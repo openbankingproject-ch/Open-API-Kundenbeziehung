@@ -319,26 +319,21 @@ if (!fs.existsSync(logDir)) {
 }
 
 // Export logger and helper functions
-module.exports = {
-  // Main logger
-  ...logger,
-  
-  // Specialized loggers
-  securityLogger,
-  auditLogger,
-  
-  // Helper functions
-  logWithContext,
-  logSecurityEvent,
-  logAuditEvent,
-  logPerformance,
-  logApiRequest,
-  logError,
-  logBusinessEvent,
-  logComplianceEvent,
-  logDataAccess,
-  logConsentEvent,
-  logCertificateEvent,
-  logRateLimitEvent,
-  logAuthEvent,
-};
+module.exports = logger;
+
+// Add helper functions to the logger instance
+logger.securityLogger = securityLogger;
+logger.auditLogger = auditLogger;
+logger.logWithContext = logWithContext;
+logger.logSecurityEvent = logSecurityEvent;
+logger.logAuditEvent = logAuditEvent;
+logger.logPerformance = logPerformance;
+logger.logApiRequest = logApiRequest;
+logger.logError = logError;
+logger.logBusinessEvent = logBusinessEvent;
+logger.logComplianceEvent = logComplianceEvent;
+logger.logDataAccess = logDataAccess;
+logger.logConsentEvent = logConsentEvent;
+logger.logCertificateEvent = logCertificateEvent;
+logger.logRateLimitEvent = logRateLimitEvent;
+logger.logAuthEvent = logAuthEvent;
