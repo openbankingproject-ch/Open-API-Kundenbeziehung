@@ -25,10 +25,18 @@ const schemas = {
       )
     ).min(1).required().description('Requested data categories'),
     purpose: Joi.string().valid(
+      'account_opening',
       'accountOpening',
-      'creditAssessment', 
+      'credit_assessment',
+      'creditAssessment',
       'compliance',
-      'customerUpdate'
+      'customer_update',
+      'customerUpdate',
+      'insurance_application',
+      'car_insurance_application',
+      'mortgage_application',
+      'investment_services',
+      'wealth_management'
     ).required().description('Purpose of data usage'),
     expiryDate: Joi.date().iso().min('now').required()
       .description('Consent expiry date'),
@@ -60,13 +68,31 @@ const schemas = {
     sharedCustomerHash: Joi.string().min(64).max(64).pattern(/^[a-f0-9]+$/).required()
       .description('SHA-256 hash of customer'),
     purpose: Joi.string().valid(
+      'account_opening',
       'accountOpening',
+      'credit_assessment',
       'creditAssessment',
-      'compliance'
-    ).required().description('Purpose of data request'),
-    consentToken: Joi.string().min(10).required()
-      .description('JWT token with consent proof')
-  }),
+      'compliance',
+      'car_insurance_application',
+      'insurance_application'
+    ).optional().description('Purpose of data request (optional if consent provides it)'),
+    consentToken: Joi.string().min(10).optional()
+      .description('JWT token with consent proof'),
+    consentId: Joi.string().guid().optional()
+      .description('Consent ID (alternative to consentToken)'),
+    dataCategories: Joi.array().items(
+      Joi.string().valid(
+        'basicData',
+        'identification',
+        'contactInformation',
+        'addressData',
+        'kycData',
+        'riskProfile',
+        'complianceData',
+        'extendedData'
+      )
+    ).optional().description('Requested data categories (optional if consent specifies them)')
+  }).or('consentToken', 'consentId'),
 
   identificationRequest: Joi.object({
     customerId: Joi.string().min(1).max(255).required()

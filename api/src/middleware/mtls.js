@@ -205,6 +205,18 @@ const validatePrivateKeyJWT = async (jwtAssertion, clientId) => {
  */
 const mtlsMiddleware = async (req, res, next) => {
   try {
+    // Test mode bypass (development only)
+    if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true') {
+      logger.debug('Test mode client authentication bypass activated');
+      req.client = {
+        id: req.headers['x-institution-id'] || 'test-client',
+        authMethod: 'test_mode',
+        institutionId: req.headers['x-institution-id'] || 'test-client',
+        testMode: true
+      };
+      return next();
+    }
+
     // Skip client authentication in development if explicitly disabled
     if (process.env.NODE_ENV !== 'production' && process.env.SKIP_CLIENT_AUTH === 'true') {
       logger.debug('Skipping client authentication in development mode');

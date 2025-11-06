@@ -171,9 +171,29 @@ const validateConsentClaims = (decoded, requiredPurpose) => {
  */
 const required = async (req, res, next) => {
   try {
+    // Test mode bypass (development only)
+    if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true') {
+      logger.debug('Test mode authentication bypass activated');
+      req.user = {
+        id: 'test-user',
+        clientId: 'test-client',
+        institutionId: req.headers['x-institution-id'] || 'CH-TEST-001',
+        scopes: ['customer:read', 'customer:write', 'consent:manage', 'identification:read', 'checks:read'],
+        consent: {
+          granted: true,
+          purpose: 'testing',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          dataCategories: ['basicData', 'contactInformation', 'addressData', 'identification', 'kycData', 'complianceData']
+        },
+        dpopBound: false,
+        testMode: true
+      };
+      return next();
+    }
+
     const token = extractBearerToken(req);
     const dpopProof = extractDPoPProof(req);
-    
+
     if (!token) {
       return res.status(401).json({
         error: 'UNAUTHORIZED',
@@ -260,8 +280,28 @@ const required = async (req, res, next) => {
  */
 const optional = async (req, res, next) => {
   try {
+    // Test mode bypass (development only)
+    if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true') {
+      logger.debug('Test mode authentication bypass activated (optional)');
+      req.user = {
+        id: 'test-user',
+        clientId: 'test-client',
+        institutionId: req.headers['x-institution-id'] || 'CH-TEST-001',
+        scopes: ['customer:read', 'customer:write', 'consent:manage', 'identification:read', 'checks:read'],
+        consent: {
+          granted: true,
+          purpose: 'testing',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          dataCategories: ['basicData', 'contactInformation', 'addressData', 'identification', 'kycData', 'complianceData']
+        },
+        dpopBound: false,
+        testMode: true
+      };
+      return next();
+    }
+
     const token = extractBearerToken(req);
-    
+
     if (token) {
       const decoded = await verifyToken(token);
       req.user = {
@@ -272,7 +312,7 @@ const optional = async (req, res, next) => {
         consent: decoded.consent
       };
     }
-    
+
     next();
   } catch (error) {
     // For optional auth, continue without user context
@@ -321,7 +361,13 @@ const requireConsent = (purpose) => {
         timestamp: new Date().toISOString()
       });
     }
-    
+
+    // Skip consent validation in test mode
+    if (req.user.testMode) {
+      logger.debug('Test mode consent validation bypass activated');
+      return next();
+    }
+
     if (!validateConsentClaims(req.user, purpose)) {
       return res.status(403).json({
         error: 'FORBIDDEN',
@@ -329,7 +375,7 @@ const requireConsent = (purpose) => {
         timestamp: new Date().toISOString()
       });
     }
-    
+
     next();
   };
 };
