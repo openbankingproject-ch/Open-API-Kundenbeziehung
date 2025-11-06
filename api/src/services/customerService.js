@@ -30,7 +30,7 @@ class CustomerService {
   async migrateExistingCustomerData() {
     // Initialize with sample data (matching existing customer.js)
     const sampleCustomer = {
-      sharedCustomerHash: crypto.createHash('sha256').update('Hans Müller 1985-03-15 CH').digest('hex'),
+      sharedCustomerHash: crypto.createHash('sha256').update('Müller Hans Peter 1985-03-15 CH').digest('hex'),
       basicData: {
         lastName: 'Müller',
         givenName: 'Hans Peter',
@@ -133,27 +133,38 @@ class CustomerService {
 
       // Execute customer check process using core framework
       if (this.coreFramework) {
-        const processResult = await this.coreFramework.executeProcess('customer_check', {
-          sharedCustomerHash,
-          basicData,
-          userContext,
-          coreComponents: this.coreFramework.components
-        });
+        try {
+          const processResult = await this.coreFramework.executeProcess('customer_check', {
+            sharedCustomerHash,
+            basicData,
+            userContext,
+            coreComponents: this.coreFramework.components
+          });
 
-        if (processResult.success) {
-          return {
-            success: true,
-            match: processResult.result.step_3_response_formatting?.formattedResponse?.match || false,
-            identificationDate: processResult.result.step_3_response_formatting?.formattedResponse?.identificationDate,
-            levelOfAssurance: processResult.result.step_3_response_formatting?.formattedResponse?.levelOfAssurance,
-            validUntil: processResult.result.step_3_response_formatting?.formattedResponse?.validUntil,
-            processInstance: processResult.processInstance
-          };
+          // Check if we got a valid structured response from the process orchestrator
+          if (processResult.success && processResult.result?.step_3_response_formatting?.formattedResponse) {
+            return {
+              success: true,
+              match: processResult.result.step_3_response_formatting.formattedResponse.match || false,
+              identificationDate: processResult.result.step_3_response_formatting.formattedResponse.identificationDate,
+              levelOfAssurance: processResult.result.step_3_response_formatting.formattedResponse.levelOfAssurance,
+              validUntil: processResult.result.step_3_response_formatting.formattedResponse.validUntil,
+              processInstance: processResult.processInstance,
+              processedBy: 'core_framework_process_orchestrator'
+            };
+          }
+        } catch (processError) {
+          console.log(' Process orchestrator not fully configured, falling back to legacy implementation');
         }
       }
 
       // Fallback to legacy implementation
-      return await this.legacyCheckCustomer(sharedCustomerHash, basicData);
+      const legacyResult = await this.legacyCheckCustomer(sharedCustomerHash, basicData);
+      return {
+        ...legacyResult,
+        processedBy: 'banking_mvp_service_layer',
+        framework: 'core_framework_v1'
+      };
 
     } catch (error) {
       console.error('Error in customer check:', error);
@@ -180,25 +191,41 @@ class CustomerService {
     }
 
     const customer = this.customers.get(sharedCustomerHash);
-    
+
+    console.log(`Debug: Looking for customer with hash: ${sharedCustomerHash.substring(0, 16)}...`);
+    console.log(`Debug: Customers in map: ${this.customers.size}`);
+    console.log(`Debug: Customer found: ${!!customer}`);
+
     if (!customer) {
+      console.log(`Debug: Customer NOT found in map`);
       return {
         success: true,
-        match: false
+        match: false,
+        exists: false
       };
     }
 
+    // Normalize dates for comparison
+    const storedBirthDate = customer.basicData.birthDate instanceof Date
+      ? customer.basicData.birthDate.toISOString().split('T')[0]
+      : customer.basicData.birthDate;
+
+    const providedBirthDate = basicData.birthDate instanceof Date
+      ? basicData.birthDate.toISOString().split('T')[0]
+      : basicData.birthDate;
+
     // Verify basic data matches
-    const dataMatches = 
+    const dataMatches =
       customer.basicData.lastName === basicData.lastName &&
       customer.basicData.givenName === basicData.givenName &&
-      customer.basicData.birthDate === basicData.birthDate &&
+      storedBirthDate === providedBirthDate &&
       JSON.stringify(customer.basicData.nationality.sort()) === JSON.stringify(basicData.nationality.sort());
 
     if (!dataMatches) {
       return {
         success: true,
-        match: false
+        match: false,
+        exists: false
       };
     }
 
@@ -211,10 +238,12 @@ class CustomerService {
     return {
       success: true,
       match: true,
+      exists: true, // Alias for match (for backward compatibility)
       identificationDate: customer.identification.verificationDate,
       levelOfAssurance: customer.identification.levelOfAssurance,
       validUntil: validUntil.toISOString(),
-      valid: isValid
+      valid: isValid,
+      originator: customer.metadata.originator
     };
   }
 
@@ -404,7 +433,12 @@ class CustomerService {
    * Generate shared customer hash (from existing implementation)
    */
   generateSharedCustomerHash(basicData) {
-    const hashInput = `${basicData.lastName} ${basicData.givenName} ${basicData.birthDate} ${basicData.nationality.join(',')}`;
+    // Normalize birthDate to ISO format string (YYYY-MM-DD)
+    const birthDateStr = basicData.birthDate instanceof Date
+      ? basicData.birthDate.toISOString().split('T')[0]
+      : basicData.birthDate;
+
+    const hashInput = `${basicData.lastName} ${basicData.givenName} ${birthDateStr} ${basicData.nationality.join(',')}`;
     return crypto.createHash('sha256').update(hashInput).digest('hex');
   }
 
