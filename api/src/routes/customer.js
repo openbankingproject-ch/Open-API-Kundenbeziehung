@@ -30,7 +30,7 @@ const customers = new Map();
 // Initialize with sample data
 const initializeSampleData = () => {
   const sampleCustomer = {
-    sharedCustomerHash: crypto.createHash('sha256').update('Hans Müller 1985-03-15 CH').digest('hex'),
+    sharedCustomerHash: crypto.createHash('sha256').update('Müller Hans Peter 1985-03-15 CH').digest('hex'),
     basicData: {
       lastName: 'Müller',
       givenName: 'Hans Peter',
@@ -163,9 +163,12 @@ router.post('/check', validateRequest('customerCheck'), async (req, res) => {
 
         return res.json({
           match: checkResult.match,
+          exists: checkResult.exists || checkResult.match, // Alias for backward compatibility
           identificationDate: checkResult.identificationDate,
           levelOfAssurance: checkResult.levelOfAssurance,
           validUntil: checkResult.validUntil,
+          valid: checkResult.valid,
+          originator: checkResult.originator,
           processedBy: 'banking_mvp_service_layer',
           framework: 'core_framework_v1'
         });
@@ -256,11 +259,15 @@ router.post('/data',
   requireConsent('accountOpening'),
   async (req, res) => {
     try {
-      const { sharedCustomerHash, purpose, consentToken } = req.body;
+      const { sharedCustomerHash, purpose, consentToken, consentId, dataCategories } = req.body;
+
+      // Handle both consentToken and consentId
+      const consent = consentToken || consentId;
 
       logger.info('Banking MVP - Full customer data request', {
         sharedCustomerHash,
         purpose,
+        consent: consent ? (consentToken ? 'token' : 'id') : 'none',
         institutionId: req.user.institutionId,
         userId: req.user.id
       });
@@ -268,9 +275,14 @@ router.post('/data',
       // Use service layer if available, fallback to legacy implementation
       if (serviceManager) {
         const customerService = serviceManager.getService('customer');
-        
+
         const dataResult = await customerService.requestFullCustomerData(
-          { sharedCustomerHash, purpose, consentToken },
+          {
+            sharedCustomerHash,
+            purpose,
+            consentToken: consent,  // Use consentToken field for compatibility
+            dataCategories
+          },
           {
             institutionId: req.user.institutionId,
             userId: req.user.id,

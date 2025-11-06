@@ -69,7 +69,8 @@ router.post('/', validateRequest('createConsent'), async (req, res) => {
           institutionId: req.user?.institutionId || 'anonymous',
           userId: req.user?.id,
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
+          userAgent: req.get('User-Agent'),
+          testMode: req.user?.testMode
         }
       );
 

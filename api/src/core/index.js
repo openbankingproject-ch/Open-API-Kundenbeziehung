@@ -192,6 +192,20 @@ class CoreFramework {
   }
 
   /**
+   * Execute a process through the process orchestrator
+   * @param {string} processName - Name of the process to execute
+   * @param {object} request - Request data
+   * @param {string} extensionName - Optional extension name
+   * @returns {Promise} Process execution result
+   */
+  async executeProcess(processName, request, extensionName = null) {
+    if (!this.initialized) {
+      throw new Error('Framework not initialized');
+    }
+    return this.components.processOrchestrator.executeProcess(processName, request, extensionName);
+  }
+
+  /**
    * Validate request against universal schemas and extension schemas
    */
   async validateRequest(request, operation, extensionName = null) {

@@ -10,14 +10,14 @@ const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/error-handler');
 const authMiddleware = require('./middleware/auth');
 const mtlsMiddleware = require('./middleware/mtls');
 const validationMiddleware = require('./middleware/validation');
 const securityMiddleware = require('./middleware/security');
 
 // Core Framework and Service Layer
-const CoreFramework = require('./core');
+const { CoreFramework } = require('./core');
 const { createServiceManager } = require('./services');
 const BankingExtension = require('./extensions/banking');
 
@@ -124,23 +124,29 @@ async function initializeFramework() {
       environment: process.env.NODE_ENV || 'development'
     });
     await coreFramework.initialize();
-    
-    // Initialize banking extension
-    bankingExtension = new BankingExtension();
-    await bankingExtension.initialize(coreFramework);
-    
-    // Register banking extension with core framework
-    await coreFramework.registerExtension('banking', bankingExtension);
-    
+
+    // Initialize banking extension (non-fatal if it fails)
+    try {
+      bankingExtension = new BankingExtension();
+      await bankingExtension.initialize(coreFramework);
+
+      // Register banking extension with core framework
+      await coreFramework.registerExtension('banking', bankingExtension);
+
+      logger.info(`Banking extension loaded (version: ${bankingExtension.version})`);
+    } catch (error) {
+      logger.warn('Banking extension failed to initialize (continuing without it):', error.message);
+      bankingExtension = null;
+    }
+
     // Initialize service layer
     serviceManager = createServiceManager(coreFramework);
     await serviceManager.initialize();
-    
+
     // Inject dependencies into routes
     injectDependenciesIntoRoutes();
-    
+
     logger.info('Framework initialization complete');
-    logger.info(`Banking extension loaded (version: ${bankingExtension.version})`);
     logger.info(`Core components: ${Object.keys(coreFramework.components).length}`);
     logger.info(`Services initialized: ${Object.keys(serviceManager.services).length}`);
     
