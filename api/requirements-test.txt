@@ -1,0 +1,4 @@
+# Python dependencies for test_scenarios.py
+# Install with: pip install -r requirements-test.txt
+
+requests>=2.31.0
