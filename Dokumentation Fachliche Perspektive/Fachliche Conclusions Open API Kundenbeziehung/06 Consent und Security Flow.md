@@ -185,7 +185,15 @@ Before initiating the OAuth 2.0 Authorization Code Flow, the following precondit
 - Network connectivity between all components
 - Audit logging infrastructure operational
 
-### Generic OAuth 2.0 Authorization Code Flow
+### Generic Consent Management Flow (OAuth 2.0 Based)
+
+This flow demonstrates how customer consent is managed when sharing data between providers in the Open API Kundenbeziehung network. The implementation follows OAuth 2.0 Authorization Code Flow standards while addressing the specific requirements of customer data sharing and consent management.
+
+**Business Context:**
+- **Scenario**: Customer wants to use their existing data (held by Data Provider) with a new service (Client)
+- **Consent Requirement**: Customer must explicitly authorize which data scopes to share
+- **Technical Implementation**: OAuth 2.0 Authorization Code Flow with PKCE
+- **Compliance**: GDPR consent requirements mapped to OAuth 2.0 authorization scopes
 
 ```mermaid
 sequenceDiagram
@@ -196,7 +204,7 @@ sequenceDiagram
     participant DataProvider as Resource Server (Data Provider)
     participant AuditLog as Audit System & Compliance
 
-    Note over Customer,AuditLog: Phase 1: Authorization Initiation
+    Note over Customer,AuditLog: Phase 1: Consent Request Initiation
     Customer->>Client: Initiate service request
     Client->>Client: Prepare authorization request with required scopes
     Note right of Client: Parameters: client_id, scope,<br/>redirect_uri, state, response_type=code,<br/>code_challenge (PKCE)
@@ -211,11 +219,11 @@ sequenceDiagram
     AuthServer->>AuthServer: Authenticate user identity
     AuthServer-->>AuditLog: Log authentication event
 
-    Note over Customer,AuditLog: Phase 3: Authorization (Consent)
+    Note over Customer,AuditLog: Phase 3: Consent Granting (Authorization)
     AuthServer->>UserAgent: Present consent screen
-    Note right of AuthServer: Display requested scopes:<br/>- identity:read<br/>- contact:read<br/>- kyc:basic:read<br/>with purpose and retention info
-    UserAgent->>Customer: Show scope authorization request
-    Customer->>UserAgent: Authorize requested scopes
+    Note right of AuthServer: Display requested data scopes:<br/>- identity:read<br/>- contact:read<br/>- kyc:basic:read<br/>with purpose and retention info
+    UserAgent->>Customer: Show consent/authorization request
+    Customer->>UserAgent: Grant consent (authorize scopes)
     UserAgent->>AuthServer: Submit authorization decision
     AuthServer->>AuthServer: Generate authorization code
     AuthServer-->>AuditLog: Log authorization decision with scopes
@@ -231,30 +239,30 @@ sequenceDiagram
     AuthServer->>Client: Return access_token + refresh_token + id_token (OIDC)
 
     Note over Customer,AuditLog: Phase 5: Resource Access
-    Client->>ResourceServer: API request with Bearer access_token
-    ResourceServer->>AuthServer: Validate token (introspection or JWT verification)
-    AuthServer->>ResourceServer: Token valid, scope: [identity:read, contact:read, kyc:basic:read]
-    ResourceServer->>ResourceServer: Apply scope-based access control
-    ResourceServer-->>AuditLog: Log data access with token reference
-    ResourceServer->>Client: Return requested data (minimized per scope)
+    Client->>DataProvider: API request with Bearer access_token
+    DataProvider->>AuthServer: Validate token (introspection or JWT verification)
+    AuthServer->>DataProvider: Token valid, scope: [identity:read, contact:read, kyc:basic:read]
+    DataProvider->>DataProvider: Apply scope-based access control
+    DataProvider-->>AuditLog: Log data access with token reference
+    DataProvider->>Client: Return requested data (minimized per scope)
     Client->>UserAgent: Display service result
     UserAgent->>Customer: Service delivered with authorized data
 
-    Note over Customer,AuditLog: Phase 6: Ongoing Authorization Management (Separate Session)
+    Note over Customer,AuditLog: Phase 6: Ongoing Consent Management (Separate Session)
     Note right of Customer: Requires new authentication session
-    Customer->>UserAgent: Access authorization management portal
-    UserAgent->>AuthServer: Request authorization management UI
+    Customer->>UserAgent: Access consent management portal
+    UserAgent->>AuthServer: Request consent management UI
     AuthServer->>UserAgent: Require re-authentication
-    Note right of AuthServer: User must authenticate again<br/>to manage authorizations
+    Note right of AuthServer: User must authenticate again<br/>to manage consents
     Customer->>UserAgent: Authenticate
     UserAgent->>AuthServer: Submit credentials
-    AuthServer->>UserAgent: Display authorization management dashboard
-    Customer->>UserAgent: Revoke/modify authorization
-    UserAgent->>AuthServer: Update authorization
+    AuthServer->>UserAgent: Display consent management dashboard
+    Customer->>UserAgent: Revoke/modify consent
+    UserAgent->>AuthServer: Update authorization (revoke consent)
     AuthServer->>AuthServer: Revoke access tokens for modified scopes
-    AuthServer-->>AuditLog: Log authorization modification
+    AuthServer-->>AuditLog: Log consent modification
     AuthServer->>UserAgent: Confirmation
-    UserAgent->>Customer: Authorization updated
+    UserAgent->>Customer: Consent updated
 ```
 
 **previous:**
