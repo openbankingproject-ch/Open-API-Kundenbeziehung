@@ -60,12 +60,9 @@ Das API Endpoint Design für die Open API Kundenbeziehung folgt den OpenAPI 3.0 
 Basierend auf der finalen API-Spezifikation Version 2.0 aus der Workshop-Phase bietet die Open API Kundenbeziehung folgende Kernendpunkte:
 
 ### Customer Check API
-
 #### `POST /customer/check`
-**Zweck:** Existenz- und Identifikationsgültigkeitsprüfung
-**HTTP Method:** POST
+**Zweck:** Existenz- und Identifikationsgültigkeitsprüfung eines Kunden
 **Authentication:** JWT Header with Consent Claims
-
 **Request (Hin):**
 ```json
 {
@@ -87,11 +84,10 @@ Basierend auf der finalen API-Spezifikation Version 2.0 aus der Workshop-Phase b
 ```
 
 ### Full Customer Dataset API
-
 #### `POST /customer/fullRequest`
-**Zweck:** Vollständiger Kundendatensatz (≈ 65 Felder inkl. PDF-Dokumente)
-**HTTP Method:** POST
-**Authentication:** Header JWT (Consent-Claim)
+**Zweck:** Vollständiger Kundendatensatz basierend auf definierten Datenbausteinen
+**Scope:** Umfasst Identity, Address, Contact, Identification und KYC-Daten
+**Authentication:** JWT Header with Consent Claims
 
 **Request (Hin):**
 ```json
@@ -150,12 +146,9 @@ Basierend auf der finalen API-Spezifikation Version 2.0 aus der Workshop-Phase b
 ```
 
 ### Customer Identification API
-
 #### `POST /customer/identification`
-**Zweck:** Nur Identifikationsdaten abrufen
-**HTTP Method:** POST
-**Authentication:** JWT Header
-
+**Zweck:** Abfrage spezifischer Identifikationsdaten mit Verifikationsstatus
+**Authentication:** JWT Header with Consent Claims
 **Request (Hin):**
 ```json
 {
@@ -187,10 +180,14 @@ Basierend auf der finalen API-Spezifikation Version 2.0 aus der Workshop-Phase b
 ```
 
 ### Process Flow APIs
+**Basierend auf dem 10-stufigen Referenzprozess** → [Vollständige Prozessdetails in Conclusion 03 Referenzprozess](./03%20Referenzprozess.md)
 
-**Basierend auf dem 10-stufigen Referenzprozess** → [Vollständige Prozessdetails und Business Logic in Conclusion 03 Referenzprozess](./03%20Referenzprozess.md)
+Die folgenden Endpunkte implementieren die technischen Schnittstellen für den strukturierten Onboarding-Flow:
 
-Die folgenden API-Endpunkte implementieren die technischen Schnittstellen für den strukturierten Onboarding-Flow:
+- `POST /process/initialize` - Initialisierung des Onboarding-Prozesses
+- `POST /process/self-declaration` - Selbstdeklaration für Compliance
+- `POST /process/background-checks` - Background Checks und KYC-Prüfungen
+- `POST /process/contract-signature` - Digitale Vertragsunterzeichnung
 
 #### `POST /process/initialize`
 **Zweck:** Schritt 1 - Initialisierung des Onboarding-Prozesses
@@ -289,9 +286,17 @@ Die folgenden API-Endpunkte implementieren die technischen Schnittstellen für d
 
 ## Granulare Daten-Endpunkte
 
-Die API bietet granulare Endpunkte für spezifische Datensubsets, um minimale Datenübertragung und präzise Consent-Kontrolle zu ermöglichen:
+Die API bietet granulare Endpunkte für spezifische Datensubsets zur Ermöglichung minimaler Datenübertragung und präziser Consent-Kontrolle:
 
-**Consent-basierte Datenzugriffskontrolle:** → [Detailed consent flow architectures and granular permission management in Conclusion 06 Consent und Security Flow](./06%20Consent%20und%20Security%20Flow.md)
+**Consent-basierte Datenzugriffskontrolle:** → [Detaillierte Consent-Flow-Architekturen in Conclusion 06 Consent und Security Flow](./06%20Consent%20und%20Security%20Flow.md)
+
+### Verfügbare granulare Endpunkte:
+- `POST /customer/basic` - Stammdaten (Name, Geburtsdatum, Nationalität)
+- `POST /customer/address` - Adressdaten (Wohn- & Korrespondenzadresse)
+- `POST /customer/contact` - Kontaktdaten (Telefon, E-Mail)
+- `POST /customer/kyc` - KYC-Attribute ohne Ausweisdokumente
+
+---
 
 ### Basic Customer Data API
 
@@ -420,7 +425,7 @@ Die API bietet granulare Endpunkte für spezifische Datensubsets, um minimale Da
 
 ---
 
-## Request/Response Strukturen
+## API-Datenstrukturen
 
 ### Technische Spezifikationen
 
@@ -431,9 +436,18 @@ Die API bietet granulare Endpunkte für spezifische Datensubsets, um minimale Da
 **Sicherheit:** JWT-Token mit Consent-Claims → [Complete JWT token architecture and consent claims structure in Conclusion 06](./06%20Consent%20und%20Security%20Flow.md#jwt-token-architektur-und-consent-claims)
 **Authentifizierung:** Header-basierte JWT-Übertragung
 
-### Datenpunkte – Modulare Datenbausteine (Version 2.0)
+### Modulare Datenbausteine (Version 2.0)
 
-Die Open API Kundenbeziehung Version 2.0 definiert modulare Datenbausteine entsprechend dem Referenzprozess → [Siehe Conclusion Referenzprozess](./03%20Referenzprozess.md):
+Die Open API Kundenbeziehung Version 2.0 definiert modulare Datenbausteine entsprechend dem Referenzprozess → [Detaillierte Datenstrukturen in Conclusion 03 Referenzprozess](./03%20Referenzprozess.md):
+
+**Verfügbare Datenbausteine:**
+- **Identität:** Persönliche Stammdaten mit Verifikationslevel (QEAA/EAA/self-declared)
+- **Adresse:** Wohn- und Korrespondenzadressen mit Gültigkeitszeiträumen
+- **Kontakt:** Kommunikationskanäle mit Verifikationsstatus
+- **Consent:** Einwilligungsverwaltung → [Detaillierte Strukturen in Conclusion 06](./06%20Consent%20und%20Security%20Flow.md)
+- **KYC/Compliance:** Regulatorische Compliance-Daten (AML, FATCA, PEP)
+
+**Integration:** Diese Datenbausteine können einzeln oder kombiniert über die entsprechenden API-Endpunkte abgerufen werden.
 
 #### Baustein: Identität
 ```json
@@ -520,7 +534,6 @@ Basic consent reference structure:
 }
 ```
 
-**Integration:** Diese Datenbausteine können einzeln oder kombiniert über die entsprechenden API-Endpunkte abgerufen werden, wodurch eine granulare und datenschutzkonforme Datenübertragung gewährleistet wird.
 
 ### sharedCustomerHash-Konzept
 
@@ -554,159 +567,21 @@ The implementation guide covers:
 
 ## Implementierungsrichtlinien
 
-### Standard Request Headers
-```http
-Authorization: Bearer {jwt_access_token}
-Content-Type: application/json
-X-Request-ID: {unique_request_identifier}
-X-Correlation-ID: {transaction_correlation_id}
-Accept: application/json
-```
+Die vollständigen technischen Implementierungsrichtlinien, einschliesslich Request/Response Formate, Error Handling, Pagination und OpenAPI 3.0 Spezifikationen, sind in der separaten technischen Dokumentation verfügbar.
 
-### Standard Response Format
-```json
-{
-  "status": "success",
-  "timestamp": "2025-08-18T10:00:00Z",
-  "requestId": "req_12345",
-  "data": {
-    // Response payload
-  },
-  "metadata": {
-    "version": "1.0",
-    "processingTime": "125ms",
-    "dataSource": "primary_db"
-  }
-}
-```
+**Zentrale Implementierungs-Standards:**
+- **OpenAPI 3.0** Spezifikation für automatische Code-Generierung
+- **FAPI 2.0 Security** → [Detaillierte Security-Anforderungen in Conclusion 06](./06%20Consent%20und%20Security%20Flow.md)
+- **Semantic Versioning** mit Backward Compatibility
+- **Comprehensive Testing** → [Testing-Framework in Conclusion 08](./08%20Testing%20und%20Verifikation.md)
 
-### Error Response Structure
-```json
-{
-  "status": "error",
-  "timestamp": "2025-08-18T10:00:00Z",
-  "requestId": "req_12345",
-  "error": {
-    "code": "CUSTOMER_NOT_FOUND",
-    "message": "Customer with provided hash not found",
-    "details": "The sharedCustomerHash does not exist in our network",
-    "retryable": false
-  },
-  "supportInfo": {
-    "reference": "ERR_20250818_001",
-    "documentation": "https://api-docs.obp.ch/errors/CUSTOMER_NOT_FOUND"
-  }
-}
-```
-
-### Pagination Structure
-```json
-{
-  "data": [...],
-  "pagination": {
-    "page": 1,
-    "pageSize": 50,
-    "totalItems": 150,
-    "totalPages": 3,
-    "hasNext": true,
-    "hasPrevious": false,
-    "nextPage": "/v1/customers?page=2&pageSize=50",
-    "previousPage": null
-  }
-}
-```
+Diese konzeptionelle API-Spezifikation bietet die Grundlage für die technische Implementation.
 
 ---
 
-### OpenAPI 3.0 Specification
-
-**Dokumentationsstandards:**
-- Vollständige API-Spezifikation in OpenAPI 3.0 YAML Format
-- Automatische Code-Generierung für Client SDKs
-- Interactive API Documentation mit Swagger UI
-- Schema Validation für alle Request/Response Payloads
-
-**Beispiel OpenAPI Definition:**
-```yaml
-openapi: 3.0.3
-info:
-  title: Open API Kundenbeziehung
-  version: 1.0.0
-  description: Standardized customer data exchange APIs
-  contact:
-    name: API Support Team
-    url: https://support.obp.ch
-    email: api-support@obp.ch
-
-servers:
-  - url: https://api.obp.ch/v1
-    description: Production API Server
-  - url: https://sandbox-api.obp.ch/v1
-    description: Sandbox Environment
-
-paths:
-  /customer/check:
-    get:
-      summary: Check customer existence and validity
-      operationId: checkCustomer
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: sharedCustomerHash
-          in: query
-          required: true
-          schema:
-            type: string
-            format: sha256
-      responses:
-        '200':
-          description: Customer check successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CustomerCheckResponse'
-```
-
-### Sicherheits-Implementation
-
-**FAPI 2.0 Implementation:** → [Complete FAPI 2.0 compliance specifications and security requirements in Conclusion 06 Consent und Security Flow](./06%20Consent%20und%20Security%20Flow.md)
-
-### Performance Guidelines
-
-**Response Time Targets:**
-- Authentication Endpoints: Optimierte Antwortzeiten für Security Operations
-- Data Retrieval Endpoints: Optimierte Antwortzeiten entsprechend Endpoint-Typ
-- Data Modification Endpoints: Antwortzeiten für Transaktions-Operationen
-- Bulk Operations: Antwortzeiten für komplexe Operationen
-
-**Caching Strategy:**
-- Static Data: Erweiterte Cache-Dauer
-- Customer Profile Data: Moderate Cache-Dauer  
-- Verification Status: Kurze Cache-Dauer
-- Real-time Data: No caching
-
-### Development Best Practices
-
-**API Versioning Strategy:**
-- Semantic Versioning für API Evolution
-- Backward Compatibility für mindestens 2 Major Versions
-- Deprecation Notice Period: 6 Monate minimum
-- Feature Flags für schrittweise Rollouts
-
-**Testing Requirements:**
-- Unit Tests für alle API Endpoints mit hoher Testabdeckung
-- Integration Tests mit Mock External Systems
-- Contract Testing zwischen Producer/Consumer
-- Load Testing für Performance Validation
-- Security Testing mit OWASP API Security Guidelines → [Siehe Conclusion Testing und Verifikation](./08%20Testing%20und%20Verifikation.md)
-
-Diese konzeptionelle API-Spezifikation bietet die Grundlage für die technische Implementation und wird kontinuierlich mit der separaten technischen Dokumentation synchronisiert, um eine konsistente und wartbare API-Architektur zu gewährleisten.
-
----
-
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Konzeptionelle Spezifikation für technische Implementation
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 
