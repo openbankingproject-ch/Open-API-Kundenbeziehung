@@ -265,46 +265,51 @@ sequenceDiagram
     UserAgent->>Customer: Consent updated
 ```
 
-**previous:**
+### Simplified Consent Management Flow
 
+For a high-level overview, this simplified version shows the essential steps while maintaining OAuth 2.0 compliance. For complete implementation details, refer to the detailed flow above.
 
 ```mermaid
 sequenceDiagram
     participant Customer as Customer
-    participant Bank as Bank/Service Provider
-    participant ConsentMgmt as Consent Management
+    participant UserAgent as User Agent
+    participant Client as Client
+    participant AuthServer as Authorization Server
     participant DataProvider as Data Provider
-    participant AuditLog as Audit & Compliance
+    participant AuditLog as Audit System
 
-    Note over Customer,AuditLog: Phase 1: Consent Request Initiation
-    Customer->>Bank: Initiate service request
-    Bank->>ConsentMgmt: Check existing consents
-    ConsentMgmt->>Bank: No valid consent found
-    
-    Bank->>ConsentMgmt: Create consent request
-    ConsentMgmt->>Customer: Present consent form
-    Note over Customer: Granular consent options:<br/>- Basic data access<br/>- Extended KYC data<br/>- Purpose limitation<br/>- Time restrictions
-    
-    Note over Customer,AuditLog: Phase 2: Consent Granting & Validation
-    Customer->>ConsentMgmt: Grant specific consents
-    ConsentMgmt->>ConsentMgmt: Validate consent completeness
-    ConsentMgmt->>AuditLog: Log consent decision
-    
-    ConsentMgmt->>Bank: Consent granted with scope
-    Bank->>DataProvider: Request data with consent token
-    
-    Note over Customer,AuditLog: Phase 3: Data Access & Usage
-    DataProvider->>ConsentMgmt: Verify consent validity
-    ConsentMgmt->>DataProvider: Consent valid for scope
-    DataProvider->>Bank: Provide requested data
-    DataProvider->>AuditLog: Log data access
-    
-    Bank->>Customer: Service delivered
-    
+    Note over Customer,AuditLog: Phase 1: Consent Request & Authentication
+    Customer->>Client: Initiate service request
+    Client->>UserAgent: Redirect to Authorization Server
+    UserAgent->>AuthServer: Authorization request (scopes)
+    AuthServer->>UserAgent: Authentication challenge
+    Customer->>UserAgent: Authenticate
+    UserAgent->>AuthServer: Submit credentials
+    AuthServer-->>AuditLog: Log authentication
+
+    Note over Customer,AuditLog: Phase 2: Consent Granting
+    AuthServer->>UserAgent: Present consent screen (data scopes)
+    Customer->>UserAgent: Grant consent for scopes
+    UserAgent->>AuthServer: Submit consent decision
+    AuthServer-->>AuditLog: Log consent decision
+    AuthServer->>UserAgent: Return authorization code
+    UserAgent->>Client: Deliver authorization code
+
+    Note over Customer,AuditLog: Phase 3: Token Exchange & Data Access
+    Client->>AuthServer: Exchange code for access token
+    AuthServer->>Client: Return access token (with scopes)
+    Client->>DataProvider: Request data with access token
+    DataProvider->>AuthServer: Validate token
+    AuthServer->>DataProvider: Token valid (scopes confirmed)
+    DataProvider-->>AuditLog: Log data access
+    DataProvider->>Client: Return customer data
+    Client->>Customer: Service delivered
+
     Note over Customer,AuditLog: Phase 4: Ongoing Consent Management
-    ConsentMgmt->>Customer: Consent expiry notification (if applicable)
-    Customer->>ConsentMgmt: Renew/modify/revoke consent
-    ConsentMgmt->>AuditLog: Log consent updates
+    Customer->>AuthServer: Access consent portal (requires re-auth)
+    Customer->>AuthServer: Revoke/modify consent
+    AuthServer->>AuthServer: Revoke tokens
+    AuthServer-->>AuditLog: Log consent change
 ```
 
 
@@ -751,44 +756,6 @@ sequenceDiagram
     UserAgent->>Customer: Service delivered
 ```
 
-**previous:**
-
-
-```mermaid
-sequenceDiagram
-    participant Client as Client App
-    participant AuthServer as Authorization Server
-    participant ResourceServer as Resource Server
-    participant Customer as Customer
-
-    Note over Client,Customer: FAPI 2.0 Security Flow with PKCE + mTLS
-    
-    Client->>Client: Generate PKCE code_verifier & code_challenge
-    Client->>Client: Create authorization request with security parameters
-    
-    Client->>AuthServer: Authorization request<br/>(client_id, scope, code_challenge, state, nonce)
-    AuthServer->>Customer: Authenticate customer
-    Customer->>AuthServer: Authentication successful
-    
-    AuthServer->>Customer: Present consent screen<br/>(granular data permissions)
-    Customer->>AuthServer: Grant consent
-    
-    AuthServer->>Client: Authorization code + state
-    
-    Note over Client,Customer: Token Exchange with Enhanced Security
-    Client->>AuthServer: Token request via mTLS<br/>(code, code_verifier, client_cert)
-    AuthServer->>AuthServer: Verify mTLS certificate
-    AuthServer->>AuthServer: Validate PKCE code_verifier
-    AuthServer->>Client: Access token + ID token (JWT)
-    
-    Note over Client,Customer: Resource Access with Financial-Grade Security
-    Client->>ResourceServer: API request + access token via mTLS
-    ResourceServer->>ResourceServer: Validate mTLS client certificate
-    ResourceServer->>AuthServer: Introspect access token
-    AuthServer->>ResourceServer: Token valid + scope information
-    ResourceServer->>Client: Protected resource data
-```
-
 ### Authentication/Authorization Sequence
 
 **Complete Authentication Flow für Business Stakeholders:**
@@ -945,77 +912,6 @@ sequenceDiagram
     AuthServer->>UserAgent: Confirmation
     UserAgent->>Customer: Authorization updated successfully
 ```
-
-**previous:**
-
-
-```mermaid
-sequenceDiagram
-    participant Customer as Customer
-    participant Integrator as Integrator App/Service
-    participant AuthServer as Authorization Server
-    participant Producer as Data Producer
-    participant ConsentMgmt as Consent Management
-    participant AuditLog as Audit System
-
-    Note over Customer,AuditLog: Phase 1: Customer Initiation
-    Customer->>Integrator: Request service (account opening)
-    Integrator->>Customer: Explain data requirements & purpose
-    Customer->>Integrator: Agree to proceed with data sharing
-    
-    Note over Customer,AuditLog: Phase 2: Authorization Request (PAR)
-    Integrator->>Integrator: Generate PKCE code_verifier & code_challenge
-    Integrator->>AuthServer: POST /par (Pushed Authorization Request)
-    Note right of AuthServer: client_id, scope, code_challenge,<br/>purpose, data_categories
-    AuthServer->>AuthServer: Validate client credentials & request
-    AuthServer->>Integrator: Return request_uri (60s expiry)
-    
-    Note over Customer,AuditLog: Phase 3: Customer Authentication
-    Integrator->>Customer: Redirect to authorization endpoint
-    Customer->>AuthServer: GET /authorize?request_uri=...
-    AuthServer->>Customer: Present authentication challenge
-    Customer->>AuthServer: Primary factor (password/PIN/biometric)
-    AuthServer->>Customer: Secondary factor (SMS/App/Hardware token)
-    Customer->>AuthServer: Complete strong authentication
-    AuthServer->>AuthServer: Validate authentication factors
-    
-    Note over Customer,AuditLog: Phase 4: Consent Management
-    AuthServer->>ConsentMgmt: Check existing consents
-    ConsentMgmt->>AuthServer: No valid consent / consent expired
-    AuthServer->>Customer: Present detailed consent screen
-    Note right of Customer: Granular data permissions:<br/>- Basic identity data<br/>- Contact information<br/>- KYC attributes<br/>- Purpose & retention period
-    Customer->>AuthServer: Grant specific data permissions
-    AuthServer->>ConsentMgmt: Record consent with granular scope
-    ConsentMgmt->>AuditLog: Log consent decision with full details
-    
-    Note over Customer,AuditLog: Phase 5: Token Exchange
-    AuthServer->>Customer: Redirect with authorization code
-    Customer->>Integrator: Authorization code received
-    Integrator->>AuthServer: POST /token (via mTLS)
-    Note right of AuthServer: authorization_code,<br/>code_verifier, client_cert
-    AuthServer->>AuthServer: Verify mTLS certificate
-    AuthServer->>AuthServer: Validate PKCE code_verifier
-    AuthServer->>AuthServer: Generate tokens with consent scope
-    AuthServer->>Integrator: Access token + ID token + Refresh token
-    
-    Note over Customer,AuditLog: Phase 6: Data Access
-    Integrator->>Producer: GET /customer/data (with access token)
-    Producer->>AuthServer: Introspect access token & validate consent
-    AuthServer->>Producer: Token valid + consent scope details
-    Producer->>ConsentMgmt: Verify consent is still active
-    ConsentMgmt->>Producer: Consent active for requested data
-    Producer->>Producer: Apply data minimization based on consent
-    Producer->>AuditLog: Log data access with consent reference
-    Producer->>Integrator: Return requested customer data (minimized)
-    
-    Integrator->>Customer: Service delivered with imported data
-    
-    Note over Customer,AuditLog: Ongoing Consent Management
-    ConsentMgmt->>Customer: Periodic consent status notifications
-    Customer->>ConsentMgmt: Modify/extend/revoke consent as needed
-    ConsentMgmt->>AuditLog: Log all consent lifecycle events
-```
-
 ### Security Flow aus der Perspektive der Finanzindustrie
 
 **Konzeptionelle Customer Journey:**
@@ -1107,34 +1003,6 @@ sequenceDiagram
     UserAgent->>AuthServerA: Update authorization, revoke tokens
 ```
 
-**previous:**
-
-
-```mermaid
-sequenceDiagram
-    participant Customer as Customer
-    participant BankA as Bank A (Producer)
-    participant BankB as Bank B (Integrator)
-    participant Consent as Consent Layer
-
-    Note over Customer,Consent: Direct P2P Security Flow
-    Customer->>BankB: Request account opening
-    BankB->>Customer: Request consent for data from Bank A
-    Customer->>Consent: Grant consent with specific permissions
-    
-    BankB->>BankA: Direct API call with customer consent
-    BankA->>Consent: Verify consent validity
-    Consent->>BankA: Consent valid for requested scope
-    BankA->>BankA: Apply data minimization based on consent
-    BankA->>BankB: Provide requested customer data
-    
-    BankB->>Customer: Account opened with imported data
-    
-    Note over Customer,Consent: Ongoing Consent Management
-    Consent->>Customer: Consent status notifications
-    Customer->>Consent: Modify/revoke consent as needed
-```
-
 
 #### Hybrid Security Model
 
@@ -1179,36 +1047,6 @@ sequenceDiagram
 
     BankB->>UserAgent: Display result
     UserAgent->>Customer: Service delivered
-```
-
-**previous:**
-
-
-```mermaid
-sequenceDiagram
-    participant Customer as Customer
-    participant BankB as Bank B (Integrator)
-    participant CentralAuth as Central Auth Hub
-    participant BankA as Bank A (Producer)
-    participant PolicyEngine as Policy Engine
-
-    Note over Customer,PolicyEngine: Hybrid: Central Auth + Distributed Data
-    Customer->>BankB: Initiate service request
-    BankB->>CentralAuth: Request authorization
-    CentralAuth->>Customer: Authenticate & consent request
-    Customer->>CentralAuth: Grant consent
-    
-    CentralAuth->>PolicyEngine: Apply governance policies
-    PolicyEngine->>CentralAuth: Validate compliance & scope
-    CentralAuth->>BankB: Issue access token with consent scope
-    
-    BankB->>BankA: Direct data request with central token
-    BankA->>CentralAuth: Validate token & consent
-    CentralAuth->>BankA: Token valid, scope approved
-    BankA->>BankB: Provide data within approved scope
-    
-    BankB->>Customer: Service delivered
-    CentralAuth->>CentralAuth: Log all transactions for audit
 ```
 
 ### Consent Lifecycle Management
