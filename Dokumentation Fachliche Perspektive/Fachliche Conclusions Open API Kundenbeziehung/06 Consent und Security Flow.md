@@ -141,7 +141,124 @@ Die Security-Komponenten sind in einer hierarchischen Schicht-Architektur organi
 
 ## Consent-Flow-Architekturen
 
-### Generic Consent Management Flow
+### Terminology Alignment
+
+The following table clarifies the mapping between OAuth 2.0/OIDC technical terms and business/GDPR terminology:
+
+| OAuth 2.0 / OIDC Term | Description | GDPR / Business Term |
+|----------------------|-------------|---------------------|
+| Authorization Server | Issues tokens after authentication and authorization | Consent Platform |
+| Client | Application requesting access on behalf of user | Service Provider / Integrator |
+| Resource Owner | User who grants access to their data | Data Subject / Customer |
+| Resource Server | API protecting user data | Data Controller / Data Provider |
+| Scope | Technical access permissions defining API access | Data Categories |
+| Authorization | User grants access to requested scopes | Consent Granting |
+| Access Token | Credential for API access | - |
+| ID Token (OIDC) | Proof of authentication with user claims | - |
+| User Agent | Browser or mobile app mediating interactions | - |
+
+**Note:** In this document, "consent" refers to user authorization per GDPR requirements, while OAuth "scope" defines technical access permissions. These concepts align but use different terminology in their respective contexts.
+
+### Flow Preconditions
+
+Before initiating the OAuth 2.0 Authorization Code Flow, the following preconditions must be met:
+
+**Client Registration:**
+- Client application registered with Authorization Server
+- Client credentials issued (client_id, client_secret or X.509 certificate)
+- Redirect URIs pre-registered and validated
+- Allowed scopes configured for the client
+
+**User Prerequisites:**
+- User has active account with Resource Provider
+- User credentials established for authentication
+- User has verified contact information for notifications
+
+**Technical Configuration:**
+- TLS/mTLS certificates configured for secure communication
+- PKCE support enabled for enhanced security
+- Token endpoint authentication method configured
+- Scopes defined and documented per OpenID Connect specification
+
+**Infrastructure:**
+- User Agent (browser/mobile app) available for redirect-based flow
+- Network connectivity between all components
+- Audit logging infrastructure operational
+
+### Generic OAuth 2.0 Authorization Code Flow
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer (Resource Owner)
+    participant UserAgent as User Agent (Browser/App)
+    participant Client as Client (Integrator)
+    participant AuthServer as Authorization Server
+    participant DataProvider as Resource Server (Data Provider)
+    participant AuditLog as Audit System & Compliance
+
+    Note over Customer,AuditLog: Phase 1: Authorization Initiation
+    Customer->>Client: Initiate service request
+    Client->>Client: Prepare authorization request with required scopes
+    Note right of Client: Parameters: client_id, scope,<br/>redirect_uri, state, response_type=code,<br/>code_challenge (PKCE)
+    Client->>UserAgent: Redirect to Authorization Server
+    UserAgent->>AuthServer: GET /authorize (authorization request)
+
+    Note over Customer,AuditLog: Phase 2: Authentication
+    AuthServer->>UserAgent: Present authentication challenge
+    UserAgent->>Customer: Display login form
+    Customer->>UserAgent: Provide credentials (username/password)
+    UserAgent->>AuthServer: Submit authentication credentials
+    AuthServer->>AuthServer: Authenticate user identity
+    AuthServer-->>AuditLog: Log authentication event
+
+    Note over Customer,AuditLog: Phase 3: Authorization (Consent)
+    AuthServer->>UserAgent: Present consent screen
+    Note right of AuthServer: Display requested scopes:<br/>- identity:read<br/>- contact:read<br/>- kyc:basic:read<br/>with purpose and retention info
+    UserAgent->>Customer: Show scope authorization request
+    Customer->>UserAgent: Authorize requested scopes
+    UserAgent->>AuthServer: Submit authorization decision
+    AuthServer->>AuthServer: Generate authorization code
+    AuthServer-->>AuditLog: Log authorization decision with scopes
+    AuthServer->>UserAgent: Redirect with authorization code + state
+    UserAgent->>Client: Deliver authorization code
+
+    Note over Customer,AuditLog: Phase 4: Token Exchange
+    Client->>AuthServer: POST /token (authorization code, code_verifier, client credentials)
+    Note right of Client: Backend call via mTLS<br/>grant_type=authorization_code
+    AuthServer->>AuthServer: Validate authorization code and client
+    AuthServer->>AuthServer: Generate access token with authorized scopes
+    AuthServer-->>AuditLog: Log token issuance
+    AuthServer->>Client: Return access_token + refresh_token + id_token (OIDC)
+
+    Note over Customer,AuditLog: Phase 5: Resource Access
+    Client->>ResourceServer: API request with Bearer access_token
+    ResourceServer->>AuthServer: Validate token (introspection or JWT verification)
+    AuthServer->>ResourceServer: Token valid, scope: [identity:read, contact:read, kyc:basic:read]
+    ResourceServer->>ResourceServer: Apply scope-based access control
+    ResourceServer-->>AuditLog: Log data access with token reference
+    ResourceServer->>Client: Return requested data (minimized per scope)
+    Client->>UserAgent: Display service result
+    UserAgent->>Customer: Service delivered with authorized data
+
+    Note over Customer,AuditLog: Phase 6: Ongoing Authorization Management (Separate Session)
+    Note right of Customer: Requires new authentication session
+    Customer->>UserAgent: Access authorization management portal
+    UserAgent->>AuthServer: Request authorization management UI
+    AuthServer->>UserAgent: Require re-authentication
+    Note right of AuthServer: User must authenticate again<br/>to manage authorizations
+    Customer->>UserAgent: Authenticate
+    UserAgent->>AuthServer: Submit credentials
+    AuthServer->>UserAgent: Display authorization management dashboard
+    Customer->>UserAgent: Revoke/modify authorization
+    UserAgent->>AuthServer: Update authorization
+    AuthServer->>AuthServer: Revoke access tokens for modified scopes
+    AuthServer-->>AuditLog: Log authorization modification
+    AuthServer->>UserAgent: Confirmation
+    UserAgent->>Customer: Authorization updated
+```
+
+**previous:**
+
 
 ```mermaid
 sequenceDiagram
@@ -181,6 +298,7 @@ sequenceDiagram
     Customer->>ConsentMgmt: Renew/modify/revoke consent
     ConsentMgmt->>AuditLog: Log consent updates
 ```
+
 
 ### Übersicht existierender Consent-Flow-Modelle
 
@@ -320,6 +438,63 @@ Der Decoupled Flow ermöglicht Multi-Device Authentication für höchste Sicherh
 - Accommodates verschiedene Customer Sophistication Levels
 - Legal Compliance durch Purpose Limitation
 - Skalierbar für verschiedene Use Cases
+
+---
+
+## Standards Compliance and Implementation References
+
+### OAuth 2.0 and OpenID Connect Standards
+
+This implementation follows established industry standards for secure authorization and authentication:
+
+**OAuth 2.0 Authorization Framework (RFC 6749)**
+- **Authorization Code Grant**: Primary flow for server-side applications
+- **Specification**: IETF RFC 6749 - The OAuth 2.0 Authorization Framework
+- **Key Features**: Redirect-based flow with authorization code exchange for access tokens
+- **Security Extensions**: PKCE (RFC 7636) for enhanced security against authorization code interception attacks
+
+**OpenID Connect Core 1.0**
+- **Authentication Layer**: Built on OAuth 2.0, adds authentication capabilities
+- **Specification**: https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
+- **ID Token**: JWT containing authentication claims about the end-user
+- **Standard Scopes**: openid (required), profile, email, address, phone
+- **Key Distinction**: Separates authentication (proving identity) from authorization (granting access)
+
+**PKCE (Proof Key for Code Exchange) - RFC 7636**
+- **Purpose**: Protects authorization code flow from interception attacks
+- **Mechanism**: Code challenge/verifier pair prevents code substitution
+- **Recommendation**: Mandatory for all clients, including confidential clients
+
+### Standards Alignment Summary
+
+| Standard | Version | Purpose | Implementation Status |
+|----------|---------|---------|----------------------|
+| OAuth 2.0 | RFC 6749 | Authorization framework | Full compliance |
+| PKCE | RFC 7636 | Code flow security | Mandatory |
+| OpenID Connect | Core 1.0 | Authentication layer | Full support |
+| FAPI 2.0 | Draft | Financial-grade security | Target implementation |
+| mTLS | RFC 8705 | Client authentication | Supported |
+| JWT | RFC 7519 | Token format | Access & ID tokens |
+
+### Architectural Implementation Notes
+
+**Authorization Server Responsibilities:**
+- User authentication (credentials validation)
+- Authorization management (scope approval)
+- Token issuance (access, refresh, ID tokens)
+- Token introspection and revocation
+- Authorization lifecycle management
+
+**Note on Consent Management:**
+Per bLink reference architecture, the Authorization Server may delegate consent storage to a specialized Consent Server while maintaining control over the authorization flow. This is an implementation detail that does not affect the OAuth 2.0 flow structure.
+
+**Security Best Practices:**
+- Always use PKCE for authorization code flow
+- Implement mTLS for confidential client authentication
+- Use short-lived access tokens with refresh token rotation
+- Validate all redirect URIs against pre-registered values
+- Implement comprehensive audit logging for all authorization events
+- Apply rate limiting to prevent abuse
 
 ---
 
@@ -515,6 +690,64 @@ graph TB
 
 ```mermaid
 sequenceDiagram
+    participant Customer as Customer (Resource Owner)
+    participant UserAgent as User Agent (Browser/App)
+    participant Client as Client App
+    participant AuthServer as Authorization Server
+    participant ResourceServer as Resource Server
+    participant AuditLog as Audit System & Compliance
+
+    Note over Customer,AuditLog: FAPI 2.0 Security Flow with PKCE + mTLS
+
+    Client->>Client: Generate PKCE code_verifier & code_challenge
+    Client->>Client: Create authorization request with security parameters
+    Note right of Client: client_id, scope, code_challenge,<br/>state, nonce, redirect_uri
+
+    Client->>UserAgent: Redirect to Authorization Server
+    UserAgent->>AuthServer: GET /authorize (authorization request)
+    AuthServer->>UserAgent: Present authentication challenge
+    UserAgent->>Customer: Display login
+    Customer->>UserAgent: Provide credentials
+    UserAgent->>AuthServer: Submit authentication
+    AuthServer->>AuthServer: Authenticate customer
+    AuthServer-->>AuditLog: Log authentication
+
+    AuthServer->>UserAgent: Present scope authorization screen
+    Note right of UserAgent: Display scopes with<br/>granular data permissions
+    UserAgent->>Customer: Show authorization request
+    Customer->>UserAgent: Authorize scopes
+    UserAgent->>AuthServer: Submit authorization
+    AuthServer-->>AuditLog: Log authorization decision
+
+    AuthServer->>UserAgent: Redirect with authorization code + state
+    UserAgent->>Client: Deliver authorization code
+
+    Note over Customer,AuditLog: Token Exchange with Enhanced Security
+    Client->>AuthServer: POST /token via mTLS
+    Note right of Client: grant_type=authorization_code<br/>code, code_verifier,<br/>client mTLS certificate
+    AuthServer->>AuthServer: Verify mTLS certificate
+    AuthServer->>AuthServer: Validate PKCE code_verifier
+    AuthServer->>AuthServer: Validate authorization code
+    AuthServer-->>AuditLog: Log token issuance
+    AuthServer->>Client: access_token + id_token (JWT) + refresh_token
+
+    Note over Customer,AuditLog: Resource Access with Financial-Grade Security
+    Client->>ResourceServer: API request with Bearer token via mTLS
+    ResourceServer->>ResourceServer: Validate mTLS client certificate
+    ResourceServer->>AuthServer: POST /introspect (validate token)
+    AuthServer->>ResourceServer: Token valid + scope information
+    ResourceServer->>ResourceServer: Apply scope-based access control
+    ResourceServer-->>AuditLog: Log resource access
+    ResourceServer->>Client: Return protected resource data (minimized per scope)
+    Client->>UserAgent: Display result
+    UserAgent->>Customer: Service delivered
+```
+
+**previous:**
+
+
+```mermaid
+sequenceDiagram
     participant Client as Client App
     participant AuthServer as Authorization Server
     participant ResourceServer as Resource Server
@@ -579,35 +812,134 @@ sequenceDiagram
 10. Optional: E-ID integration für enhanced verification
 ```
 
-#### Phase 4: Consent Management
+#### Phase 4: Authorization (Scope Approval)
 ```
-11. Authorization Server presents consent screen:
-    - Clear explanation of data access purpose
-    - Granular data category selection
-    - Duration and retention policy info
-12. Customer grants/denies specific permissions
-13. Consent recorded with audit trail
+11. Authorization Server checks for existing authorizations
+12. Authorization Server presents scope authorization screen via User Agent:
+    - Clear explanation of requested scopes and data access purpose
+    - Granular scope selection (e.g., identity:read, contact:read, kyc:basic:read)
+    - Duration and retention policy information
+13. Customer authorizes/denies requested scopes via User Agent
+14. Authorization decision recorded with audit trail
 ```
 
 #### Phase 5: Token Exchange
 ```
-14. Authorization code issued (kurze Gültigkeitsdauer)
-15. Customer redirected back to Integrator
-16. Integrator exchanges code for tokens:
-    - Access Token (kurze Gültigkeitsdauer)
-    - Refresh Token (lange Gültigkeitsdauer) 
-    - ID Token with customer claims
+15. Authorization code issued to User Agent (short expiry, single-use)
+16. User Agent delivers authorization code to Client
+17. Client exchanges authorization code for tokens via backend call:
+    - POST /token with authorization_code, code_verifier (PKCE), client credentials
+    - Backend call via mTLS for confidential clients
+    - Receives: Access Token (short-lived), Refresh Token (long-lived), ID Token (OIDC)
+18. Tokens contain authorized scopes (not raw "consent")
 ```
 
-#### Phase 6: Data Access
+#### Phase 6: Resource Access
 ```
-17. Integrator requests data from Producer API
-18. Producer validates token and consent scope
-19. Producer returns requested data (minimized)
-20. Audit event logged at all systems
+19. Client requests data from Resource Server API with Bearer access token
+20. Resource Server validates token (introspection or JWT verification) with Authorization Server
+21. Resource Server checks token scopes and applies scope-based access control
+22. Resource Server returns requested data (minimized per authorized scopes)
+23. Audit events logged at all systems (authentication, authorization, data access)
 ```
 
 **Detailed Authentication/Authorization Sequence Diagram:**
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer (Resource Owner)
+    participant UserAgent as User Agent (Browser/App)
+    participant Client as Client (Integrator)
+    participant AuthServer as Authorization Server
+    participant ResourceServer as Resource Server (Producer)
+    participant AuditLog as Audit System
+
+    Note over Customer,AuditLog: Phase 1: Service Initiation
+    Customer->>UserAgent: Request service (e.g., account opening)
+    UserAgent->>Client: Navigate to service
+    Client->>UserAgent: Explain data requirements & purpose
+    UserAgent->>Customer: Display information
+    Customer->>UserAgent: Agree to proceed with data sharing
+    UserAgent->>Client: User consent to initiate
+
+    Note over Customer,AuditLog: Phase 2: Authorization Request (PAR)
+    Client->>Client: Generate PKCE code_verifier & code_challenge
+    Client->>AuthServer: POST /par (Pushed Authorization Request)
+    Note right of AuthServer: client_id, scope, code_challenge,<br/>redirect_uri, state
+    AuthServer->>AuthServer: Validate client credentials & request
+    AuthServer-->>AuditLog: Log authorization request
+    AuthServer->>Client: Return request_uri (60s expiry)
+
+    Note over Customer,AuditLog: Phase 3: Authentication
+    Client->>UserAgent: Redirect to authorization endpoint with request_uri
+    UserAgent->>AuthServer: GET /authorize?request_uri=...
+    AuthServer->>UserAgent: Present authentication challenge
+    UserAgent->>Customer: Display login form
+    Customer->>UserAgent: Primary factor (password/PIN/biometric)
+    UserAgent->>AuthServer: Submit primary credentials
+    AuthServer->>UserAgent: Request secondary factor
+    UserAgent->>Customer: Prompt for 2FA (SMS/App/Hardware token)
+    Customer->>UserAgent: Provide secondary factor
+    UserAgent->>AuthServer: Submit secondary credentials
+    AuthServer->>AuthServer: Validate authentication factors
+    AuthServer-->>AuditLog: Log authentication event
+
+    Note over Customer,AuditLog: Phase 4: Authorization (Scope Approval)
+    AuthServer->>AuthServer: Check existing authorizations for requested scopes
+    Note right of AuthServer: May skip consent screen<br/>if previously authorized
+    AuthServer->>UserAgent: Present scope authorization screen
+    Note right of UserAgent: Display requested scopes:<br/>- identity:read (Basic identity data)<br/>- contact:read (Contact information)<br/>- kyc:basic:read (KYC attributes)<br/>with purpose & retention info
+    UserAgent->>Customer: Show authorization request
+    Customer->>UserAgent: Authorize requested scopes
+    UserAgent->>AuthServer: Submit authorization decision
+    AuthServer->>AuthServer: Generate authorization code
+    AuthServer-->>AuditLog: Log authorization decision with approved scopes
+
+    Note over Customer,AuditLog: Phase 5: Token Exchange
+    AuthServer->>UserAgent: Redirect with authorization code + state
+    UserAgent->>Client: Deliver authorization code
+    Client->>AuthServer: POST /token (via mTLS)
+    Note right of Client: grant_type=authorization_code<br/>code=..., code_verifier=...,<br/>client credentials (mTLS cert)
+    AuthServer->>AuthServer: Verify mTLS certificate
+    AuthServer->>AuthServer: Validate PKCE code_verifier
+    AuthServer->>AuthServer: Validate authorization code
+    AuthServer->>AuthServer: Generate access token with authorized scopes
+    AuthServer-->>AuditLog: Log token issuance
+    AuthServer->>Client: access_token + refresh_token + id_token (OIDC)
+
+    Note over Customer,AuditLog: Phase 6: Resource Access
+    Client->>ResourceServer: GET /customer/data (Bearer access_token)
+    ResourceServer->>AuthServer: POST /introspect (validate token)
+    AuthServer->>ResourceServer: Token valid, scope: [identity:read, contact:read, kyc:basic:read]
+    ResourceServer->>ResourceServer: Apply scope-based access control
+    ResourceServer->>ResourceServer: Minimize data per approved scopes
+    ResourceServer-->>AuditLog: Log data access with token & scope reference
+    ResourceServer->>Client: Return customer data (minimized per scope)
+
+    Client->>UserAgent: Display service result
+    UserAgent->>Customer: Service delivered with authorized data
+
+    Note over Customer,AuditLog: Ongoing Authorization Management (Requires Re-Authentication)
+    Note right of Customer: This is a separate session,<br/>not part of the main flow
+    Customer->>UserAgent: Access authorization management portal
+    UserAgent->>AuthServer: Request management UI
+    AuthServer->>UserAgent: Redirect to authentication
+    Note right of AuthServer: User must re-authenticate<br/>to manage authorizations
+    Customer->>UserAgent: Authenticate again
+    UserAgent->>AuthServer: Submit credentials
+    AuthServer->>AuthServer: Authenticate user
+    AuthServer->>UserAgent: Display authorization dashboard
+    UserAgent->>Customer: Show active authorizations
+    Customer->>UserAgent: Revoke/modify authorization
+    UserAgent->>AuthServer: POST /revoke or update authorization
+    AuthServer->>AuthServer: Revoke access tokens for modified scopes
+    AuthServer-->>AuditLog: Log authorization modification
+    AuthServer->>UserAgent: Confirmation
+    UserAgent->>Customer: Authorization updated successfully
+```
+
+**previous:**
+
 
 ```mermaid
 sequenceDiagram
@@ -729,6 +1061,50 @@ Der Sicherheits- und Consent-Flow folgt einer strukturierten Customer-Journey-Pe
 ```mermaid
 sequenceDiagram
     participant Customer as Customer
+    participant UserAgent as User Agent
+    participant BankB as Bank B (Client)
+    participant AuthServerA as Bank A Authorization Server
+    participant BankA as Bank A (Resource Server)
+
+    Note over Customer,BankA: Direct P2P OAuth 2.0 Flow
+    Customer->>UserAgent: Request account opening at Bank B
+    UserAgent->>BankB: Initiate service
+    BankB->>UserAgent: Redirect to Bank A Authorization Server
+    UserAgent->>AuthServerA: Authorization request (scopes: identity:read, kyc:read)
+
+    AuthServerA->>UserAgent: Present authentication & authorization
+    UserAgent->>Customer: Display login and scope approval
+    Customer->>UserAgent: Authenticate & authorize scopes
+    UserAgent->>AuthServerA: Submit authorization
+    AuthServerA->>UserAgent: Return authorization code
+    UserAgent->>BankB: Deliver authorization code
+
+    BankB->>AuthServerA: Exchange code for access token
+    AuthServerA->>BankB: Return access token with authorized scopes
+
+    BankB->>BankA: API call with Bearer access token
+    BankA->>AuthServerA: Validate token
+    AuthServerA->>BankA: Token valid, scopes: [identity:read, kyc:read]
+    BankA->>BankA: Apply scope-based access control
+    BankA->>BankB: Return customer data (per scopes)
+
+    BankB->>UserAgent: Display result
+    UserAgent->>Customer: Account opened with imported data
+
+    Note over Customer,BankA: Ongoing Authorization Management
+    Note right of Customer: Separate session, requires re-authentication
+    Customer->>UserAgent: Access Bank A authorization portal
+    UserAgent->>AuthServerA: Authenticate and manage authorizations
+    Customer->>UserAgent: Modify/revoke authorization
+    UserAgent->>AuthServerA: Update authorization, revoke tokens
+```
+
+**previous:**
+
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer
     participant BankA as Bank A (Producer)
     participant BankB as Bank B (Integrator)
     participant Consent as Consent Layer
@@ -751,7 +1127,54 @@ sequenceDiagram
     Customer->>Consent: Modify/revoke consent as needed
 ```
 
+
 #### Hybrid Security Model
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer
+    participant UserAgent as User Agent
+    participant BankB as Bank B (Client)
+    participant CentralAuthServer as Central Authorization Server
+    participant PolicyEngine as Policy Engine
+    participant BankA as Bank A (Resource Server)
+
+    Note over Customer,BankA: Hybrid: Central Authorization + Distributed Data
+    Customer->>UserAgent: Initiate service request at Bank B
+    UserAgent->>BankB: Request service
+    BankB->>UserAgent: Redirect to Central Authorization Server
+    UserAgent->>CentralAuthServer: Authorization request with scopes
+
+    CentralAuthServer->>UserAgent: Present authentication challenge
+    UserAgent->>Customer: Display login
+    Customer->>UserAgent: Authenticate
+    UserAgent->>CentralAuthServer: Submit credentials
+    CentralAuthServer->>CentralAuthServer: Authenticate user
+
+    CentralAuthServer->>PolicyEngine: Check governance policies for requested scopes
+    PolicyEngine->>CentralAuthServer: Validate compliance & scope permissions
+    CentralAuthServer->>UserAgent: Present scope authorization
+    UserAgent->>Customer: Display scope approval
+    Customer->>UserAgent: Authorize scopes
+    UserAgent->>CentralAuthServer: Submit authorization
+    CentralAuthServer->>UserAgent: Return authorization code
+    UserAgent->>BankB: Deliver authorization code
+
+    BankB->>CentralAuthServer: Exchange code for access token
+    CentralAuthServer->>BankB: Issue access token with authorized scopes
+
+    BankB->>BankA: API request with Bearer token
+    BankA->>CentralAuthServer: Validate token
+    CentralAuthServer->>BankA: Token valid, scopes approved
+    BankA->>BankA: Apply scope-based access control
+    BankA->>BankB: Return data within approved scopes
+
+    BankB->>UserAgent: Display result
+    UserAgent->>Customer: Service delivered
+```
+
+**previous:**
+
 
 ```mermaid
 sequenceDiagram
@@ -916,9 +1339,21 @@ Das Consent und Security Flow Framework positioniert die Open API Kundenbeziehun
 
 ---
 
-**Version:** 1.1
+**Version:** 1.2
 **Datum:** November 2025
-**Status:** Reviewed for Alpha Version 1.0
+**Status:** OAuth 2.0/OIDC Standards Compliant - Reviewed for Alpha Version 1.0
+
+**Change Log v1.2:**
+- Updated all flow diagrams to OAuth 2.0 Authorization Code Flow standards
+- Added User Agent component to properly represent browser/app mediation
+- Replaced "Consent Management" with "Authorization Server" per RFC 6749
+- Implemented consistent OAuth 2.0/OIDC terminology (scope, authorization code, access token)
+- Added Standards Compliance section with references to RFC 6749, OIDC Core 1.0, PKCE, FAPI 2.0
+- Added authoritative implementation references (Airlock IAM, bLink, Open Wealth)
+- Changed audit logging to dashed arrows (supporting activity)
+- Added preconditions section and terminology alignment table
+- Distinguished authentication from authorization phases
+- Clarified ongoing authorization management requires re-authentication
 
 ---
 
