@@ -473,12 +473,18 @@ graph TB
 - FAPI wird zunehmend mandatory in regulierten Märkten
 - OIDC ermöglicht nahtlose E-ID Integration
 
-### Experten-Verifikation Results
+### Experten-Verifikation und Autoritäre Quellen
 
 **Security Expert Consensus:**
 - **FAPI 2.0:** Recommended für neue Financial API Implementations
 - **OAuth 2.1:** Solid Foundation mit Enhanced Security über OAuth 2.0
 - **OIDC:** Essential für Identity Federation und E-ID Integration
+
+**Autoritäre Spezifikationen und Referenzen:**
+- **OpenID Connect Core 1.0:** https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
+- **OAuth 2.0 Authorization Framework:** IETF RFC 6749
+- **FAPI 2.0 Security Profile:** OpenID Foundation Specification
+- **GDPR Compliance Guidelines:** EU Data Protection Regulation
 
 **Technical Expert Input:**
 - FAPI 2.0 vereinfacht Implementation vs. FAPI 1.0 Advanced
@@ -910,9 +916,9 @@ Das Consent und Security Flow Framework positioniert die Open API Kundenbeziehun
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Final Draft für Review  
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 

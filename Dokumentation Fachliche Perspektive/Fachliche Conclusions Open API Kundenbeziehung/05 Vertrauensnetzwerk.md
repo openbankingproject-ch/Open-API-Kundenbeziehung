@@ -470,9 +470,9 @@ Das Hybrid-Vertrauensnetzwerk positioniert die Schweiz optimal für die digitale
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Final Draft für Review
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 

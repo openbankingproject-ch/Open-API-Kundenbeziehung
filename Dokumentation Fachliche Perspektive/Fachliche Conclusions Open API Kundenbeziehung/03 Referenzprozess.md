@@ -244,8 +244,6 @@ Angaben zu wirtschaftlicher Berechtigung, Steuerdomizil, US Person Status und an
 
 #### Stufe 4: Erhebung Basisdaten
 
-![Daten Onboarding](./Resources/graphics/03-referenzprozess/Daten%20Onboarding.png)
-
 **Beschreibung:** Stammdaten-Erfassung (Core Identity)
 - Name, Adresse, Kontaktdaten
 
@@ -727,9 +725,9 @@ Der Referenzprozess stellt das Herzstück der Open API Kundenbeziehung dar und b
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Final Draft für Review
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 

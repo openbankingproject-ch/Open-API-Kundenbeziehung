@@ -284,9 +284,10 @@ Diese Übersicht bietet eine strukturierte Navigation durch alle Fachlichen Conc
 
 ## Kontinuierliche Aktualisierung
 
-**Version Control:** Alle Conclusions werden gemeinsam versioniert  
-**Aktuelle Version:** 1.0 (August 2025)  
-**Nächste Review:** November 2025 (nach 3 Monaten praktischer Implementation)
+**Version Control:** Alle Conclusions werden gemeinsam versioniert
+**Aktuelle Version:** 1.1 (November 2025)
+**Status:** Reviewed for Alpha Version 1.0
+**Nächste Review:** Februar 2026 (nach 3 Monaten Feedback-Integration)
 
 **Update-Triggers:**
 - FINMA-Stellungnahmen oder neue Regulatory Guidance
@@ -311,7 +312,7 @@ Umfassende Quellensammlung für alle Conclusions verfügbar in: **[Quellen und R
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Complete Overview für alle 8 Conclusions  
-**Nächste Aktualisierung:** November 2025
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
+**Nächste Aktualisierung:** Februar 2026

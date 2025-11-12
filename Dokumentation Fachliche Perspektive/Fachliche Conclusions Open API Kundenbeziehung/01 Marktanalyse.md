@@ -214,7 +214,7 @@ Modularer Ansatz beginnend mit Identifikationsdaten, schrittweise Expansion. Opp
 
 
 #### Use Cases für Schweizer Implementation
-Basierend auf systematischer Marktanalyse und Workshop-basierter Stakeholder-Bewertung wurden 16 Use Cases identifiziert und priorisiert:
+Basierend auf systematischer Marktanalyse und Workshop-basierter Stakeholder-Bewertung wurden 9 Use Cases identifiziert und priorisiert:
 [Detaillierte Analyse siehe Conclusion Anforderungen](./02%20Anforderungen.md)
 
 **Top-prioritäre Use Cases:**
@@ -495,9 +495,9 @@ Integration Technologies → [Siehe Conclusion API Endpoint Design](./04%20API%2
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Reviewed and Approved
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 
