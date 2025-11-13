@@ -141,59 +141,59 @@ Die Security-Komponenten sind in einer hierarchischen Schicht-Architektur organi
 
 ## Consent-Flow-Architekturen
 
-### Terminology Alignment
+### Terminologie-Abstimmung
 
-The following table clarifies the mapping between OAuth 2.0/OIDC technical terms and business/GDPR terminology:
+Die folgende Tabelle verdeutlicht die Zuordnung zwischen OAuth 2.0/OIDC technischen Begriffen und Business/DSGVO-Terminologie:
 
-| OAuth 2.0 / OIDC Term | Description | GDPR / Business Term |
+| OAuth 2.0 / OIDC Begriff | Beschreibung | DSGVO / Business Begriff |
 |----------------------|-------------|---------------------|
-| Authorization Server | Issues tokens after authentication and authorization | Consent Platform |
-| Client | Application requesting access on behalf of user | Service Provider / Integrator |
-| Resource Owner | User who grants access to their data | Data Subject / Customer |
-| Resource Server | API protecting user data | Data Controller / Data Provider |
-| Scope | Technical access permissions defining API access | Data Categories |
-| Authorization | User grants access to requested scopes | Consent Granting |
-| Access Token | Credential for API access | - |
-| ID Token (OIDC) | Proof of authentication with user claims | - |
-| User Agent | Browser or mobile app mediating interactions | - |
+| Authorization Server | Stellt Tokens nach Authentifizierung und Autorisierung aus | Consent Platform |
+| Client | Anwendung, die im Namen des Benutzers Zugriff anfordert | Service Provider / Integrator |
+| Resource Owner | Benutzer, der Zugriff auf seine Daten gewährt | Betroffene Person / Kunde |
+| Resource Server | API, die Benutzerdaten schützt | Datenverantwortlicher / Data Provider |
+| Scope | Technische Zugriffsberechtigungen, die API-Zugriff definieren | Datenkategorien |
+| Authorization | Benutzer gewährt Zugriff auf angeforderte Scopes | Einwilligung |
+| Access Token | Zugangsberechtigung für API-Zugriff | - |
+| ID Token (OIDC) | Nachweis der Authentifizierung mit Benutzer-Claims | - |
+| User Agent | Browser oder Mobile App als Vermittlungsinstanz | - |
 
-**Note:** In this document, "consent" refers to user authorization per GDPR requirements, while OAuth "scope" defines technical access permissions. These concepts align but use different terminology in their respective contexts.
+**Hinweis:** In diesem Dokument bezieht sich "Consent" auf die Benutzerautorisierung gemäß DSGVO-Anforderungen, während OAuth "Scope" technische Zugriffsberechtigungen definiert. Diese Konzepte sind aufeinander abgestimmt, verwenden jedoch unterschiedliche Terminologie in ihren jeweiligen Kontexten.
 
-### Flow Preconditions
+### Flow-Voraussetzungen
 
-Before initiating the OAuth 2.0 Authorization Code Flow, the following preconditions must be met:
+Vor der Initiierung des OAuth 2.0 Authorization Code Flow müssen folgende Voraussetzungen erfüllt sein:
 
-**Client Registration:**
-- Client application registered with Authorization Server
-- Client credentials issued (client_id, client_secret or X.509 certificate)
-- Redirect URIs pre-registered and validated
-- Allowed scopes configured for the client
+**Client-Registrierung:**
+- Client-Anwendung beim Authorization Server registriert
+- Client-Credentials ausgestellt (client_id, client_secret oder X.509-Zertifikat)
+- Redirect-URIs vorregistriert und validiert
+- Erlaubte Scopes für den Client konfiguriert
 
-**User Prerequisites:**
-- User has active account with Resource Provider
-- User credentials established for authentication
-- User has verified contact information for notifications
+**Benutzervoraussetzungen:**
+- Benutzer hat aktives Konto beim Resource Provider
+- Benutzer-Credentials für Authentifizierung eingerichtet
+- Benutzer hat verifizierte Kontaktinformationen für Benachrichtigungen
 
-**Technical Configuration:**
-- TLS/mTLS certificates configured for secure communication
-- PKCE support enabled for enhanced security
-- Token endpoint authentication method configured
-- Scopes defined and documented per OpenID Connect specification
+**Technische Konfiguration:**
+- TLS/mTLS-Zertifikate für sichere Kommunikation konfiguriert
+- PKCE-Unterstützung für erhöhte Sicherheit aktiviert
+- Token-Endpoint-Authentifizierungsmethode konfiguriert
+- Scopes gemäß OpenID Connect Spezifikation definiert und dokumentiert
 
-**Infrastructure:**
-- User Agent (browser/mobile app) available for redirect-based flow
-- Network connectivity between all components
-- Audit logging infrastructure operational
+**Infrastruktur:**
+- User Agent (Browser/Mobile App) für Redirect-basierten Flow verfügbar
+- Netzwerkkonnektivität zwischen allen Komponenten
+- Audit-Logging-Infrastruktur operativ
 
-### Generic Consent Management Flow (OAuth 2.0 Based)
+### Generischer Consent Management Flow (OAuth 2.0-basiert)
 
-This flow demonstrates how customer consent is managed when sharing data between providers in the Open API Kundenbeziehung network. The implementation follows OAuth 2.0 Authorization Code Flow standards while addressing the specific requirements of customer data sharing and consent management.
+Dieser Flow demonstriert, wie Kundeneinwilligung beim Datenaustausch zwischen Providern im Open API Kundenbeziehung-Netzwerk verwaltet wird. Die Implementierung folgt OAuth 2.0 Authorization Code Flow Standards und adressiert gleichzeitig die spezifischen Anforderungen an Kundendatenaustausch und Consent Management.
 
 **Business Context:**
-- **Scenario**: Customer wants to use their existing data (held by Data Provider) with a new service (Client)
-- **Consent Requirement**: Customer must explicitly authorize which data scopes to share
-- **Technical Implementation**: OAuth 2.0 Authorization Code Flow with PKCE
-- **Compliance**: GDPR consent requirements mapped to OAuth 2.0 authorization scopes
+- **Szenario**: Kunde möchte seine bestehenden Daten (gehalten vom Data Provider) mit einem neuen Service (Client) nutzen
+- **Consent-Anforderung**: Kunde muss explizit autorisieren, welche Daten-Scopes geteilt werden
+- **Technische Implementierung**: OAuth 2.0 Authorization Code Flow mit PKCE
+- **Compliance**: DSGVO-Einwilligungsanforderungen gemappt auf OAuth 2.0 Authorization Scopes
 
 ```mermaid
 sequenceDiagram
@@ -265,9 +265,9 @@ sequenceDiagram
     UserAgent->>Customer: Consent updated
 ```
 
-### Simplified Consent Management Flow
+### Vereinfachter Consent Management Flow
 
-For a high-level overview, this simplified version shows the essential steps while maintaining OAuth 2.0 compliance. For complete implementation details, refer to the detailed flow above.
+Für einen High-Level-Überblick zeigt diese vereinfachte Version die wesentlichen Schritte unter Beibehaltung der OAuth 2.0-Konformität. Für vollständige Implementierungsdetails siehe den detaillierten Flow oben.
 
 ```mermaid
 sequenceDiagram
@@ -447,73 +447,73 @@ Der Decoupled Flow ermöglicht Multi-Device Authentication für höchste Sicherh
 2. **Secondary Layer:** Category-Based Granularity für Privacy Control  
 3. **Advanced Layer:** Field-Level Control für Power Users (optional)
 
-**Benefits:**
-- Accommodates verschiedene Customer Sophistication Levels
+**Vorteile:**
+- Berücksichtigt verschiedene Customer Sophistication Levels
 - Legal Compliance durch Purpose Limitation
 - Skalierbar für verschiedene Use Cases
 
 ---
 
-## Standards Compliance and Implementation References
+## Standards Compliance und Implementierungs-Referenzen
 
-### OAuth 2.0 and OpenID Connect Standards
+### OAuth 2.0 und OpenID Connect Standards
 
-This implementation follows established industry standards for secure authorization and authentication:
+Diese Implementierung folgt etablierten Industriestandards für sichere Autorisierung und Authentifizierung:
 
 **OAuth 2.0 Authorization Framework (RFC 6749)**
-- **Authorization Code Grant**: Primary flow for server-side applications
-- **Specification**: IETF RFC 6749 - The OAuth 2.0 Authorization Framework
-- **Key Features**: Redirect-based flow with authorization code exchange for access tokens
-- **Security Extensions**: PKCE (RFC 7636) for enhanced security against authorization code interception attacks
+- **Authorization Code Grant**: Primärer Flow für Server-seitige Anwendungen
+- **Spezifikation**: IETF RFC 6749 - The OAuth 2.0 Authorization Framework
+- **Kernfunktionen**: Redirect-basierter Flow mit Authorization Code Exchange für Access Tokens
+- **Security Extensions**: PKCE (RFC 7636) für erhöhte Sicherheit gegen Authorization Code Interception Attacks
 
 **OpenID Connect Core 1.0**
-- **Authentication Layer**: Built on OAuth 2.0, adds authentication capabilities
-- **Specification**: https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
-- **ID Token**: JWT containing authentication claims about the end-user
-- **Standard Scopes**: openid (required), profile, email, address, phone
-- **Key Distinction**: Separates authentication (proving identity) from authorization (granting access)
+- **Authentication Layer**: Aufbauend auf OAuth 2.0, fügt Authentifizierungsfähigkeiten hinzu
+- **Spezifikation**: https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth
+- **ID Token**: JWT mit Authentifizierungs-Claims über den Endbenutzer
+- **Standard Scopes**: openid (erforderlich), profile, email, address, phone
+- **Kernunterscheidung**: Trennt Authentifizierung (Identitätsnachweis) von Autorisierung (Zugriffsgenehmigung)
 
 **PKCE (Proof Key for Code Exchange) - RFC 7636**
-- **Purpose**: Protects authorization code flow from interception attacks
-- **Mechanism**: Code challenge/verifier pair prevents code substitution
-- **Recommendation**: Mandatory for all clients, including confidential clients
+- **Zweck**: Schützt Authorization Code Flow vor Interception Attacks
+- **Mechanismus**: Code Challenge/Verifier Paar verhindert Code Substitution
+- **Empfehlung**: Mandatory für alle Clients, einschließlich Confidential Clients
 
-### Standards Alignment Summary
+### Standards Alignment Zusammenfassung
 
-| Standard | Version | Purpose | Implementation Status |
+| Standard | Version | Zweck | Implementierungsstatus |
 |----------|---------|---------|----------------------|
-| OAuth 2.0 | RFC 6749 | Authorization framework | Full compliance |
-| PKCE | RFC 7636 | Code flow security | Mandatory |
-| OpenID Connect | Core 1.0 | Authentication layer | Full support |
-| FAPI 2.0 | Draft | Financial-grade security | Target implementation |
-| mTLS | RFC 8705 | Client authentication | Supported |
-| JWT | RFC 7519 | Token format | Access & ID tokens |
+| OAuth 2.0 | RFC 6749 | Authorization Framework | Vollständige Compliance |
+| PKCE | RFC 7636 | Code Flow Security | Mandatory |
+| OpenID Connect | Core 1.0 | Authentication Layer | Vollständige Unterstützung |
+| FAPI 2.0 | Draft | Financial-grade Security | Ziel-Implementierung |
+| mTLS | RFC 8705 | Client Authentication | Unterstützt |
+| JWT | RFC 7519 | Token Format | Access & ID Tokens |
 
-### Architectural Implementation Notes
+### Architektonische Implementierungshinweise
 
-**Authorization Server Responsibilities:**
-- User authentication (credentials validation)
-- Authorization management (scope approval)
-- Token issuance (access, refresh, ID tokens)
-- Token introspection and revocation
-- Authorization lifecycle management
+**Authorization Server Verantwortlichkeiten:**
+- Benutzerauthentifizierung (Credentials-Validierung)
+- Autorisierungsmanagement (Scope-Genehmigung)
+- Token-Ausstellung (Access, Refresh, ID Tokens)
+- Token-Introspection und Revocation
+- Autorisierungs-Lifecycle-Management
 
-**Note on Consent Management:**
-Per bLink reference architecture, the Authorization Server may delegate consent storage to a specialized Consent Server while maintaining control over the authorization flow. This is an implementation detail that does not affect the OAuth 2.0 flow structure.
+**Hinweis zum Consent Management:**
+Gemäß bLink-Referenzarchitektur kann der Authorization Server die Consent-Speicherung an einen spezialisierten Consent Server delegieren, während er die Kontrolle über den Authorization Flow behält. Dies ist ein Implementierungsdetail, das die OAuth 2.0 Flow-Struktur nicht beeinflusst.
 
 **Security Best Practices:**
-- Always use PKCE for authorization code flow
-- Implement mTLS for confidential client authentication
-- Use short-lived access tokens with refresh token rotation
-- Validate all redirect URIs against pre-registered values
-- Implement comprehensive audit logging for all authorization events
-- Apply rate limiting to prevent abuse
+- Immer PKCE für Authorization Code Flow verwenden
+- mTLS für Confidential Client Authentication implementieren
+- Kurzlebige Access Tokens mit Refresh Token Rotation verwenden
+- Alle Redirect URIs gegen vorregistrierte Werte validieren
+- Umfassendes Audit Logging für alle Authorization Events implementieren
+- Rate Limiting zur Missbrauchsprävention anwenden
 
 ---
 
 ## JWT-Token Architektur und Consent Claims
 
-### JWT Token Architecture & Claims
+### JWT Token Architektur & Claims
 
 ```mermaid
 graph TB
@@ -1059,10 +1059,10 @@ sequenceDiagram
 
 **Integration-Architektur:** Das Hub-and-Spoke Modell zentralisiert Security, Consent Management und API-Routing im Integrator Hub. Alle Data Producers werden über standardisierte FAPI 2.0 APIs mit mTLS angebunden, wodurch einheitliche Sicherheits- und Datenstandards gewährleistet werden.
 
-**Benefits:**
-- Consistent Security Model across all Producers
-- Simplified Integrator Development (single pattern)
-- Standardized Error Handling und Monitoring
+**Vorteile:**
+- Konsistentes Security Model über alle Producers hinweg
+- Vereinfachte Integrator-Entwicklung (einheitliches Pattern)
+- Standardisiertes Error Handling und Monitoring
 
 ### Federation Integration Pattern
 
@@ -1073,9 +1073,9 @@ sequenceDiagram
 **Federation-Mechanismus:** Der Kunde authentifiziert sich einmal in seiner Heimat-Domäne und erhält einen Cross-Domain-Token, der grenzüberschreitenden Zugriff auf Ressourcen ermöglicht.
 
 **Use Cases:**
-- Swiss Customer accessing EU Services
-- Cross-border Banking Relationships
-- Multi-jurisdictional Use Cases
+- Schweizer Kunden mit Zugriff auf EU-Services
+- Grenzüberschreitende Banking-Beziehungen
+- Multi-jurisdiktionale Use Cases
 
 ### Legacy System Integration Pattern
 
@@ -1085,10 +1085,10 @@ sequenceDiagram
 
 **Transformation-Pattern:** Das API Gateway fungiert als Protokoll-Übersetzer zwischen modernen FAPI 2.0-Standards und proprietären Legacy-Systemen.
 
-**Implementation Strategy:**
+**Implementierungsstrategie:**
 - Legacy Systems bleiben unverändert
-- API Gateway transformiert modern protocols zu legacy protocols
-- Gradual Migration Path über mehrere Jahre
+- API Gateway transformiert moderne Protokolle zu Legacy-Protokollen
+- Gradueller Migrationspfad über mehrere Jahre
 
 ### Mobile App Integration Pattern
 
@@ -1100,8 +1100,8 @@ sequenceDiagram
 
 **Security Features:**
 - App-to-App Redirect wo verfügbar
-- System Browser für enhanced Security
-- Biometric Authentication Integration
+- System Browser für erhöhte Sicherheit
+- Biometrische Authentifizierungsintegration
 - Certificate Pinning für API Calls
 
 ---
@@ -1190,16 +1190,16 @@ Das Consent und Security Flow Framework positioniert die Open API Kundenbeziehun
 **Status:** OAuth 2.0/OIDC Standards Compliant - Reviewed for Alpha Version 1.0
 
 **Change Log v1.2:**
-- Updated all flow diagrams to OAuth 2.0 Authorization Code Flow standards
-- Added User Agent component to properly represent browser/app mediation
-- Replaced "Consent Management" with "Authorization Server" per RFC 6749
-- Implemented consistent OAuth 2.0/OIDC terminology (scope, authorization code, access token)
-- Added Standards Compliance section with references to RFC 6749, OIDC Core 1.0, PKCE, FAPI 2.0
-- Added authoritative implementation references (Airlock IAM, bLink, Open Wealth)
-- Changed audit logging to dashed arrows (supporting activity)
-- Added preconditions section and terminology alignment table
-- Distinguished authentication from authorization phases
-- Clarified ongoing authorization management requires re-authentication
+- Alle Flow-Diagramme auf OAuth 2.0 Authorization Code Flow Standards aktualisiert
+- User Agent Komponente hinzugefügt, um Browser/App-Vermittlung korrekt darzustellen
+- "Consent Management" durch "Authorization Server" gemäß RFC 6749 ersetzt
+- Konsistente OAuth 2.0/OIDC-Terminologie implementiert (Scope, Authorization Code, Access Token)
+- Standards Compliance Sektion mit Referenzen zu RFC 6749, OIDC Core 1.0, PKCE, FAPI 2.0 hinzugefügt
+- Autoritative Implementierungs-Referenzen hinzugefügt (Airlock IAM, bLink, Open Wealth)
+- Audit Logging auf gestrichelte Pfeile geändert (unterstützende Aktivität)
+- Voraussetzungen-Sektion und Terminologie-Abstimmungstabelle hinzugefügt
+- Authentifizierungs- von Autorisierungsphasen unterschieden
+- Klargestellt, dass laufendes Autorisierungsmanagement Re-Authentifizierung erfordert
 
 ---
 
