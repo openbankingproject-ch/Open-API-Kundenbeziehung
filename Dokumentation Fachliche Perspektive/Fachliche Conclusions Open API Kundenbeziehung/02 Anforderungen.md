@@ -195,52 +195,11 @@ Die Entwicklung der Zielbilder erfolgte durch einen strukturierten Workshop-basi
 - **Primärer Fokus:** Zielbilder 1 & 2 aufgrund hoher kurzfristiger Umsetzbarkeit
 - **Sekundärer Fokus:** Zielbilder 3 & 4 als strategische Erweiterungsoptionen
 
-### Zielbild-Bewertung und Fokussierung
-
-**Quantitative Bewertungsmatrix:**
-
-**Machbarkeit (Kurzfristige Umsetzbarkeit):**
-- Zielbild 1: Höchste Machbarkeit - Sofort umsetzbar mit bestehender Infrastruktur
-- Zielbild 2: Hohe Machbarkeit mit moderatem API-Entwicklungsaufwand
-- Zielbild 3: Mittlere Machbarkeit, erfordert erweiterte Koordination
-- Zielbild 4: Niedrige kurzfristige Machbarkeit aufgrund hoher Komplexität
-
-**Innovationspotenzial (Strategischer Mehrwert):**
-- Zielbild 1: Moderate Innovation durch Prozessoptimierung
-- Zielbild 2: Hohe Innovation durch Service-Integration
-- Zielbild 3: Höchste Innovation durch Multi-Player-Konstellationen
-- Zielbild 4: Höchste Innovation durch Plattform-Wirtschaft
-
-**Marktrelevanz (Gegenwärtige Nachfrage):**
-- Zielbild 1: Hohe Relevanz für bestehende Geschäftsmodelle
-- Zielbild 2: Höchste Marktrelevanz durch PSD2-Compliance
-- Zielbild 3: Hohe Zukunftsrelevanz für Marktentwicklung
-- Zielbild 4: Mittlere aktuelle Relevanz, hohe strategische Bedeutung
-
-**Implementierungs-Zeitrahmen:**
-- Zielbild 1: 0-3 Monate - Sofortige Umsetzung möglich
-- Zielbild 2: 6-12 Monate - Mittelfristige Entwicklung erforderlich
-- Zielbild 3: 12-18 Monate - Langfristige strategische Entwicklung
-- Zielbild 4: 18-24+ Monate - Langfristige Transformation erforderlich
-
-**Aktuelle Marktperspektiven:**
-- Markt fokussiert sich auf Zielbild 3 (bLink als technische Plattform)
-- Internationale Tech-Konzerne verfolgen Zielbild 5 (dezentrale Ansätze), für Schweizer Markt eher ungeeignet
-- Zielbilder 1 & 2 bieten höchste kurzfristige Erfolgswahrscheinlichkeit
-
-**Projektfokussierung (nächste 3 Monate):**
-- **Primär:** Zielbilder 1 & 2 (schnelle Umsetzbarkeit)
-- **Sekundär:** Evaluation von Erweiterungen zu Zielbild 3 & 4
-
-**Unterscheidung E-ID vs. Open API Kundenbeziehung:**
-- E-ID: Identitätszentrierte Datenhaltungsansätze
-- Open API Kundenbeziehung: Service-zentrierte Integration
-
 ## Use Case Analyse und Priorisierung
 
 ### Use Case Sammlung und Bewertungsmethodologie
 
-**Sammlung:** 16+ Use Cases identifiziert (jedes Ecosystem aus dem Ecosystem Wheel vertreten)
+**Sammlung:** 9 Use Cases identifiziert (jedes Ecosystem aus dem Ecosystem Wheel vertreten)
 
 **Bewertungsmethodik:**
 - Workshop-basiertes Punkteranking-Verfahren
@@ -690,29 +649,6 @@ Implementation eines anonymen Customer-Hash-Systems zur providerübergreifenden 
 **Hash-Generierung:**
 Konzeptionell wird der sharedCustomerHash durch Normalisierung und Verknüpfung standardisierter Identitätsdaten (Vorname, Nachname, Geburtsdatum, Geburtsort, Nationalität) mit einem Sicherheits-Salt generiert und über SHA-256 gehasht.
 
-#### **Granularitäts-Level Definition**
-
-**Level 1 - Basic Identity:**
-- Name, Geburtsdatum, Nationalität
-- Basis-Kontaktinformationen
-- Primäre Adresse
-
-**Level 2 - Enhanced Identity:**
-- Level 1 + erweiterte Kontaktdaten
-- Historische Adressen
-- Zivilstand und Familienverhältnisse
-
-**Level 3 - Financial Profile:**
-- Level 2 + Beruf und Einkommen
-- Vermögensverhältnisse
-- Steuerliche Situation
-
-**Level 4 - Comprehensive Profile:**
-- Level 3 + Risk Profiling
-- Investment Experience
-- Compliance Status (PEP, Sanctions)
-
-
 ## E-ID Integration und Abgrenzung
 
 ### Konzeptionelle Unterschiede
@@ -815,9 +751,9 @@ Die Anforderungsanalyse zeigt einen klaren Weg für die erfolgreiche Implementie
 
 ---
 
-**Version:** 1.0  
-**Datum:** August 2025  
-**Status:** Final Draft für Review
+**Version:** 1.1
+**Datum:** November 2025
+**Status:** Reviewed for Alpha Version 1.0
 
 ---
 

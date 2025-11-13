@@ -435,10 +435,12 @@
 
         .flow-diagram {
             position: relative;
-            min-height: 600px;
+            min-height: 1700px;
+            height: 1700px;
             background: linear-gradient(45deg, #f8fafc 0%, #f1f5f9 100%);
             border: 2px solid var(--border);
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             margin: 15px 0;
         }
 
@@ -492,7 +494,7 @@
             top: 60px;
             left: 95px;
             right: 95px;
-            height: 500px;
+            height: 1650px;
             display: flex;
             justify-content: space-between;
             z-index: 1;
@@ -512,7 +514,7 @@
 
         .messages {
             position: absolute;
-            top: 60px;
+            top: 80px;
             left: 95px;
             right: 95px;
             height: 500px;
@@ -546,7 +548,8 @@
         }
 
         .sequence-message.completed .message-arrow.return::after {
-            border-left-color: var(--message-color, #0070C0);
+            border-right-color: var(--message-color, #0070C0);
+            border-left: none;
         }
 
         .sequence-message.in-progress .message-arrow {
@@ -555,6 +558,31 @@
 
         .sequence-message.in-progress .message-arrow::after {
             border-left-color: #F85F3D;
+        }
+
+        .sequence-message.in-progress .message-arrow.return::after {
+            border-right-color: #F85F3D;
+            border-left: none;
+        }
+
+        /* Ensure return arrow line colors match state */
+        .sequence-message.completed .message-arrow.return {
+            border-bottom-color: var(--message-color, #0070C0);
+        }
+
+        .sequence-message.in-progress .message-arrow.return {
+            border-bottom-color: #F85F3D;
+        }
+
+        /* Ensure self-message arrows remain transparent even when completed/in-progress */
+        .sequence-message.completed .message-arrow.self,
+        .sequence-message.in-progress .message-arrow.self {
+            background: transparent !important;
+        }
+
+        .sequence-message.completed .message-arrow.self::after,
+        .sequence-message.in-progress .message-arrow.self::after {
+            border-top-color: var(--primary);
         }
 
         .message-arrow {
@@ -578,27 +606,41 @@
         }
 
         .message-arrow.return {
-            background: var(--tertiary);
+            background: transparent;
+            border-style: dashed;
+            border-width: 0;
+            border-bottom: 2px dashed var(--tertiary);
+            height: 0;
         }
 
+        /* Remove the default right-pointing arrow for return arrows */
         .message-arrow.return::after {
-            border-left-color: var(--tertiary);
-            right: auto;
+            content: '';
+            position: absolute;
             left: -8px;
-            transform: rotate(180deg);
+            top: -6px;
+            right: auto;
+            width: 0;
+            height: 0;
+            border-right: 8px solid var(--tertiary);
+            border-left: none;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
         }
 
         .sequence-message.self-message {
-            width: 60px !important;
+            width: 70px !important;
         }
 
         .message-arrow.self {
-            background: none;
-            width: 40px;
-            height: 30px;
-            border-right: 2px solid #F85F3D;
-            border-bottom: 2px solid #F85F3D;
-            border-radius: 0 0 15px 0;
+            background: transparent !important;
+            width: 50px;
+            height: 40px;
+            border-left: none;
+            border-right: 3px solid var(--primary);
+            border-top: 3px solid var(--primary);
+            border-bottom: 3px solid var(--primary);
+            border-radius: 0 8px 8px 0;
             position: relative;
             margin: 0;
         }
@@ -606,42 +648,58 @@
         .message-arrow.self::after {
             content: '';
             position: absolute;
-            bottom: -6px;
-            right: -6px;
+            bottom: -8px;
+            right: -2px;
             width: 0;
             height: 0;
-            border-left: 6px solid #F85F3D;
-            border-top: 6px solid transparent;
-            border-bottom: 6px solid transparent;
+            border-top: 8px solid var(--primary);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
         }
 
         .message-text {
-            background: white;
-            padding: 4px 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 5px;
+            border: none;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--primary);
             white-space: nowrap;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 5;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .sequence-message.in-progress .message-text {
-            border: 2px solid #F85F3D;
-            background: #f3c9c1ff;
-            color: #F85F3D;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--secondary);
+            font-weight: 700;
         }
 
         .sequence-message.completed .message-text {
-            border: 2px solid var(--message-color, #0070C0);
-            background: white;
-            color: #1e293b;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--message-color, var(--tertiary));
+            font-weight: 600;
+        }
+
+        /* Position text on the left for self-message arrows */
+        .sequence-message.self-message .message-text {
+            left: auto;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-right: 10px;
+            max-width: none;
+            white-space: nowrap;
         }
 
 
@@ -970,9 +1028,10 @@
                 grid-template-columns: 1fr 1fr;
                 gap: 10px;
             }
-            
+
             .flow-diagram {
-                min-height: 500px;
+                min-height: 1600px;
+                height: 1600px;
             }
         }
         
@@ -1043,9 +1102,10 @@
             .participant-name {
                 font-size: 0.65rem;
             }
-            
+
             .flow-diagram {
-                min-height: 400px;
+                min-height: 1500px;
+                height: 1500px;
             }
             
             .data-section-title {
@@ -1181,30 +1241,30 @@
             <!-- Consent Flow Section -->
             <section class="consent-flow">
                 <h2 class="section-title">
-                    <div class="phase-display" id="currentPhaseDisplay">Phase 1: Consent Request Initiation</div>
-                    Generischer Consent Flow
+                    <div class="phase-display" id="currentPhaseDisplay">Phase 1: Consent Request & Authentication</div>
+                    Simplified Consent Management Flow (OAuth 2.0)
                 </h2>
                 <div class="flow-diagram">
                     <div class="participants" id="participants">
                         <!-- Participants will be generated by JavaScript -->
                     </div>
-                    
+
                     <div class="lifelines" id="lifelines">
                         <!-- Lifelines will be generated by JavaScript -->
                     </div>
-                    
+
                     <div class="messages" id="messages">
                         <!-- Sequence messages will be generated by JavaScript -->
                     </div>
-                    
-                    
+
+
                     <div class="granular-consent-info">
-                        <h4>Granular consent options:</h4>
+                        <h4>Requested Data Scopes:</h4>
                         <ul>
-                            <li>Basic data access</li>
-                            <li>Extended KYC data</li>
-                            <li>Purpose limitation</li>
-                            <li>Time restrictions</li>
+                            <li><strong>identity:read</strong> - Basic identity data</li>
+                            <li><strong>contact:read</strong> - Contact information</li>
+                            <li><strong>kyc:basic:read</strong> - KYC attributes</li>
+                            <li>With purpose and retention info</li>
                         </ul>
                     </div>
                 </div>
@@ -1301,183 +1361,367 @@
                 icon: '../graphics/pictograms/Kunde.png'
             },
             {
-                id: 'bank',
-                name: 'Bank/Service Provider',
+                id: 'useragent',
+                name: 'User Agent',
+                icon: '../graphics/pictograms/Bank.png' // Reusing bank icon for User Agent
+            },
+            {
+                id: 'client',
+                name: 'Client',
                 icon: '../graphics/pictograms/Bank.png'
             },
             {
-                id: 'consent',
-                name: 'Consent Management',
+                id: 'authserver',
+                name: 'Authorization Server',
                 icon: '../graphics/pictograms/Consent%20Manager.png'
             },
             {
-                id: 'data',
+                id: 'dataprovider',
                 name: 'Data Provider',
                 icon: '../graphics/pictograms/Data%20Provider.png'
             },
             {
                 id: 'audit',
-                name: 'Audit & Compliance',
+                name: 'Audit System',
                 icon: '../graphics/pictograms/Audit%20and%20Compliance.png'
             }
         ];
 
         const sequenceMessages = [
-            // Phase 1 messages
+            // Phase 1: Consent Request & Authentication
             {
                 id: 1,
                 from: 0, // Customer
-                to: 1,   // Bank
+                to: 2,   // Client
                 text: 'Initiate service request',
-                top: 20
+                top: 40
             },
             {
                 id: 2,
-                from: 1, // Bank
-                to: 2,   // ConsentMgmt
-                text: 'Check existing consents',
-                top: 45
+                from: 2, // Client
+                to: 2,   // Client (self)
+                text: 'Prepare authorization request with required scopes',
+                top: 80,
+                selfMessage: true
             },
             {
                 id: 3,
-                from: 2, // ConsentMgmt
-                to: 1,   // Bank
-                text: 'No valid consent found',
-                top: 70,
-                return: true
+                from: 2, // Client
+                to: 1,   // User Agent
+                text: 'Redirect to Authorization Server',
+                top: 120
             },
             {
                 id: 4,
-                from: 1, // Bank
-                to: 2,   // ConsentMgmt
-                text: 'Create consent request',
-                top: 95
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'GET /authorize (authorization request with scopes)',
+                top: 160
             },
             {
                 id: 5,
-                from: 2, // ConsentMgmt
-                to: 0,   // Customer
-                text: 'Present consent form',
-                top: 120
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Present authentication challenge',
+                top: 200,
+                return: true
             },
             {
                 id: 6,
                 from: 0, // Customer
-                to: 2,   // ConsentMgmt
-                text: 'Grant specific consents',
-                top: 145
+                to: 1,   // User Agent
+                text: 'Provide credentials (username/password)',
+                top: 240
             },
             {
                 id: 7,
-                from: 2, // ConsentMgmt
-                to: 2,   // ConsentMgmt (self)
-                text: 'Validate consent completeness',
-                top: 170,
-                selfMessage: true
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'Submit authentication credentials',
+                top: 280
             },
             {
                 id: 8,
-                from: 2, // ConsentMgmt
-                to: 4,   // AuditLog
-                text: 'Log consent decision',
-                top: 195
+                from: 3, // Authorization Server
+                to: 3,   // Authorization Server (self)
+                text: 'Authenticate user identity',
+                top: 320,
+                selfMessage: true
             },
             {
                 id: 9,
-                from: 2, // ConsentMgmt
-                to: 1,   // Bank
-                text: 'Consent granted with scope',
-                top: 220,
-                return: true
+                from: 3, // Authorization Server
+                to: 5,   // Audit System
+                text: 'Log authentication event',
+                top: 360,
+                audit: true
             },
+            // Phase 2: Consent Granting
             {
                 id: 10,
-                from: 1, // Bank
-                to: 3,   // DataProvider
-                text: 'Request data with consent token',
-                top: 245
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Present consent screen (data scopes)',
+                top: 400,
+                return: true
             },
             {
                 id: 11,
-                from: 3, // DataProvider
-                to: 2,   // ConsentMgmt
-                text: 'Verify consent validity',
-                top: 270
+                from: 0, // Customer
+                to: 1,   // User Agent
+                text: 'Grant consent for scopes',
+                top: 440
             },
             {
                 id: 12,
-                from: 2, // ConsentMgmt
-                to: 3,   // DataProvider
-                text: 'Consent valid for scope',
-                top: 295,
-                return: true
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'Submit consent decision',
+                top: 480
             },
             {
                 id: 13,
-                from: 3, // DataProvider
-                to: 1,   // Bank
-                text: 'Provide requested data',
-                top: 320,
-                return: true
+                from: 3, // Authorization Server
+                to: 3,   // Authorization Server (self)
+                text: 'Generate authorization code',
+                top: 520,
+                selfMessage: true
             },
             {
                 id: 14,
-                from: 3, // DataProvider
-                to: 4,   // AuditLog
-                text: 'Log data access',
-                top: 345
+                from: 3, // Authorization Server
+                to: 5,   // Audit System
+                text: 'Log authorization decision with scopes',
+                top: 560,
+                audit: true
             },
             {
                 id: 15,
-                from: 1, // Bank
-                to: 0,   // Customer
-                text: 'Service delivered',
-                top: 370,
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Return authorization code + state',
+                top: 600,
                 return: true
             },
             {
                 id: 16,
-                from: 2, // ConsentMgmt
-                to: 0,   // Customer
-                text: 'Consent expiry notification (if applicable)',
-                top: 395
+                from: 1, // User Agent
+                to: 2,   // Client
+                text: 'Deliver authorization code',
+                top: 640,
+                return: true
             },
+            // Phase 3: Token Exchange & Data Access
             {
                 id: 17,
-                from: 0, // Customer
-                to: 2,   // ConsentMgmt
-                text: 'Renew/modify/revoke consent',
-                top: 420
+                from: 2, // Client
+                to: 3,   // Authorization Server
+                text: 'POST /token (authorization code, code_verifier, client credentials)',
+                top: 680
             },
             {
                 id: 18,
-                from: 2, // ConsentMgmt
-                to: 4,   // AuditLog
-                text: 'Log consent updates',
-                top: 445
+                from: 3, // Authorization Server
+                to: 3,   // Authorization Server (self)
+                text: 'Validate authorization code and client',
+                top: 720,
+                selfMessage: true
+            },
+            {
+                id: 19,
+                from: 3, // Authorization Server
+                to: 3,   // Authorization Server (self)
+                text: 'Generate access token with authorized scopes',
+                top: 760,
+                selfMessage: true
+            },
+            {
+                id: 20,
+                from: 3, // Authorization Server
+                to: 5,   // Audit System
+                text: 'Log token issuance',
+                top: 800,
+                audit: true
+            },
+            {
+                id: 21,
+                from: 3, // Authorization Server
+                to: 2,   // Client
+                text: 'Return access_token + refresh_token + id_token (OIDC)',
+                top: 840,
+                return: true
+            },
+            {
+                id: 22,
+                from: 2, // Client
+                to: 4,   // Data Provider
+                text: 'Request data with Bearer access_token',
+                top: 880
+            },
+            {
+                id: 23,
+                from: 4, // Data Provider
+                to: 3,   // Authorization Server
+                text: 'Validate token (introspection or JWT verification)',
+                top: 920
+            },
+            {
+                id: 24,
+                from: 3, // Authorization Server
+                to: 4,   // Data Provider
+                text: 'Token valid, scope: [identity:read, contact:read, kyc:basic:read]',
+                top: 960,
+                return: true
+            },
+            {
+                id: 25,
+                from: 4, // Data Provider
+                to: 4,   // Data Provider (self)
+                text: 'Apply scope-based access control',
+                top: 1000,
+                selfMessage: true
+            },
+            {
+                id: 26,
+                from: 4, // Data Provider
+                to: 5,   // Audit System
+                text: 'Log data access with token reference',
+                top: 1040,
+                audit: true
+            },
+            {
+                id: 27,
+                from: 4, // Data Provider
+                to: 2,   // Client
+                text: 'Return customer data (minimized per scope)',
+                top: 1080,
+                return: true
+            },
+            {
+                id: 28,
+                from: 2, // Client
+                to: 0,   // Customer
+                text: 'Service delivered',
+                top: 1120,
+                return: true
+            },
+            // Phase 4: Ongoing Consent Management
+            {
+                id: 29,
+                from: 0, // Customer
+                to: 1,   // User Agent
+                text: 'Access consent management portal',
+                top: 1160
+            },
+            {
+                id: 30,
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'Request consent management UI',
+                top: 1200
+            },
+            {
+                id: 31,
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Require re-authentication',
+                top: 1240,
+                return: true
+            },
+            {
+                id: 32,
+                from: 0, // Customer
+                to: 1,   // User Agent
+                text: 'Authenticate',
+                top: 1280
+            },
+            {
+                id: 33,
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'Submit credentials',
+                top: 1320
+            },
+            {
+                id: 34,
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Display consent management dashboard',
+                top: 1360,
+                return: true
+            },
+            {
+                id: 35,
+                from: 0, // Customer
+                to: 1,   // User Agent
+                text: 'Revoke/modify consent',
+                top: 1400
+            },
+            {
+                id: 36,
+                from: 1, // User Agent
+                to: 3,   // Authorization Server
+                text: 'Update authorization (revoke consent)',
+                top: 1440
+            },
+            {
+                id: 37,
+                from: 3, // Authorization Server
+                to: 3,   // Authorization Server (self)
+                text: 'Revoke access tokens for modified scopes',
+                top: 1480,
+                selfMessage: true
+            },
+            {
+                id: 38,
+                from: 3, // Authorization Server
+                to: 5,   // Audit System
+                text: 'Log consent modification',
+                top: 1520,
+                audit: true
+            },
+            {
+                id: 39,
+                from: 3, // Authorization Server
+                to: 1,   // User Agent
+                text: 'Confirmation',
+                top: 1560,
+                return: true
+            },
+            {
+                id: 40,
+                from: 1, // User Agent
+                to: 0,   // Customer
+                text: 'Consent updated',
+                top: 1600,
+                return: true
             }
         ];
 
         const consentFlowPhases = [
             {
                 id: 1,
-                title: 'Phase 1: Consent Request Initiation',
-                description: 'Service-Anfrage und Consent-Status-Prüfung'
+                title: 'Phase 1: Consent Request & Authentication',
+                description: 'Service initiation, authorization request, and user authentication',
+                messageRange: [1, 9]
             },
             {
                 id: 2,
-                title: 'Phase 2: Consent Granting & Validation',
-                description: 'Einverständniserklärung und Scope-Definition'
+                title: 'Phase 2: Consent Granting',
+                description: 'Presenting consent screen, user authorization, and code generation',
+                messageRange: [10, 16]
             },
             {
                 id: 3,
-                title: 'Phase 3: Data Access & Usage',
-                description: 'Datenbereitstellung und Service-Auslieferung'
+                title: 'Phase 3: Token Exchange & Data Access',
+                description: 'Token issuance, data retrieval with access control, and service delivery',
+                messageRange: [17, 28]
             },
             {
                 id: 4,
                 title: 'Phase 4: Ongoing Consent Management',
-                description: 'Kontinuierliche Consent-Überwachung und Updates'
+                description: 'Consent portal access, modification, and revocation',
+                messageRange: [29, 40]
             }
         ];
 
@@ -1804,26 +2048,26 @@
 
         // Activate Consent Flow Phases - 1:1 match to official generic-consent-flow.mmd
         function activateConsentPhases(stepId) {
-            // Pure consent flow phases based on official diagram
+            // Pure consent flow phases based on updated simplified flow
             const consentFlowPhases = {
-                1: { messageRange: [1, 5], name: 'Phase 1: Consent Request Initiation' },
-                2: { messageRange: [6, 10], name: 'Phase 2: Consent Granting & Validation' },
-                3: { messageRange: [11, 15], name: 'Phase 3: Data Access & Usage' },
-                4: { messageRange: [16, 18], name: 'Phase 4: Ongoing Consent Management' }
+                1: { messageRange: [1, 9], name: 'Phase 1: Consent Request & Authentication' },
+                2: { messageRange: [10, 16], name: 'Phase 2: Consent Granting' },
+                3: { messageRange: [17, 28], name: 'Phase 3: Token Exchange & Data Access' },
+                4: { messageRange: [29, 40], name: 'Phase 4: Ongoing Consent Management' }
             };
-            
+
             // Map process steps to consent flow progression (loose coupling)
             const stepToConsentProgress = {
-                1: { maxMessage: 2, phase: 1 },   // Show first 2 messages
-                2: { maxMessage: 5, phase: 1 },   // Complete Phase 1
-                3: { maxMessage: 10, phase: 2 },  // Complete Phase 2
-                4: { maxMessage: 12, phase: 3 },  // Start Phase 3
-                5: { maxMessage: 13, phase: 3 },  // Continue Phase 3
-                6: { maxMessage: 14, phase: 3 },  // Continue Phase 3
-                7: { maxMessage: 15, phase: 3 },  // Complete Phase 3
-                8: { maxMessage: 15, phase: 3 },  // Stay at Phase 3
-                9: { maxMessage: 15, phase: 3 },  // Stay at Phase 3
-                10: { maxMessage: 18, phase: 4 } // Complete Phase 4
+                1: { maxMessage: 3, phase: 1 },   // Show first 3 messages
+                2: { maxMessage: 9, phase: 1 },   // Complete Phase 1
+                3: { maxMessage: 16, phase: 2 },  // Complete Phase 2
+                4: { maxMessage: 21, phase: 3 },  // Token exchange
+                5: { maxMessage: 24, phase: 3 },  // Token validation
+                6: { maxMessage: 26, phase: 3 },  // Data access logging
+                7: { maxMessage: 28, phase: 3 },  // Complete Phase 3
+                8: { maxMessage: 28, phase: 3 },  // Stay at Phase 3
+                9: { maxMessage: 28, phase: 3 },  // Stay at Phase 3
+                10: { maxMessage: 40, phase: 4 } // Complete Phase 4
             };
 
             // Get consent progress for current step
@@ -1965,10 +2209,10 @@
                 }
             });
             
-            // Show granular consent info when message 6 is visible (Phase 2 start)
+            // Show granular consent info when message 10 is visible (Phase 2 start)
             const granularInfo = document.querySelector('.granular-consent-info');
             if (granularInfo) {
-                if (visibleMessages.includes(6)) {
+                if (visibleMessages.includes(10)) {
                     granularInfo.classList.add('visible');
                 } else {
                     granularInfo.classList.remove('visible');
@@ -1977,20 +2221,20 @@
         }
 
         // Independent Consent Flow Control - runs separately from process steps
-        function runConsentFlow(maxMessage = 18) {
-            // Pure consent flow phases based on official diagram
+        function runConsentFlow(maxMessage = 40) {
+            // Pure consent flow phases based on updated simplified flow
             const consentFlowPhases = {
-                1: { messageRange: [1, 5], name: 'Phase 1: Consent Request Initiation' },
-                2: { messageRange: [6, 10], name: 'Phase 2: Consent Granting & Validation' },
-                3: { messageRange: [11, 15], name: 'Phase 3: Data Access & Usage' },
-                4: { messageRange: [16, 18], name: 'Phase 4: Ongoing Consent Management' }
+                1: { messageRange: [1, 9], name: 'Phase 1: Consent Request & Authentication' },
+                2: { messageRange: [10, 16], name: 'Phase 2: Consent Granting' },
+                3: { messageRange: [17, 28], name: 'Phase 3: Token Exchange & Data Access' },
+                4: { messageRange: [29, 40], name: 'Phase 4: Ongoing Consent Management' }
             };
 
             // Determine current phase based on maxMessage
             let currentPhase = 1;
-            if (maxMessage >= 16) currentPhase = 4;
-            else if (maxMessage >= 11) currentPhase = 3;
-            else if (maxMessage >= 6) currentPhase = 2;
+            if (maxMessage >= 29) currentPhase = 4;
+            else if (maxMessage >= 17) currentPhase = 3;
+            else if (maxMessage >= 10) currentPhase = 2;
 
             const currentPhaseInfo = consentFlowPhases[currentPhase];
 
@@ -2029,7 +2273,7 @@
             // Update granular consent info visibility
             const granularInfo = document.querySelector('.granular-consent-info');
             if (granularInfo) {
-                if (maxMessage >= 6) {
+                if (maxMessage >= 10) {
                     granularInfo.classList.add('visible');
                 } else {
                     granularInfo.classList.remove('visible');
@@ -2617,7 +2861,7 @@
         setTimeout(() => {
             addConsoleMessage('Interactive demo ready. Click on process steps to explore the Open API Kundenbeziehung.', 'info');
             addConsoleMessage('Navigation: Use arrow buttons or keyboard (← → for steps, Space for play/pause, Esc to reset).', 'info');
-            addConsoleMessage('Console Commands: startAutoDemo(), runConsentFlow(18) for pure consent flow.', 'info');
+            addConsoleMessage('Console Commands: startAutoDemo(), runConsentFlow(40) for pure consent flow.', 'info');
             testImagePaths();
         }, 1000);
     </script>
