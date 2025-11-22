@@ -978,6 +978,14 @@ class ProcessOrchestrator {
   }
 
   /**
+   * Register a custom process definition (for extensions)
+   */
+  registerProcess(processId, processDefinition) {
+    this.processDefinitions.set(processId, processDefinition);
+    console.log(` Registered custom process: ${processId}`);
+  }
+
+  /**
    * Register extension handler
    */
   registerExtensionHandler(extensionName, handler) {

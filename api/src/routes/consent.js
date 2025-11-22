@@ -290,10 +290,39 @@ router.delete('/:consentId', requireScope('consent:manage'), (req, res) => {
  * Customer consent approval endpoint (for simulation)
  * POST /consent/:consentId/approve
  */
-router.post('/:consentId/approve', (req, res) => {
+router.post('/:consentId/approve', async (req, res) => {
   try {
     const { consentId } = req.params;
-    const { customerApproval, restrictions } = req.body;
+    const { customerApproval = true, restrictions } = req.body;
+
+    // Try service layer first, fallback to legacy implementation
+    if (serviceManager) {
+      const consentService = serviceManager.getService('consent');
+
+      const approvalResult = await consentService.approveConsent(consentId, {
+        customerApproval,
+        restrictions,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      if (approvalResult.success) {
+        return res.json({
+          consentId,
+          status: approvalResult.status,
+          token: approvalResult.token,
+          processedAt: new Date().toISOString()
+        });
+      } else {
+        return res.status(400).json({
+          error: approvalResult.error,
+          message: approvalResult.message || 'Failed to approve consent',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Legacy implementation (fallback)
     const consent = consents.get(consentId);
 
     if (!consent) {

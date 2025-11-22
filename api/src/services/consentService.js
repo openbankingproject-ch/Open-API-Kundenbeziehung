@@ -22,11 +22,21 @@ class ConsentService {
    */
   async createConsent(consentRequest, userContext) {
     try {
+      // Map API field names to core framework field names BEFORE validation
+      const mappedRequest = {
+        customerId: consentRequest.customerId,
+        requestingParticipant: consentRequest.requestingInstitution,
+        providingParticipant: consentRequest.providingInstitution,
+        dataCategories: consentRequest.dataCategories,
+        purpose: consentRequest.purpose,
+        expiryDate: consentRequest.expiryDate
+      };
+
       // Validate request using core framework
       if (this.coreFramework) {
         const validationEngine = this.coreFramework.getComponent('validationEngine');
         if (validationEngine) {
-          const validation = await validationEngine.validate(consentRequest, 'createConsent');
+          const validation = await validationEngine.validate(mappedRequest, 'createConsent');
           if (!validation.valid) {
             return {
               success: false,
@@ -40,11 +50,11 @@ class ConsentService {
       // Create consent using core framework
       if (this.coreFramework) {
         const consentHandler = this.coreFramework.createConsentHandler();
-        
+
         // Enhance request with user context and metadata
         const enhancedRequest = {
-          ...consentRequest,
-          requestedBy: userContext.institutionId,
+          ...mappedRequest,
+          requestedBy: userContext?.institutionId || 'demo',
           ipAddress: userContext.ipAddress,
           userAgent: userContext.userAgent,
           context: {
@@ -131,6 +141,7 @@ class ConsentService {
             success: true,
             consentId: result.consentId,
             status: result.status,
+            token: result.token,
             processedAt: result.processedAt,
             dataCategories: result.dataCategories,
             permissions: result.permissions

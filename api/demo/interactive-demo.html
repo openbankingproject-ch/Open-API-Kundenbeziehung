@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBP Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .center-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .splits-container {
+            display: flex;
+            flex-direction: row;
+            height: calc(100vh - 100px);
+            gap: 10px;
+        }
+
+        .split {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .split h3 {
+            margin-bottom: 15px;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding-bottom: 10px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input, select {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-left: 3px solid #007bff;
+            background: #f8f9fa;
+        }
+
+        .log-timestamp {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .success-message {
+            padding: 20px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Page 2: Demo Scenario Selection -->
+    <div id="page2" class="page active">
+        <div class="center-page">
+            <h1>OBP Interactive Demo</h1>
+            <h2>Wählen Sie ein Demo-Szenario</h2>
+            <button onclick="selectScenario('bank')">Demo: Banküberweisung</button>
+            <button onclick="selectScenario('insurance')">Demo: Lebensversicherung</button>
+        </div>
+    </div>
+
+    <!-- Page 3: Bank A Registration -->
+    <div id="page3" class="page">
+        <div class="splits-container">
+            <div class="split" id="split1-page3">
+                <h3>Eingabe: <span id="bankALabel">Bank A</span> Registrierung</h3>
+                <form id="bankAForm">
+                    <label>Vorname:</label>
+                    <input type="text" id="firstName" required>
+
+                    <label>Nachname:</label>
+                    <input type="text" id="lastName" required>
+
+                    <label>Geburtsdatum:</label>
+                    <input type="date" id="birthDate" required>
+
+                    <label>Nationalität:</label>
+                    <input type="text" id="nationality" value="CH" required>
+
+                    <label>Straße:</label>
+                    <input type="text" id="street" required>
+
+                    <label>Hausnummer:</label>
+                    <input type="text" id="houseNumber" required>
+
+                    <label>PLZ:</label>
+                    <input type="text" id="postalCode" required>
+
+                    <label>Ort:</label>
+                    <input type="text" id="city" required>
+
+                    <label>Land:</label>
+                    <input type="text" id="country" value="CH" required>
+
+                    <label>E-Mail:</label>
+                    <input type="email" id="email" required>
+
+                    <label>Telefon:</label>
+                    <input type="tel" id="phone" required>
+
+                    <div class="button-container">
+                        <button type="button" onclick="fillExampleData()">Beispieldaten ausfüllen</button>
+                        <button type="submit">Registrieren</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="split" id="split2-page3">
+                <h3>Request & Response</h3>
+                <div id="requestResponse3"></div>
+            </div>
+
+            <div class="split" id="split3-page3">
+                <h3>Hintergrund: API-Operationen</h3>
+                <div id="backgroundLogs3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 4: Data Transfer Request -->
+    <div id="page4" class="page">
+        <div class="splits-container">
+            <div class="split" id="split1-page4">
+                <h3>Eingabe: <span id="bankBLabel">Bank B</span> Datenanfrage</h3>
+                <p>Bitte geben Sie Ihre Basisdaten ein, um Ihre Daten abzurufen:</p>
+                <form id="bankBForm">
+                    <label>Vorname:</label>
+                    <input type="text" id="firstName2" required>
+
+                    <label>Nachname:</label>
+                    <input type="text" id="lastName2" required>
+
+                    <label>Geburtsdatum:</label>
+                    <input type="date" id="birthDate2" required>
+
+                    <label>Nationalität:</label>
+                    <input type="text" id="nationality2" value="CH" required>
+
+                    <div class="button-container">
+                        <button type="submit">Daten anfordern</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="split" id="split2-page4">
+                <h3>Request & Response</h3>
+                <div id="requestResponse4"></div>
+            </div>
+
+            <div class="split" id="split3-page4">
+                <h3>Hintergrund: API-Operationen</h3>
+                <div id="backgroundLogs4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 5: Data Retrieval -->
+    <div id="page5" class="page">
+        <div class="splits-container">
+            <div class="split" id="split1-page5">
+                <h3>Status</h3>
+                <div id="retrievalStatus">
+                    <p>Daten werden abgerufen...</p>
+                </div>
+            </div>
+
+            <div class="split" id="split2-page5">
+                <h3>Request & Response</h3>
+                <div id="requestResponse5"></div>
+            </div>
+
+            <div class="split" id="split3-page5">
+                <h3>Hintergrund: API-Operationen</h3>
+                <div id="backgroundLogs5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 6: Success -->
+    <div id="page6" class="page">
+        <div class="splits-container">
+            <div class="split" id="split1-page6">
+                <h3>Erfolg!</h3>
+                <div class="success-message">
+                    <h2>Registrierung erfolgreich!</h2>
+                    <p>Ihre Daten wurden erfolgreich übertragen.</p>
+                </div>
+                <h4>Zusammenfassung:</h4>
+                <div id="summary"></div>
+                <div class="button-container">
+                    <button onclick="resetDemo()">Demo neu starten</button>
+                </div>
+            </div>
+
+            <div class="split" id="split2-page6">
+                <h3>Datenvergleich</h3>
+                <div id="dataComparison"></div>
+            </div>
+
+            <div class="split" id="split3-page6">
+                <h3>Vollständiger Ablauf</h3>
+                <div id="backgroundLogs6"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let state = {
+            dataMode: 'custom', // 'demo' or 'custom'
+            scenario: null, // 'bank' or 'insurance'
+            customerData: null,
+            sharedCustomerHash: null,
+            consentId: null,
+            consentToken: null,
+            retrievedData: null,
+            allLogs: []
+        };
+
+        // Demo user data
+        const DEMO_USER = {
+            firstName: 'Maria',
+            lastName: 'Schmidt',
+            birthDate: '1990-05-20',
+            nationality: 'CH',
+            street: 'Bahnhofstrasse',
+            houseNumber: '42',
+            postalCode: '8001',
+            city: 'Zürich',
+            country: 'CH',
+            email: 'maria.schmidt@example.ch',
+            phone: '+41791234567'
+        };
+
+        const API_BASE = 'http://localhost:3000/v1';
+
+        // Utility functions
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function addLog(message, target = null) {
+            const timestamp = new Date().toISOString();
+            const logEntry = {
+                timestamp,
+                message
+            };
+            state.allLogs.push(logEntry);
+
+            const logHtml = `
+                <div class="log-entry">
+                    <div class="log-timestamp">${timestamp}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+
+            if (target) {
+                const element = document.getElementById(target);
+                if (element) {
+                    element.innerHTML += logHtml;
+                    element.scrollTop = element.scrollHeight;
+                }
+            }
+        }
+
+        function displayRequestResponse(title, request, response, target) {
+            const html = `
+                <h4>${title}</h4>
+                <h5>Request:</h5>
+                <pre>${JSON.stringify(request, null, 2)}</pre>
+                <h5>Response:</h5>
+                <pre>${JSON.stringify(response, null, 2)}</pre>
+            `;
+            document.getElementById(target).innerHTML += html;
+        }
+
+        function generateHash(data) {
+            // Simple hash generation for demo (in production, use SHA-256)
+            const str = `${data.lastName}${data.firstName}${data.birthDate}${data.nationality}`;
+            // Generate a simple hex hash that meets API requirements (64+ chars, hex only)
+            let hash = '';
+            for (let i = 0; i < str.length; i++) {
+                hash += str.charCodeAt(i).toString(16).padStart(4, '0');
+            }
+            // Pad to at least 64 characters
+            while (hash.length < 64) {
+                hash += '0';
+            }
+            return hash.substring(0, 64);
+        }
+
+        function fillExampleData() {
+            // Fill the form with example data
+            document.getElementById('firstName').value = DEMO_USER.firstName;
+            document.getElementById('lastName').value = DEMO_USER.lastName;
+            document.getElementById('birthDate').value = DEMO_USER.birthDate;
+            document.getElementById('nationality').value = DEMO_USER.nationality;
+            document.getElementById('street').value = DEMO_USER.street;
+            document.getElementById('houseNumber').value = DEMO_USER.houseNumber;
+            document.getElementById('postalCode').value = DEMO_USER.postalCode;
+            document.getElementById('city').value = DEMO_USER.city;
+            document.getElementById('country').value = DEMO_USER.country;
+            document.getElementById('email').value = DEMO_USER.email;
+            document.getElementById('phone').value = DEMO_USER.phone;
+        }
+
+        // Proceed to page 4 function
+        function proceedToPage4() {
+            // Pre-fill Page 4 form
+            document.getElementById('firstName2').value = state.customerData.firstName;
+            document.getElementById('lastName2').value = state.customerData.lastName;
+            document.getElementById('birthDate2').value = state.customerData.birthDate;
+            document.getElementById('nationality2').value = state.customerData.nationality;
+            showPage('page4');
+        }
+
+        // Proceed to data retrieval function
+        function proceedToDataRetrieval() {
+            showPage('page5');
+            retrieveCustomerData();
+        }
+
+        // Show success page function
+        function showSuccessPage() {
+            showPage('page6');
+            displaySuccess();
+        }
+
+        // Page 2: Scenario selection
+        function selectScenario(scenario) {
+            state.scenario = scenario;
+
+            // Update labels based on scenario
+            if (scenario === 'bank') {
+                document.getElementById('bankALabel').textContent = 'Bank A';
+                document.getElementById('bankBLabel').textContent = 'Bank B';
+            } else {
+                document.getElementById('bankALabel').textContent = 'Bank A';
+                document.getElementById('bankBLabel').textContent = 'Lebensversicherung';
+            }
+
+            // Pre-fill form if demo mode
+            if (state.dataMode === 'demo') {
+                Object.keys(DEMO_USER).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = DEMO_USER[key];
+                    }
+                });
+            }
+
+            showPage('page3');
+        }
+
+        // Page 3: Bank A Registration
+        document.getElementById('bankAForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Collect form data
+            state.customerData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                birthDate: document.getElementById('birthDate').value,
+                nationality: document.getElementById('nationality').value,
+                street: document.getElementById('street').value,
+                houseNumber: document.getElementById('houseNumber').value,
+                postalCode: document.getElementById('postalCode').value,
+                city: document.getElementById('city').value,
+                country: document.getElementById('country').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value
+            };
+
+            // Generate hash
+            state.sharedCustomerHash = generateHash(state.customerData);
+
+            addLog('Generiere Kunden-Hash...', 'backgroundLogs3');
+            addLog(`Generated hash: ${state.sharedCustomerHash}`, 'backgroundLogs3');
+
+            // Prepare API request
+            const requestBody = {
+                basicData: {
+                    lastName: state.customerData.lastName,
+                    givenName: state.customerData.firstName,
+                    birthDate: state.customerData.birthDate,
+                    nationality: [state.customerData.nationality]
+                },
+                contactInformation: {
+                    emailAddresses: [{ address: state.customerData.email }],
+                    phoneNumbers: [{ number: state.customerData.phone }]
+                },
+                addressData: {
+                    postalAddresses: [{
+                        street: state.customerData.street,
+                        houseNumber: state.customerData.houseNumber,
+                        postalCode: state.customerData.postalCode,
+                        city: state.customerData.city,
+                        country: state.customerData.country
+                    }]
+                }
+            };
+
+            addLog('Sende Kundendaten an Bank A...', 'backgroundLogs3');
+
+            try {
+                const response = await fetch(`${API_BASE}/customer/${state.sharedCustomerHash}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const responseData = await response.json();
+
+                addLog(`Status: ${response.status} ${response.statusText}`, 'backgroundLogs3');
+                addLog('Kundendaten erfolgreich gespeichert', 'backgroundLogs3');
+
+                displayRequestResponse(
+                    'PUT /v1/customer/:hash',
+                    { url: `/v1/customer/${state.sharedCustomerHash}`, body: requestBody },
+                    responseData,
+                    'requestResponse3'
+                );
+
+                // Show continue button
+                document.getElementById('bankAForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>Registrierung erfolgreich!</h3>
+                        <p>Kunde wurde erfolgreich bei Bank A registriert.</p>
+                    </div>
+                    <div class="button-container">
+                        <button type="button" onclick="proceedToPage4()">Weiter zur Datenanfrage</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                addLog(`Fehler: ${error.message}`, 'backgroundLogs3');
+                alert('Fehler beim Speichern der Daten. Stellen Sie sicher, dass die API läuft.');
+            }
+        });
+
+        // Page 4: Data Transfer Request
+        document.getElementById('bankBForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const checkData = {
+                firstName: document.getElementById('firstName2').value,
+                lastName: document.getElementById('lastName2').value,
+                birthDate: document.getElementById('birthDate2').value,
+                nationality: document.getElementById('nationality2').value
+            };
+
+            addLog('Prüfe Kundenexistenz...', 'backgroundLogs4');
+
+            // Step 1: Check customer existence
+            const checkRequestBody = {
+                sharedCustomerHash: state.sharedCustomerHash,
+                basicData: {
+                    lastName: checkData.lastName,
+                    givenName: checkData.firstName,
+                    birthDate: checkData.birthDate,
+                    nationality: [checkData.nationality]
+                }
+            };
+
+            try {
+                const checkResponse = await fetch(`${API_BASE}/customer/check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(checkRequestBody)
+                });
+
+                const checkResponseData = await checkResponse.json();
+
+                addLog(`Status: ${checkResponse.status} ${checkResponse.statusText}`, 'backgroundLogs4');
+                addLog('Kunde gefunden!', 'backgroundLogs4');
+
+                displayRequestResponse(
+                    'POST /v1/customer/check',
+                    { url: '/v1/customer/check', body: checkRequestBody },
+                    checkResponseData,
+                    'requestResponse4'
+                );
+
+                // Step 2: Create consent request
+                addLog('Erstelle Einwilligungsanfrage...', 'backgroundLogs4');
+
+                const consentRequestBody = {
+                    customerId: state.sharedCustomerHash,
+                    requestingInstitution: state.scenario === 'bank' ? 'Bank B' : 'Lebensversicherung AG',
+                    dataCategories: ['basicData', 'contactInformation', 'addressData', 'identification', 'kycData'],
+                    purpose: 'accountOpening',
+                    expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+                };
+
+                const consentResponse = await fetch(`${API_BASE}/consent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(consentRequestBody)
+                });
+
+                const consentResponseData = await consentResponse.json();
+                state.consentId = consentResponseData.consentId;
+
+                addLog(`Einwilligung erstellt: ${state.consentId}`, 'backgroundLogs4');
+
+                displayRequestResponse(
+                    'POST /v1/consent',
+                    { url: '/v1/consent', body: consentRequestBody },
+                    consentResponseData,
+                    'requestResponse4'
+                );
+
+                // Step 3: Auto-approve consent
+                addLog('Auto-Genehmigung der Einwilligung...', 'backgroundLogs4');
+
+                const approveResponse = await fetch(`${API_BASE}/consent/${state.consentId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const approveResponseData = await approveResponse.json();
+                state.consentToken = approveResponseData.token;
+
+                addLog(`Einwilligung genehmigt! Token: ${state.consentToken ? state.consentToken.substring(0, 20) + '...' : 'N/A'}`, 'backgroundLogs4');
+
+                displayRequestResponse(
+                    'POST /v1/consent/:id/approve',
+                    { url: `/v1/consent/${state.consentId}/approve`, body: {} },
+                    approveResponseData,
+                    'requestResponse4'
+                );
+
+                // Show continue button
+                document.getElementById('bankBForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>Einwilligung erfolgreich!</h3>
+                        <p>Die Einwilligung wurde genehmigt und ein Token wurde erstellt.</p>
+                        <p><strong>Token:</strong> ${state.consentToken ? state.consentToken.substring(0, 40) + '...' : 'N/A'}</p>
+                    </div>
+                    <div class="button-container">
+                        <button type="button" onclick="proceedToDataRetrieval()">Weiter zum Datenabruf</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                addLog(`Fehler: ${error.message}`, 'backgroundLogs4');
+                alert('Fehler beim Abrufen der Daten. Stellen Sie sicher, dass die API läuft.');
+            }
+        });
+
+        // Page 5: Retrieve customer data
+        async function retrieveCustomerData() {
+            addLog('Verwende Einwilligungs-Token...', 'backgroundLogs5');
+            addLog('Rufe vollständige Kundendaten ab...', 'backgroundLogs5');
+
+            const dataRequestBody = {
+                sharedCustomerHash: state.sharedCustomerHash,
+                purpose: 'accountOpening',
+                consentToken: state.consentToken
+            };
+
+            try {
+                const dataResponse = await fetch(`${API_BASE}/customer/data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataRequestBody)
+                });
+
+                const dataResponseData = await dataResponse.json();
+                state.retrievedData = dataResponseData;
+
+                addLog(`Status: ${dataResponse.status} ${dataResponse.statusText}`, 'backgroundLogs5');
+                addLog('Daten erfolgreich abgerufen!', 'backgroundLogs5');
+
+                displayRequestResponse(
+                    'POST /v1/customer/data',
+                    { url: '/v1/customer/data', body: dataRequestBody },
+                    dataResponseData,
+                    'requestResponse5'
+                );
+
+                document.getElementById('retrievalStatus').innerHTML = `
+                    <div class="success-message">
+                        <h3>Daten erfolgreich abgerufen!</h3>
+                        <p>Alle Kundendaten wurden übertragen.</p>
+                    </div>
+                    <div class="button-container">
+                        <button type="button" onclick="showSuccessPage()">Zusammenfassung anzeigen</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                addLog(`Fehler: ${error.message}`, 'backgroundLogs5');
+                document.getElementById('retrievalStatus').innerHTML += `<p style="color: red;">Fehler: ${error.message}</p>`;
+            }
+        }
+
+        // Page 6: Display success
+        function displaySuccess() {
+            // Summary
+            const summaryHtml = `
+                <p><strong>Szenario:</strong> ${state.scenario === 'bank' ? 'Banküberweisung' : 'Lebensversicherung'}</p>
+                <p><strong>Kunde:</strong> ${state.customerData.firstName} ${state.customerData.lastName}</p>
+                <p><strong>Hash:</strong> ${state.sharedCustomerHash}</p>
+                <p><strong>Einwilligungs-ID:</strong> ${state.consentId}</p>
+            `;
+            document.getElementById('summary').innerHTML = summaryHtml;
+
+            // Data comparison
+            const comparisonHtml = `
+                <h4>Minimale Eingabe bei Bank B:</h4>
+                <pre>${JSON.stringify({
+                    firstName: state.customerData.firstName,
+                    lastName: state.customerData.lastName,
+                    birthDate: state.customerData.birthDate,
+                    nationality: state.customerData.nationality
+                }, null, 2)}</pre>
+
+                <h4>Erhaltene vollständige Daten:</h4>
+                <pre>${JSON.stringify(state.retrievedData, null, 2)}</pre>
+            `;
+            document.getElementById('dataComparison').innerHTML = comparisonHtml;
+
+            // Full log
+            state.allLogs.forEach(log => {
+                const logHtml = `
+                    <div class="log-entry">
+                        <div class="log-timestamp">${log.timestamp}</div>
+                        <div>${log.message}</div>
+                    </div>
+                `;
+                document.getElementById('backgroundLogs6').innerHTML += logHtml;
+            });
+        }
+
+        // Reset demo
+        function resetDemo() {
+            state = {
+                dataMode: null,
+                scenario: null,
+                customerData: null,
+                sharedCustomerHash: null,
+                consentId: null,
+                consentToken: null,
+                retrievedData: null,
+                allLogs: []
+            };
+
+            // Clear all displays
+            ['requestResponse3', 'requestResponse4', 'requestResponse5',
+             'backgroundLogs3', 'backgroundLogs4', 'backgroundLogs5', 'backgroundLogs6',
+             'summary', 'dataComparison'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.innerHTML = '';
+            });
+
+            // Reset forms
+            document.getElementById('bankAForm').reset();
+            document.getElementById('bankBForm').reset();
+
+            showPage('page2');
+        }
+    </script>
+
+</body>
+</html>

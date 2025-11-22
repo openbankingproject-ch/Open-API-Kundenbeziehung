@@ -118,6 +118,14 @@ class CoreFramework {
   }
 
   /**
+   * Register an extension with the framework
+   */
+  async registerExtension(name, extension) {
+    this.extensions.set(name, extension);
+    console.log(` Registered extension: ${name}`);
+  }
+
+  /**
    * Create universal customer data handler
    */
   createCustomerHandler(extensionName = null) {

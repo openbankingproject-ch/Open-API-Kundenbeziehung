@@ -320,13 +320,18 @@ if (!fs.existsSync(logDir)) {
 
 // Export logger and helper functions
 module.exports = {
-  // Main logger
-  ...logger,
-  
+  // Main logger methods
+  error: logger.error.bind(logger),
+  warn: logger.warn.bind(logger),
+  info: logger.info.bind(logger),
+  http: logger.http.bind(logger),
+  debug: logger.debug.bind(logger),
+  log: logger.log.bind(logger),
+
   // Specialized loggers
   securityLogger,
   auditLogger,
-  
+
   // Helper functions
   logWithContext,
   logSecurityEvent,

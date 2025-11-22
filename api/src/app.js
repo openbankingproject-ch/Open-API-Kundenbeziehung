@@ -10,14 +10,14 @@ const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/error-handler');
 const authMiddleware = require('./middleware/auth');
 const mtlsMiddleware = require('./middleware/mtls');
 const validationMiddleware = require('./middleware/validation');
 const securityMiddleware = require('./middleware/security');
 
 // Core Framework and Service Layer
-const CoreFramework = require('./core');
+const { CoreFramework } = require('./core');
 const { createServiceManager } = require('./services');
 const BankingExtension = require('./extensions/banking');
 
@@ -50,7 +50,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for demo
+      scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers for demo
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -64,7 +65,10 @@ app.use(helmet({
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['https://localhost:3000'];
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'https://localhost:3000',
+      'http://localhost:3000'  // Allow HTTP in development
+    ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -229,6 +233,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve demo files
+app.use('/demo', express.static(path.join(__dirname, '../demo')));
+
 // Health check (no authentication required)
 app.use('/health', healthRoutes);
 
@@ -250,7 +257,10 @@ app.use('/par', mtlsMiddleware, parRoutes);
 
 // API routes with authentication
 app.use('/v1/consent', authMiddleware.optional, consentRoutes);
-app.use('/v1/customer', authMiddleware.required, mtlsMiddleware, customerRoutes);
+// In development, allow optional auth for demo purposes
+const customerAuth = process.env.NODE_ENV === 'production' ? authMiddleware.required : authMiddleware.optional;
+const customerMtls = process.env.NODE_ENV === 'production' ? mtlsMiddleware : (req, res, next) => next();
+app.use('/v1/customer', customerAuth, customerMtls, customerRoutes);
 app.use('/v1/identification', authMiddleware.required, identificationRoutes);
 app.use('/v1/checks', authMiddleware.required, checksRoutes);
 app.use('/v1/signature', authMiddleware.required, signatureRoutes);

@@ -132,8 +132,8 @@ class CustomerService {
       }
 
       // Execute customer check process using core framework
-      if (this.coreFramework) {
-        const processResult = await this.coreFramework.executeProcess('customer_check', {
+      if (this.coreFramework && this.coreFramework.components?.processOrchestrator) {
+        const processResult = await this.coreFramework.components.processOrchestrator.executeProcess('customer_check', {
           sharedCustomerHash,
           basicData,
           userContext,

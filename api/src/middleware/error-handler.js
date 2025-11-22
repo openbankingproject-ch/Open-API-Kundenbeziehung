@@ -249,38 +249,6 @@ const createError = {
   internal: (message) => new APIError(message, 500, 'INTERNAL_ERROR'),
 };
 
-/**
- * Handle unhandled promise rejections
- */
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection', {
-    reason: reason?.message || reason,
-    stack: reason?.stack,
-    promise: promise.toString(),
-  });
-  
-  // Graceful shutdown in production
-  if (process.env.NODE_ENV === 'production') {
-    setTimeout(() => {
-      process.exit(1);
-    }, 1000);
-  }
-});
-
-/**
- * Handle uncaught exceptions
- */
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception', {
-    message: error.message,
-    stack: error.stack,
-    name: error.name,
-  });
-  
-  // Graceful shutdown
-  process.exit(1);
-});
-
 module.exports = {
   errorHandler,
   notFoundHandler,
