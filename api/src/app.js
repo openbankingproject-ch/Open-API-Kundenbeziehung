@@ -45,21 +45,30 @@ let serviceManager = null;
 let bankingExtension = null;
 
 // Security middleware
+// In development, we need to allow HTTP (not HTTPS) for localhost testing
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  styleSrc: ["'self'", "'unsafe-inline'"],
+  scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for demo
+  scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers for demo
+  imgSrc: ["'self'", "data:", "https:"],
+};
+
+// Disable HTTPS upgrade in development mode (allow HTTP for localhost)
+if (process.env.NODE_ENV === 'development') {
+  cspDirectives.upgradeInsecureRequests = null;
+}
+
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for demo
-      scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers for demo
-      imgSrc: ["'self'", "data:", "https:"],
-    },
+    directives: cspDirectives,
   },
-  hsts: {
+  // Disable HSTS in development mode (only use HTTPS in production)
+  hsts: process.env.NODE_ENV === 'production' ? {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
-  }
+  } : false
 }));
 
 // CORS configuration

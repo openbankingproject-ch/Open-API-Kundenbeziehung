@@ -372,6 +372,7 @@ router.post('/:consentId/approve', async (req, res) => {
     res.json({
       consentId,
       status: consent.status,
+      token: `consent:${consentId}`,
       processedAt: new Date().toISOString()
     });
 

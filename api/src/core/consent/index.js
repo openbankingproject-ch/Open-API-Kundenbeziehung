@@ -285,6 +285,7 @@ class ConsentEngine {
     return {
       consentId,
       status: consent.status,
+      token: this.generateConsentToken(consentId),
       processedAt: new Date().toISOString(),
       dataCategories: consent.dataCategories,
       permissions: consent.permissions

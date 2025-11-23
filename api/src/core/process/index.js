@@ -730,12 +730,70 @@ class ProcessOrchestrator {
   }
 
   async handleCustomerLookup(inputs, context) {
-    // This would typically query the customer database
     console.log('Looking up customer:', inputs.sharedCustomerHash);
+
+    // Access customer service from context inputs
+    const customerService = context.inputs.customerService;
+    if (!customerService) {
+      console.warn('Customer service not available in context, using legacy stub');
+      return {
+        customerExists: true,
+        identificationDate: '2024-01-10T10:00:00Z',
+        levelOfAssurance: 'high'
+      };
+    }
+
+    // Query the actual customer database
+    const customer = customerService.customers.get(inputs.sharedCustomerHash);
+
+    if (!customer) {
+      console.log('Customer not found:', inputs.sharedCustomerHash);
+      return {
+        customerExists: false
+      };
+    }
+
+    // Verify basic data matches
+    const basicData = inputs.basicData;
+
+    // Debug: Log the data structures being compared
+    console.log('Comparing data for:', inputs.sharedCustomerHash);
+    console.log('Stored customer.basicData:', JSON.stringify(customer.basicData));
+    console.log('Incoming basicData:', JSON.stringify(basicData));
+
+    // Normalize dates for comparison (handle both Date objects and ISO strings)
+    const normalizeDate = (date) => {
+      if (date instanceof Date) {
+        return date.toISOString();
+      }
+      if (typeof date === 'string') {
+        return new Date(date).toISOString();
+      }
+      return date;
+    };
+
+    const dataMatches =
+      customer.basicData.lastName === basicData.lastName &&
+      customer.basicData.givenName === basicData.givenName &&
+      normalizeDate(customer.basicData.birthDate) === normalizeDate(basicData.birthDate) &&
+      JSON.stringify(customer.basicData.nationality.sort()) === JSON.stringify(basicData.nationality.sort());
+
+    if (!dataMatches) {
+      console.log('Customer data mismatch:', inputs.sharedCustomerHash);
+      console.log('  lastName match:', customer.basicData.lastName === basicData.lastName, `"${customer.basicData.lastName}" vs "${basicData.lastName}"`);
+      console.log('  givenName match:', customer.basicData.givenName === basicData.givenName, `"${customer.basicData.givenName}" vs "${basicData.givenName}"`);
+      console.log('  birthDate match:', customer.basicData.birthDate === basicData.birthDate, `"${customer.basicData.birthDate}" vs "${basicData.birthDate}"`);
+      console.log('  nationality match:', JSON.stringify(customer.basicData.nationality?.sort()) === JSON.stringify(basicData.nationality?.sort()));
+      return {
+        customerExists: false
+      };
+    }
+
+    console.log('Customer found and verified:', inputs.sharedCustomerHash);
     return {
       customerExists: true,
-      identificationDate: '2024-01-10T10:00:00Z',
-      levelOfAssurance: 'high'
+      identificationDate: customer.identification.verificationDate,
+      levelOfAssurance: customer.identification.levelOfAssurance
     };
   }
 

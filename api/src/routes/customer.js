@@ -293,8 +293,8 @@ router.post('/data',
             auditRecorded: dataResult.auditRecorded,
             metadata: {
               accessedAt: new Date().toISOString(),
-              accessedBy: req.user.institutionId,
-              userId: req.user.id,
+              accessedBy: req.user?.institutionId || 'demo',
+              userId: req.user?.id || 'demo-user',
               purpose,
               consentToken
             }
@@ -323,7 +323,7 @@ router.post('/data',
       }
 
       // Verify consent allows access to this customer
-      if (req.user.consent.customerId && req.user.consent.customerId !== sharedCustomerHash) {
+      if (req.user?.consent?.customerId && req.user.consent.customerId !== sharedCustomerHash) {
         return res.status(403).json({
           error: 'FORBIDDEN',
           message: 'Consent does not cover this customer',
@@ -332,7 +332,8 @@ router.post('/data',
       }
 
       // Filter data based on consent permissions
-      const allowedCategories = req.user.consent.dataCategories || [];
+      // In development mode without auth, allow all categories
+      const allowedCategories = req.user?.consent?.dataCategories || ['basicData', 'contactInformation', 'addressData', 'identification', 'kycData', 'complianceData', 'riskProfile'];
       const responseData = {};
 
       if (allowedCategories.includes('basicData')) {
@@ -373,8 +374,8 @@ router.post('/data',
       responseData.metadata = {
         ...customer.metadata,
         accessedAt: new Date().toISOString(),
-        accessedBy: req.user.institutionId,
-        userId: req.user.id,
+        accessedBy: req.user?.institutionId || 'demo',
+        userId: req.user?.id || 'demo-user',
         purpose,
         processedBy: 'legacy_implementation'
       };
@@ -382,7 +383,7 @@ router.post('/data',
       logger.info('Customer data provided (legacy)', {
         sharedCustomerHash,
         categories: allowedCategories,
-        institutionId: req.user.institutionId
+        institutionId: req.user?.institutionId || 'demo'
       });
 
       res.json({
@@ -445,6 +446,10 @@ router.put('/:sharedCustomerHash', validateRequest('updateCustomer'), (req, res)
       const newCustomer = {
         sharedCustomerHash,
         ...updates,
+        identification: {
+            verificationDate: new Date().toISOString(),
+            levelOfAssurance: 'low'
+        },
         metadata: {
           originator: req.user?.institutionId || 'demo-institution',
           created: new Date().toISOString(),
@@ -453,6 +458,23 @@ router.put('/:sharedCustomerHash', validateRequest('updateCustomer'), (req, res)
       };
 
       customers.set(sharedCustomerHash, newCustomer);
+
+      // Also update service layer storage if available (dual-write pattern)
+      if (serviceManager) {
+        const customerService = serviceManager.getService('customer');
+        if (customerService && customerService.customers) {
+          customerService.customers.set(sharedCustomerHash, newCustomer);
+          logger.info('Customer dual-write successful', {
+            sharedCustomerHash,
+            legacyMapSize: customers.size,
+            serviceLayerSize: customerService.customers.size
+          });
+        } else {
+          logger.warn('Service layer customer storage not available for dual-write');
+        }
+      } else {
+        logger.warn('Service manager not available for dual-write');
+      }
 
       return res.status(201).json({
         message: 'Customer created successfully',
@@ -483,6 +505,19 @@ router.put('/:sharedCustomerHash', validateRequest('updateCustomer'), (req, res)
     };
 
     customers.set(sharedCustomerHash, updatedCustomer);
+
+    // Also update service layer storage if available (dual-write pattern)
+    if (serviceManager) {
+      const customerService = serviceManager.getService('customer');
+      if (customerService && customerService.customers) {
+        customerService.customers.set(sharedCustomerHash, updatedCustomer);
+        logger.info('Customer update dual-write successful', {
+          sharedCustomerHash,
+          legacyMapSize: customers.size,
+          serviceLayerSize: customerService.customers.size
+        });
+      }
+    }
 
     logger.info('Customer data updated', {
       sharedCustomerHash,

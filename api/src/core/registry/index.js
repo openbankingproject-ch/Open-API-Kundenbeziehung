@@ -51,7 +51,7 @@ class ParticipantRegistry {
       type: 'system',
       industry: 'infrastructure',
       ecosystem: 'universal',
-      
+
       capabilities: {
         dataProvider: false,
         dataConsumer: false,
@@ -60,26 +60,35 @@ class ParticipantRegistry {
         processOrchestrator: true,
         registry: true
       },
-      
+
       endpoints: {
         baseUrl: process.env.API_BASE_URL || 'https://api.openbanking.ch',
         healthCheck: '/health',
         consent: '/v1/consent',
         registry: '/v1/registry'
       },
-      
+
       trustLevel: 'system',
       status: 'active',
       registeredAt: new Date().toISOString(),
       lastSeen: new Date().toISOString(),
-      
+
+      stats: {
+        totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        avgResponseTime: 0,
+        uptime: 100,
+        lastRequestAt: null
+      },
+
       metadata: {
         version: '1.0.0',
         maintainer: 'Open Banking Project',
         compliance: ['FAPI2.0', 'GDPR', 'DSG']
       }
     };
-    
+
     this.participants.set(systemParticipant.participantId, systemParticipant);
   }
 
@@ -515,15 +524,27 @@ class ParticipantRegistry {
   async performHealthChecks() {
     const activeParticipants = Array.from(this.participants.values())
       .filter(p => p.status === 'active' && p.endpoints?.healthCheck);
-    
+
     for (const participant of activeParticipants) {
       try {
+        // Ensure stats object exists
+        if (!participant.stats) {
+          participant.stats = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            avgResponseTime: 0,
+            uptime: 100,
+            lastRequestAt: null
+          };
+        }
+
         // TODO: Implement actual health check HTTP request
         // const healthStatus = await this.checkParticipantHealth(participant);
-        
+
         // For now, simulate health check
         const isHealthy = Math.random() > 0.1; // 90% healthy
-        
+
         if (isHealthy) {
           participant.lastSeen = new Date().toISOString();
           participant.stats.uptime = Math.min(participant.stats.uptime + 1, 100);
@@ -533,17 +554,28 @@ class ParticipantRegistry {
             participant.status = 'degraded';
           }
         }
-        
+
         // Update trust score
         participant.trustScore = this.calculateTrustScore(participant);
-        
+
       } catch (error) {
         console.warn(`Health check failed for ${participant.participantId}:`, error.message);
+        // Ensure stats exists before accessing
+        if (!participant.stats) {
+          participant.stats = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            avgResponseTime: 0,
+            uptime: 0,
+            lastRequestAt: null
+          };
+        }
         participant.stats.uptime = Math.max(participant.stats.uptime - 10, 0);
       }
     }
-    
-    const degradedCount = activeParticipants.filter(p => p.stats.uptime < 80).length;
+
+    const degradedCount = activeParticipants.filter(p => p.stats?.uptime < 80).length;
     if (degradedCount > 0) {
       console.log(` ${degradedCount} participants have degraded health`);
     }

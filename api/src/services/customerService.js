@@ -137,16 +137,18 @@ class CustomerService {
           sharedCustomerHash,
           basicData,
           userContext,
-          coreComponents: this.coreFramework.components
+          coreComponents: this.coreFramework.components,
+          customerService: this  // Pass customer service for actual database lookup
         });
 
         if (processResult.success) {
+          const formattedResponse = processResult.result.step_3_response_formatting?.outputs?.formattedResponse;
           return {
             success: true,
-            match: processResult.result.step_3_response_formatting?.formattedResponse?.match || false,
-            identificationDate: processResult.result.step_3_response_formatting?.formattedResponse?.identificationDate,
-            levelOfAssurance: processResult.result.step_3_response_formatting?.formattedResponse?.levelOfAssurance,
-            validUntil: processResult.result.step_3_response_formatting?.formattedResponse?.validUntil,
+            match: formattedResponse?.match || false,
+            identificationDate: formattedResponse?.identificationDate,
+            levelOfAssurance: formattedResponse?.levelOfAssurance,
+            validUntil: formattedResponse?.validUntil,
             processInstance: processResult.processInstance
           };
         }
@@ -239,7 +241,7 @@ class CustomerService {
           }
 
           // Execute data request process
-          const processResult = await this.coreFramework.executeProcess('customer_data_request', {
+          const processResult = await this.coreFramework.components.processOrchestrator.executeProcess('customer_data_request', {
             customerId: sharedCustomerHash,
             purpose,
             consentToken,
