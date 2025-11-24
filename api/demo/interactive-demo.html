@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>OBP Interactive Demo - 13-Step Process</title>
+        <title>Open Banking Platform - Interactive Demo</title>
         <style>
             * {
                 margin: 0;
@@ -12,8 +12,30 @@
             }
 
             body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #f9fafb 0%, #e8eef5 100%);
+                background-image: url('./graphics/background/background-graphic-standard.jpg');
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
+                color: #1e293b;
+                min-height: 100vh;
+            }
+
+            .header-logo {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 10px 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(37, 49, 101, 0.1);
+            }
+
+            .header-logo img {
+                height: 40px;
+                width: auto;
             }
 
             .page {
@@ -25,17 +47,39 @@
             }
 
             .center-page {
-                max-width: 800px;
+                max-width: 900px;
                 margin: 0 auto;
-                padding: 40px;
+                padding: 60px 40px 40px 40px;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(37, 49, 101, 0.15);
+                margin-top: 80px;
             }
 
             h1 {
                 margin-bottom: 30px;
+                color: #253165;
+                font-size: 32px;
+                font-weight: 600;
             }
 
             h2 {
                 margin-bottom: 20px;
+                color: #253165;
+                font-size: 24px;
+                font-weight: 600;
+            }
+
+            h3 {
+                color: #253165;
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+            h4 {
+                color: #3b4b96;
+                font-size: 16px;
+                font-weight: 600;
             }
 
             button {
@@ -43,68 +87,80 @@
                 margin: 10px;
                 font-size: 16px;
                 cursor: pointer;
-                background: #007bff;
+                background: linear-gradient(135deg, #253165 0%, #3b4b96 100%);
                 color: white;
                 border: none;
-                border-radius: 4px;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(37, 49, 101, 0.2);
             }
 
             button:hover {
-                background: #0056b3;
+                background: linear-gradient(135deg, #3b4b96 0%, #5168cc 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(37, 49, 101, 0.3);
             }
 
             button.secondary {
-                background: #6c757d;
+                background: linear-gradient(135deg, #F85F3D 0%, #f3765a 100%);
             }
 
             button.secondary:hover {
-                background: #5a6268;
+                background: linear-gradient(135deg, #f3765a 0%, #FA9F8A 100%);
             }
 
             .splits-container {
                 display: flex;
                 flex-direction: row;
-                height: calc(100vh - 100px);
-                gap: 10px;
+                height: calc(100vh - 120px);
+                gap: 15px;
+                padding: 20px;
+                margin-top: 80px;
             }
 
             .split {
                 flex: 1;
-                border: 1px solid #ccc;
-                padding: 15px;
+                border: none;
+                padding: 20px;
                 overflow-y: auto;
-                background: white;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(37, 49, 101, 0.1);
             }
 
             .split h3 {
                 margin-bottom: 15px;
                 position: sticky;
                 top: 0;
-                background: white;
+                background: rgba(255, 255, 255, 0.98);
                 padding-bottom: 10px;
                 z-index: 10;
+                color: #253165;
+                border-bottom: 2px solid #E5CAFF;
             }
 
             .progress-bar {
-                background: #f0f0f0;
-                height: 30px;
-                border-radius: 15px;
+                background: #e8eef5;
+                height: 35px;
+                border-radius: 20px;
                 margin-bottom: 20px;
                 overflow: hidden;
                 position: sticky;
                 top: 0;
                 z-index: 100;
+                border: 2px solid #E5CAFF;
             }
 
             .progress-fill {
                 height: 100%;
-                background: linear-gradient(90deg, #28a745, #20c997);
+                background: linear-gradient(90deg, #4cb867 0%, #7fb88d 100%);
                 transition: width 0.3s;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: white;
-                font-weight: bold;
+                font-weight: 600;
             }
 
             form {
@@ -121,38 +177,52 @@
             input,
             select,
             textarea {
-                padding: 8px;
+                padding: 10px;
                 font-size: 14px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
+                border: 2px solid #E5CAFF;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #1e293b;
+                transition: border-color 0.3s;
+            }
+
+            input:focus,
+            select:focus,
+            textarea:focus {
+                outline: none;
+                border-color: #5168cc;
+                box-shadow: 0 0 0 3px rgba(81, 104, 204, 0.1);
             }
 
             textarea {
                 min-height: 80px;
-                font-family: Arial, sans-serif;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
             pre {
-                background: #f5f5f5;
-                padding: 10px;
+                background: #1e293b;
+                color: #f9fafb;
+                padding: 15px;
                 overflow-x: auto;
                 font-size: 12px;
                 white-space: pre-wrap;
                 word-wrap: break-word;
-                border-radius: 4px;
-                border: 1px solid #ddd;
+                border-radius: 8px;
+                border: none;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             }
 
             .log-entry {
                 margin-bottom: 10px;
-                padding: 8px;
-                border-left: 3px solid #007bff;
-                background: #f8f9fa;
+                padding: 10px;
+                border-left: 4px solid #0070C0;
+                background: #f9fafb;
+                border-radius: 4px;
             }
 
             .log-timestamp {
                 font-size: 11px;
-                color: #666;
+                color: #6b7280;
             }
 
             .button-container {
@@ -163,26 +233,39 @@
 
             .success-message {
                 padding: 20px;
-                background: #d4edda;
-                border: 1px solid #c3e6cb;
-                border-radius: 4px;
+                background: linear-gradient(135deg, rgba(76, 184, 103, 0.1) 0%, rgba(127, 184, 141, 0.1) 100%);
+                border: 2px solid #4cb867;
+                border-radius: 12px;
                 margin-bottom: 20px;
+                color: #1e293b;
+            }
+
+            .success-message h3 {
+                color: #4cb867;
+                margin-bottom: 10px;
             }
 
             .info-message {
                 padding: 15px;
-                background: #d1ecf1;
-                border: 1px solid #bee5eb;
-                border-radius: 4px;
+                background: linear-gradient(135deg, rgba(180, 105, 255, 0.1) 0%, rgba(204, 162, 247, 0.1) 100%);
+                border: 2px solid #B469FF;
+                border-radius: 12px;
                 margin-bottom: 20px;
+                color: #1e293b;
+            }
+
+            .info-message h4 {
+                color: #B469FF;
+                margin-bottom: 8px;
             }
 
             .warning-message {
                 padding: 15px;
-                background: #fff3cd;
-                border: 1px solid #ffeaa7;
-                border-radius: 4px;
+                background: linear-gradient(135deg, rgba(255, 192, 0, 0.1) 0%, rgba(236, 208, 124, 0.1) 100%);
+                border: 2px solid #FFC000;
+                border-radius: 12px;
                 margin-bottom: 20px;
+                color: #1e293b;
             }
 
             .sequence-diagram {
@@ -339,9 +422,53 @@
                 background: #f8d7da;
                 border: 1px solid #f5c6cb;
             }
+
+            /* Scenario Cards */
+            .scenario-card {
+                display: inline-block;
+                padding: 30px 40px;
+                margin: 15px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 3px solid #E5CAFF;
+                border-radius: 16px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                min-width: 300px;
+                box-shadow: 0 4px 16px rgba(37, 49, 101, 0.1);
+            }
+
+            .scenario-card:hover {
+                border-color: #5168cc;
+                transform: translateY(-5px);
+                box-shadow: 0 8px 24px rgba(37, 49, 101, 0.2);
+            }
+
+            .scenario-card h3 {
+                margin-bottom: 10px;
+                font-size: 22px;
+            }
+
+            .scenario-card p {
+                color: #6b7280;
+                font-size: 14px;
+            }
+
+            /* Step Icons */
+            .step-icon {
+                width: 24px;
+                height: 24px;
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 8px;
+            }
         </style>
     </head>
     <body>
+        <!-- Logo Header -->
+        <div class="header-logo">
+            <img src="./graphics/logos/klein_logo_obp_hoch.png" alt="Open Banking Platform Logo">
+        </div>
+
         <!-- Progress Bar (shown on all pages except start pages) -->
         <div id="progressBar" style="display: none;">
             <div class="progress-bar">
@@ -354,16 +481,16 @@
         <!-- Page 1: Welcome -->
         <div id="pageWelcome" class="page active">
             <div class="center-page">
-                <h1>OBP Interactive Demo - 13-Step OAuth Process</h1>
+                <h1>🚀 Open Banking Platform - Interactive Demo</h1>
                 <div class="info-message">
                     <h3>Welcome to the Interactive Demo</h3>
-                    <p>This demo showcases the complete 13-step customer onboarding process with OAuth 2.0 integration:</p>
+                    <p>Experience the complete 13-step customer onboarding process with OAuth 2.1 & FAPI 2.0 security:</p>
                     <ul>
                         <li><strong>Steps 1-2:</strong> Pre-authorization (Initialization & Product Selection)</li>
-                        <li><strong>Steps 2a-2c:</strong> OAuth Flow (Authentication → Consent → Token)</li>
-                        <li><strong>Steps 3-10:</strong> Resource Access (All data collection with Bearer token)</li>
+                        <li><strong>Steps 2a-2c:</strong> OAuth Flow (Authentication → Consent → Token Exchange)</li>
+                        <li><strong>Steps 3-10:</strong> Secure Data Access (All operations with Bearer token)</li>
                     </ul>
-                    <p style="margin-top: 15px;">You'll see how a customer opens an account at Bank B while securely sharing their existing data from Bank A using OAuth 2.0.</p>
+                    <p style="margin-top: 15px;">See how customers can seamlessly share their data across institutions using industry-standard OAuth 2.1 with Swiss banking-grade security.</p>
                 </div>
                 <button onclick="showPage('pageScenario')">Start Demo</button>
             </div>
@@ -373,15 +500,21 @@
         <div id="pageScenario" class="page">
             <div class="center-page">
                 <h1>Select Demo Scenario</h1>
-                <h2>Choose the type of institution</h2>
-                <button onclick="selectScenario('bank')">
-                    Bank Transfer Scenario<br>
-                    <small style="font-size: 12px;">Opening account at Bank B using data from Bank A</small>
-                </button>
-                <button onclick="selectScenario('insurance')">
-                    Insurance Scenario<br>
-                    <small style="font-size: 12px;">Applying for insurance using bank data</small>
-                </button>
+                <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">Choose the type of institution to simulate the onboarding process</p>
+                <div style="text-align: center;">
+                    <div class="scenario-card" onclick="selectScenario('bank')">
+                        <img src="./graphics/pictograms/Bank.png" class="step-icon" style="width: 48px; height: 48px; margin-bottom: 15px;">
+                        <h3>Bank Onboarding</h3>
+                        <p>Opening account at Bank B using data from Bank A</p>
+                        <p style="margin-top: 10px; color: #3b4b96; font-weight: 600;">Products: Checking, Savings, Investment</p>
+                    </div>
+                    <div class="scenario-card" onclick="selectScenario('insurance')">
+                        <img src="./graphics/pictograms/Kunde.png" class="step-icon" style="width: 48px; height: 48px; margin-bottom: 15px;">
+                        <h3>Life Insurance</h3>
+                        <p>Applying for life insurance using bank data</p>
+                        <p style="margin-top: 10px; color: #3b4b96; font-weight: 600;">Product: Life Insurance Policy</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -389,7 +522,7 @@
         <div id="pageSetup" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Setup: <span id="sourceLabel">Bank A</span> Customer Data</h3>
+                    <h3><img src="./graphics/pictograms/Data Provider.png" class="step-icon">Setup: <span id="sourceLabel">Bank A</span> Customer Data</h3>
                     <div class="info-message">
                         <p>First, we need to simulate that you already have an account at <span id="sourceLabel2">Bank A</span>.</p>
                         <p>This is background setup - the main 13-step process will start after this.</p>
@@ -451,7 +584,7 @@
         <div id="pageStep1" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 1: Initialization <span class="data-block-indicator">Setup Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Initialisierung.png" class="step-icon">Step 1: Initialization <span class="data-block-indicator">Setup Block</span></h3>
                     <div class="info-message">
                         <h4>Process Initialization</h4>
                         <p>Starting the customer onboarding process at <span id="targetLabel1">Bank B</span>.</p>
@@ -490,7 +623,7 @@
         <div id="pageStep2" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 2: Product Selection <span class="data-block-indicator">Setup Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Produktauswahl.png" class="step-icon">Step 2: Product Selection <span class="data-block-indicator">Setup Block</span></h3>
                     <div class="info-message">
                         <h4>Product Selection</h4>
                         <p>Select the products you want to apply for. This determines which data scopes will be required.</p>
@@ -557,7 +690,7 @@
         <div id="pageStep2a" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 2a: Authentication <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <h3><img src="./graphics/pictograms/Consent Manager.png" class="step-icon">Step 2a: Authentication <span class="data-block-indicator">OAuth Flow</span></h3>
                     <div class="info-message">
                         <h4>Customer Authentication</h4>
                         <p>Authenticate yourself at <span id="sourceLabel3">Bank A</span> to access your data.</p>
@@ -609,7 +742,7 @@
         <div id="pageStep2b" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 2b: Consent Granting <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <h3><img src="./graphics/pictograms/Consent Manager.png" class="step-icon">Step 2b: Consent Granting <span class="data-block-indicator">OAuth Flow</span></h3>
                     <div class="info-message">
                         <h4>Data Sharing Authorization</h4>
                         <p><span id="targetLabel2">Bank B</span> is requesting access to your data at <span id="sourceLabel4">Bank A</span>.</p>
@@ -652,7 +785,7 @@
         <div id="pageStep2c" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 2c: Authorization Code Exchange <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <h3><img src="./graphics/pictograms/Consent Manager.png" class="step-icon">Step 2c: Authorization Code Exchange <span class="data-block-indicator">OAuth Flow</span></h3>
                     <div class="info-message">
                         <h4>Access Token Issuance</h4>
                         <p>Exchanging authorization code for access token...</p>
@@ -678,7 +811,7 @@
         <div id="pageStep3" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 3: Self-Declaration <span class="data-block-indicator">Collection Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Selbstdeklaration.png" class="step-icon">Step 3: Self-Declaration <span class="data-block-indicator">Collection Block</span></h3>
                     <div class="info-message">
                         <h4>Regulatory Self-Declaration</h4>
                         <p>Please provide required regulatory information.</p>
@@ -746,7 +879,7 @@
         <div id="pageStep4" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 4: Basic Data Collection <span class="data-block-indicator">Collection Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Basisdaten.png" class="step-icon">Step 4: Basic Data Collection <span class="data-block-indicator">Collection Block</span></h3>
                     <div class="success-message">
                         <h4>Retrieving Your Data</h4>
                         <p>We're now accessing your existing data from <span id="sourceLabel5">Bank A</span> using the authorized token.</p>
@@ -773,7 +906,7 @@
         <div id="pageStep5" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 5: Financial Profile <span class="data-block-indicator">Collection Block</span></h3>
+                    <h3><img src="./graphics/pictograms/erweiterte Daten.png" class="step-icon">Step 5: Financial Profile <span class="data-block-indicator">Collection Block</span></h3>
                     <div class="info-message">
                         <h4>MiFID II Financial Profile</h4>
                         <p>Required for investment products and suitability assessment.</p>
@@ -850,7 +983,7 @@
         <div id="pageStep6" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 6: Identification <span class="data-block-indicator">Verification Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Identifikation.png" class="step-icon">Step 6: Identification <span class="data-block-indicator">Verification Block</span></h3>
                     <div class="info-message">
                         <h4>Identity Verification</h4>
                         <p>Upload or scan your identification document.</p>
@@ -909,7 +1042,7 @@
         <div id="pageStep7" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 7: Background Checks <span class="data-block-indicator">Verification Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Checks.png" class="step-icon">Step 7: Background Checks <span class="data-block-indicator">Verification Block</span></h3>
                     <div class="info-message">
                         <h4>Automated Background Verification</h4>
                         <p>Running required compliance checks...</p>
@@ -935,7 +1068,7 @@
         <div id="pageStep89" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Steps 8-9: Contract & Signature <span class="data-block-indicator">Finalization Block</span></h3>
+                    <h3><img src="./graphics/pictograms/Signatur.png" class="step-icon">Steps 8-9: Contract & Signature <span class="data-block-indicator">Finalization Block</span></h3>
                     <div class="info-message">
                         <h4>Contract Acceptance</h4>
                         <p>Please review and sign the following documents.</p>
@@ -1008,9 +1141,9 @@
         <div id="pageSuccess" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Process Complete!</h3>
+                    <h3><img src="./graphics/pictograms/Abschluss.png" class="step-icon">Process Complete!</h3>
                     <div class="success-message">
-                        <h2>Account Opening Successful!</h2>
+                        <h2>🎉 Account Opening Successful!</h2>
                         <p>Your account at <span id="targetLabel4">Bank B</span> has been successfully created.</p>
                         <p>All 13 steps of the OAuth-integrated onboarding process have been completed.</p>
                     </div>
@@ -2601,7 +2734,7 @@
                 // Display summary
                 const summaryDiv = document.getElementById('successSummary');
                 summaryDiv.innerHTML = `
-                    <p><strong>Scenario:</strong> ${state.scenario === 'bank' ? 'Bank Transfer' : 'Insurance Application'}</p>
+                    <p><strong>Scenario:</strong> ${state.scenario === 'bank' ? 'Bank Onboarding' : 'Life Insurance'}</p>
                     <p><strong>Institution:</strong> ${state.institutionName}</p>
                     <p><strong>Process ID:</strong> ${state.processId}</p>
                     <p><strong>Customer:</strong> ${state.customerData.firstName} ${state.customerData.lastName}</p>
