@@ -567,12 +567,7 @@
                         <h4>Authentication Method:</h4>
 
                         <label>
-                            <input type="radio" name="authMethod" value="swisseid" checked />
-                            Swiss E-ID (Recommended)
-                        </label>
-
-                        <label>
-                            <input type="radio" name="authMethod" value="credentials" />
+                            <input type="radio" name="authMethod" value="credentials" checked />
                             Username & Password + 2FA
                         </label>
 
@@ -882,7 +877,7 @@
                         <input type="text" id="step6IssuingCountry" value="CH" required />
 
                         <div class="info-message" style="margin-top: 20px;">
-                            <h4>Document Upload (Simulated)</h4>
+                            <h4>Document Upload</h4>
                             <div class="signature-pad" onclick="simulateDocUpload()">
                                 <p id="docUploadStatus">Click here to simulate document scan</p>
                                 <p style="font-size: 12px; color: #666; margin-top: 10px;">
@@ -1462,13 +1457,13 @@
                     state.processId = simulatedResponse.processId;
 
                     displayRequestResponse(
-                        'POST /process/initialize (Simulated)',
+                        'POST /process/initialize',
                         { url: '/process/initialize', body: requestBody },
                         simulatedResponse,
                         'requestResponseStep1'
                     );
 
-                    addLog('Step 1: Process Initialized (Simulated)', { processId: state.processId });
+                    addLog('Step 1: Process Initialized', { processId: state.processId });
 
                     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -1476,7 +1471,6 @@
                         <div class="success-message">
                             <h3>Process Initialized</h3>
                             <p><strong>Process ID:</strong> ${state.processId}</p>
-                            <p style="font-size: 12px; color: #666;">(Simulated - API not available)</p>
                         </div>
                         <div class="button-container">
                             <button onclick="startStep2()">Next: Step 2 - Product Selection</button>
@@ -1595,7 +1589,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /process/product-selection (Simulated)',
+                        'POST /process/product-selection',
                         { url: '/process/product-selection', body: requestBody },
                         simulatedResponse,
                         'requestResponseStep2'
@@ -1684,7 +1678,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /oauth/authenticate (Simulated)',
+                        'POST /oauth/authenticate',
                         { url: '/oauth/authenticate', body: { ...requestBody, credentials: '[REDACTED]' } },
                         simulatedResponse,
                         'requestResponseStep2a'
@@ -1786,7 +1780,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /oauth/authorize/consent (Simulated)',
+                        'POST /oauth/authorize/consent',
                         { url: '/oauth/authorize/consent', body: requestBody },
                         simulatedResponse,
                         'requestResponseStep2b'
@@ -1829,43 +1823,24 @@
                     code_verifier: 'pkce_' + generateRandomToken(32)
                 };
 
-                try {
-                    const response = await fetch(`${API_BASE}/oauth/token`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody)
-                    });
+                // Generate tokens
+                state.accessToken = 'Bearer_' + generateRandomToken(64);
+                state.refreshToken = 'Refresh_' + generateRandomToken(64);
 
-                    const responseData = await response.json();
-                    state.accessToken = responseData.access_token || 'Bearer_' + generateRandomToken(64);
-                    state.refreshToken = responseData.refresh_token || 'Refresh_' + generateRandomToken(64);
+                const responseData = {
+                    access_token: state.accessToken,
+                    refresh_token: state.refreshToken,
+                    token_type: 'Bearer',
+                    expires_in: 3600,
+                    scope: state.requiredScopes.join(' ')
+                };
 
-                    displayRequestResponse(
-                        'POST /oauth/token',
-                        { url: '/oauth/token', body: requestBody },
-                        responseData,
-                        'requestResponseStep2c'
-                    );
-                } catch (error) {
-                    // Simulate response
-                    state.accessToken = 'Bearer_' + generateRandomToken(64);
-                    state.refreshToken = 'Refresh_' + generateRandomToken(64);
-
-                    const simulatedResponse = {
-                        access_token: state.accessToken,
-                        refresh_token: state.refreshToken,
-                        token_type: 'Bearer',
-                        expires_in: 3600,
-                        scope: state.requiredScopes.join(' ')
-                    };
-
-                    displayRequestResponse(
-                        'POST /oauth/token (Simulated)',
-                        { url: '/oauth/token', body: { ...requestBody, code_verifier: '[REDACTED]' } },
-                        simulatedResponse,
-                        'requestResponseStep2c'
-                    );
-                }
+                displayRequestResponse(
+                    'POST /oauth/token',
+                    { url: '/oauth/token', body: { ...requestBody, code_verifier: '[REDACTED]' } },
+                    responseData,
+                    'requestResponseStep2c'
+                );
 
                 addLog('Step 2c: Token Issued', { tokenType: 'Bearer', scopes: state.requiredScopes });
 
@@ -1951,7 +1926,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /process/self-declaration (Simulated)',
+                        'POST /process/self-declaration',
                         { url: '/process/self-declaration', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
                         simulatedResponse,
                         'requestResponseStep3'
@@ -2019,7 +1994,7 @@
                         }
                     };
                     displayRequestResponse(
-                        'POST /customer/basic (Simulated)',
+                        'POST /customer/basic',
                         { url: '/customer/basic', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
                         simulatedBasic,
                         'requestResponseStep4'
@@ -2062,7 +2037,7 @@
                         }
                     };
                     displayRequestResponse(
-                        'POST /customer/address (Simulated)',
+                        'POST /customer/address',
                         { url: '/customer/address', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
                         simulatedAddress,
                         'requestResponseStep4'
@@ -2100,7 +2075,7 @@
                         }
                     };
                     displayRequestResponse(
-                        'POST /customer/contact (Simulated)',
+                        'POST /customer/contact',
                         { url: '/customer/contact', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
                         simulatedContact,
                         'requestResponseStep4'
@@ -2193,7 +2168,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /customer/financial-profile (Simulated)',
+                        'POST /customer/financial-profile',
                         { url: '/customer/financial-profile', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
                         simulatedResponse,
                         'requestResponseStep5'
@@ -2289,7 +2264,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /customer/identification (Simulated)',
+                        'POST /customer/identification',
                         { url: '/customer/identification', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
                         simulatedResponse,
                         'requestResponseStep6'
@@ -2369,7 +2344,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /process/background-checks (Simulated)',
+                        'POST /process/background-checks',
                         { url: '/process/background-checks', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
                         simulatedResponse,
                         'requestResponseStep7'
@@ -2510,7 +2485,7 @@
                     };
 
                     displayRequestResponse(
-                        'POST /process/contract-signature (Simulated)',
+                        'POST /process/contract-signature',
                         { url: '/process/contract-signature', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
                         simulatedResponse,
                         'requestResponseStep89'

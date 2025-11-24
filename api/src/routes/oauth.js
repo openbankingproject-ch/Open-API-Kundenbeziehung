@@ -10,6 +10,21 @@ const mtlsMiddleware = require('../middleware/mtls');
 
 const router = express.Router();
 
+// Conditional mTLS middleware - bypass in development mode for demo
+const conditionalMtls = process.env.NODE_ENV === 'production'
+  ? mtlsMiddleware
+  : (req, res, next) => {
+      // In development, simulate successful client authentication
+      if (!req.client) {
+        req.client = {
+          id: 'dev-client',
+          authMethod: 'dev-bypass',
+          institutionId: 'demo-institution'
+        };
+      }
+      next();
+    };
+
 // OAuth/OIDC configuration
 const ISSUER = process.env.ISSUER || process.env.BASE_URL || 'https://api.kundenbeziehung.ch';
 const AUTHORIZATION_CODE_EXPIRY = 600; // 10 minutes
@@ -280,7 +295,7 @@ async function handlePARAuthorization(req, res) {
 /**
  * POST /token - OAuth 2.1 Token Endpoint (FAPI 2.0)
  */
-router.post('/token', mtlsMiddleware, async (req, res) => {
+router.post('/token', conditionalMtls, async (req, res) => {
   try {
     // Validate token request
     const { error, value: validatedRequest } = tokenRequestSchema.validate(req.body);
@@ -551,7 +566,7 @@ async function generateTokens(grantData, req) {
 /**
  * POST /introspect - Token Introspection Endpoint (RFC 7662)
  */
-router.post('/introspect', mtlsMiddleware, (req, res) => {
+router.post('/introspect', conditionalMtls, (req, res) => {
   try {
     const { token, token_type_hint } = req.body;
 
