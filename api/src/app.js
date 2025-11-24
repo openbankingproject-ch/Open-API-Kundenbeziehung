@@ -27,6 +27,7 @@ const customerRoutes = require('./routes/customer');
 const identificationRoutes = require('./routes/identification');
 const checksRoutes = require('./routes/checks');
 const signatureRoutes = require('./routes/signature');
+const processRoutes = require('./routes/process');
 const registryRoutes = require('./routes/registry');
 const healthRoutes = require('./routes/health');
 const parRoutes = require('./routes/par');
@@ -193,7 +194,10 @@ function injectDependenciesIntoRoutes() {
   if (typeof clientsRoutes.setCoreFramework === 'function') {
     clientsRoutes.setCoreFramework(coreFramework);
   }
-  
+  if (typeof processRoutes.setCoreFramework === 'function') {
+    processRoutes.setCoreFramework(coreFramework);
+  }
+
   // Set service manager reference in routes that support it
   if (typeof healthRoutes.setServiceManager === 'function') {
     healthRoutes.setServiceManager(serviceManager);
@@ -221,6 +225,18 @@ function injectDependenciesIntoRoutes() {
   }
   if (typeof clientsRoutes.setServiceManager === 'function') {
     clientsRoutes.setServiceManager(serviceManager);
+  }
+  if (typeof processRoutes.setServiceManager === 'function') {
+    processRoutes.setServiceManager(serviceManager);
+  }
+
+  // Set route references for process routes (for wrapping existing endpoints)
+  if (typeof processRoutes.setRouteReferences === 'function') {
+    processRoutes.setRouteReferences({
+      identification: identificationRoutes,
+      checks: checksRoutes,
+      signature: signatureRoutes
+    });
   }
 }
 
@@ -269,6 +285,13 @@ app.use('/v1/consent', authMiddleware.optional, consentRoutes);
 // In development, allow optional auth for demo purposes
 const customerAuth = process.env.NODE_ENV === 'production' ? authMiddleware.required : authMiddleware.optional;
 const customerMtls = process.env.NODE_ENV === 'production' ? mtlsMiddleware : (req, res, next) => next();
+
+// New specification-compliant endpoints (no /v1 prefix)
+app.use('/customer', customerAuth, customerMtls, customerRoutes);
+app.use('/process', customerAuth, processRoutes);
+app.use('/oauth/consents', authMiddleware.optional, consentRoutes);
+
+// Legacy v1 endpoints (keep for backward compatibility)
 app.use('/v1/customer', customerAuth, customerMtls, customerRoutes);
 app.use('/v1/identification', authMiddleware.required, identificationRoutes);
 app.use('/v1/checks', authMiddleware.required, checksRoutes);

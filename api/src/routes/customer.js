@@ -541,6 +541,536 @@ router.put('/:sharedCustomerHash', validateRequest('updateCustomer'), (req, res)
   }
 });
 
+/**
+ * Get basic customer identity data (Granular endpoint for Stufe 4)
+ * POST /customer/basic
+ * Requires Bearer token with scope: identity:read
+ */
+router.post('/basic',
+  requireConsent('identity:read'),
+  async (req, res) => {
+    try {
+      const { customerId, sharedCustomerHash } = req.body;
+      const hashToUse = customerId || sharedCustomerHash;
+
+      logger.info('Granular request: Basic identity data', {
+        customerId: hashToUse,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'identity:read'
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with identity:read scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Use service layer if available
+      if (serviceManager) {
+        const customerService = serviceManager.getService('customer');
+        const result = await customerService.getBasicData(hashToUse, {
+          institutionId: req.user.institutionId || 'demo',
+          userId: req.user.id || 'demo-user'
+        });
+
+        if (result.success) {
+          return res.json({
+            success: true,
+            data: result.data,
+            processedBy: 'service_layer'
+          });
+        }
+      }
+
+      // Legacy fallback
+      const customer = customers.get(hashToUse);
+
+      if (!customer) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Customer not found',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Return only basic identity data
+      res.json({
+        success: true,
+        data: {
+          lastName: customer.basicData.lastName,
+          givenName: customer.basicData.givenName,
+          birthDate: customer.basicData.birthDate,
+          nationality: customer.basicData.nationality,
+          gender: customer.basicData.gender,
+          maritalStatus: customer.basicData.maritalStatus,
+          language: customer.basicData.language
+        },
+        processedBy: 'legacy_implementation'
+      });
+
+    } catch (error) {
+      logger.error('Error fetching basic customer data:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to fetch basic customer data',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
+/**
+ * Get customer address data (Granular endpoint for Stufe 4)
+ * POST /customer/address
+ * Requires Bearer token with scope: address:read
+ */
+router.post('/address',
+  requireConsent('address:read'),
+  async (req, res) => {
+    try {
+      const { customerId, sharedCustomerHash } = req.body;
+      const hashToUse = customerId || sharedCustomerHash;
+
+      logger.info('Granular request: Address data', {
+        customerId: hashToUse,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'address:read'
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with address:read scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Use service layer if available
+      if (serviceManager) {
+        const customerService = serviceManager.getService('customer');
+        const result = await customerService.getAddressData(hashToUse, {
+          institutionId: req.user.institutionId || 'demo',
+          userId: req.user.id || 'demo-user'
+        });
+
+        if (result.success) {
+          return res.json({
+            success: true,
+            data: result.data,
+            processedBy: 'service_layer'
+          });
+        }
+      }
+
+      // Legacy fallback
+      const customer = customers.get(hashToUse);
+
+      if (!customer) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Customer not found',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Return only address data
+      res.json({
+        success: true,
+        data: {
+          residentialAddress: customer.addressData.residentialAddress,
+          correspondenceAddress: customer.addressData.correspondenceAddress || null,
+          previousAddresses: customer.addressData.previousAddresses || []
+        },
+        processedBy: 'legacy_implementation'
+      });
+
+    } catch (error) {
+      logger.error('Error fetching address data:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to fetch address data',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
+/**
+ * Get customer contact information (Granular endpoint for Stufe 4)
+ * POST /customer/contact
+ * Requires Bearer token with scope: contact:read
+ */
+router.post('/contact',
+  requireConsent('contact:read'),
+  async (req, res) => {
+    try {
+      const { customerId, sharedCustomerHash } = req.body;
+      const hashToUse = customerId || sharedCustomerHash;
+
+      logger.info('Granular request: Contact information', {
+        customerId: hashToUse,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'contact:read'
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with contact:read scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Use service layer if available
+      if (serviceManager) {
+        const customerService = serviceManager.getService('customer');
+        const result = await customerService.getContactData(hashToUse, {
+          institutionId: req.user.institutionId || 'demo',
+          userId: req.user.id || 'demo-user'
+        });
+
+        if (result.success) {
+          return res.json({
+            success: true,
+            data: result.data,
+            processedBy: 'service_layer'
+          });
+        }
+      }
+
+      // Legacy fallback
+      const customer = customers.get(hashToUse);
+
+      if (!customer) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Customer not found',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Return only contact information
+      res.json({
+        success: true,
+        data: {
+          primaryEmail: customer.contactInformation.primaryEmail,
+          secondaryEmail: customer.contactInformation.secondaryEmail || null,
+          mobilePhone: customer.contactInformation.mobilePhone,
+          landlinePhone: customer.contactInformation.landlinePhone || null,
+          preferredContactMethod: customer.contactInformation.preferredContactMethod,
+          communicationLanguage: customer.contactInformation.communicationLanguage,
+          emailVerified: customer.contactInformation.emailVerified !== false,
+          phoneVerified: customer.contactInformation.phoneVerified !== false
+        },
+        processedBy: 'legacy_implementation'
+      });
+
+    } catch (error) {
+      logger.error('Error fetching contact information:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to fetch contact information',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
+/**
+ * Get customer KYC attributes (Granular endpoint)
+ * POST /customer/kyc
+ * Requires Bearer token with appropriate scopes
+ */
+router.post('/kyc',
+  requireConsent('kyc:read'),
+  async (req, res) => {
+    try {
+      const { customerId, sharedCustomerHash } = req.body;
+      const hashToUse = customerId || sharedCustomerHash;
+
+      logger.info('Granular request: KYC attributes', {
+        customerId: hashToUse,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'kyc:read'
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with kyc:read scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Use service layer if available
+      if (serviceManager) {
+        const customerService = serviceManager.getService('customer');
+        const result = await customerService.getKYCData(hashToUse, {
+          institutionId: req.user.institutionId || 'demo',
+          userId: req.user.id || 'demo-user'
+        });
+
+        if (result.success) {
+          return res.json({
+            success: true,
+            data: result.data,
+            processedBy: 'service_layer'
+          });
+        }
+      }
+
+      // Legacy fallback
+      const customer = customers.get(hashToUse);
+
+      if (!customer) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Customer not found',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Return KYC attributes without documents
+      res.json({
+        success: true,
+        data: {
+          occupation: customer.kycData?.occupation,
+          employer: customer.kycData?.employer,
+          employmentType: customer.kycData?.employmentType,
+          sourceOfFunds: customer.kycData?.sourceOfFunds,
+          pepStatus: customer.kycData?.pepStatus,
+          pepDetails: customer.kycData?.pepDetails || null,
+          amlRiskRating: customer.complianceData?.amlRiskRating,
+          fatcaStatus: customer.complianceData?.fatcaStatus,
+          crsReportable: customer.complianceData?.crsReportable,
+          taxResidencies: customer.complianceData?.taxResidencies,
+          sanctionsScreening: customer.complianceData?.sanctionsScreening
+        },
+        processedBy: 'legacy_implementation'
+      });
+
+    } catch (error) {
+      logger.error('Error fetching KYC attributes:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to fetch KYC attributes',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
+/**
+ * Submit customer identification (Stufe 6 - Wrapper endpoint)
+ * POST /customer/identification
+ * Requires Bearer token with scope: identification:read_enhanced
+ */
+router.post('/identification',
+  requireConsent('identification:read_enhanced'),
+  async (req, res) => {
+    try {
+      const { processId, documentType, documentNumber, issueDate, expiryDate, issuingCountry, verificationMethod, verificationStatus } = req.body;
+
+      logger.info('Identification submission', {
+        processId,
+        documentType,
+        verificationMethod,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'identification:read_enhanced'
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with identification:read_enhanced scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Simulate identification verification
+      const identificationData = {
+        documentType,
+        documentNumber,
+        issueDate,
+        expiryDate,
+        issuingCountry,
+        verificationMethod: verificationMethod || 'nfc_mrz_biometric',
+        verificationStatus: verificationStatus || 'verified',
+        confidenceScore: 0.98,
+        verifiedAt: new Date().toISOString(),
+        verifiedBy: req.user.institutionId || 'demo'
+      };
+
+      logger.info('Identification verified', {
+        processId,
+        documentType,
+        verificationStatus: identificationData.verificationStatus,
+        confidenceScore: identificationData.confidenceScore
+      });
+
+      res.json({
+        success: true,
+        processId,
+        verificationStatus: identificationData.verificationStatus,
+        confidenceScore: identificationData.confidenceScore,
+        message: 'Identity verified successfully',
+        data: identificationData
+      });
+
+    } catch (error) {
+      logger.error('Error in identification verification:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to verify identification',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
+/**
+ * Get/Submit customer financial profile (Stufe 5 - MiFID II)
+ * POST /customer/financial-profile
+ * Requires Bearer token with scope: financial_profile:read
+ */
+router.post('/financial-profile',
+  requireConsent('financial_profile:read'),
+  async (req, res) => {
+    try {
+      const { processId, customerId, sharedCustomerHash, annualIncome, netWorth, employmentStatus, investmentExperience, riskTolerance, investmentObjectives } = req.body;
+      const hashToUse = customerId || sharedCustomerHash;
+
+      logger.info('Financial profile request', {
+        processId,
+        customerId: hashToUse,
+        institutionId: req.user?.institutionId || 'demo',
+        scope: 'financial_profile:read',
+        isSubmission: !!annualIncome // Check if this is a submission or retrieval
+      });
+
+      // Check Bearer token authorization
+      if (!req.user || !req.user.consent) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Valid Bearer token with financial_profile:read scope required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // If this is a data submission (has annualIncome), store it
+      if (annualIncome) {
+        const customer = customers.get(hashToUse);
+
+        if (!customer) {
+          return res.status(404).json({
+            error: 'NOT_FOUND',
+            message: 'Customer not found',
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        // Store financial profile
+        customer.financialProfile = {
+          annualIncome,
+          netWorth,
+          employmentStatus,
+          investmentExperience,
+          riskTolerance,
+          investmentObjectives,
+          submittedAt: new Date().toISOString(),
+          submittedBy: req.user.institutionId || 'demo'
+        };
+
+        // Calculate MiFID II suitability assessment
+        let suitabilityScore = 0;
+        let riskCategory = 'conservative';
+
+        // Simple suitability logic
+        if (investmentExperience === 'extensive') suitabilityScore += 3;
+        else if (investmentExperience === 'moderate') suitabilityScore += 2;
+        else if (investmentExperience === 'limited') suitabilityScore += 1;
+
+        if (riskTolerance === 'high') {
+          suitabilityScore += 3;
+          riskCategory = 'aggressive';
+        } else if (riskTolerance === 'medium') {
+          suitabilityScore += 2;
+          riskCategory = 'balanced';
+        } else {
+          suitabilityScore += 1;
+          riskCategory = 'conservative';
+        }
+
+        customer.financialProfile.mifidAssessment = {
+          suitabilityScore,
+          riskCategory,
+          suitable: suitabilityScore >= 3,
+          assessmentDate: new Date().toISOString()
+        };
+
+        customers.set(hashToUse, customer);
+
+        logger.info('Financial profile stored', {
+          processId,
+          customerId: hashToUse,
+          suitabilityScore,
+          riskCategory
+        });
+
+        return res.json({
+          success: true,
+          processId,
+          message: 'Financial profile recorded',
+          mifidAssessment: customer.financialProfile.mifidAssessment,
+          recommendedProducts: customer.financialProfile.mifidAssessment.suitable ?
+            ['investment', 'premiumAccount', 'creditCard'] :
+            ['basicAccount']
+        });
+      }
+
+      // Otherwise, retrieve existing financial profile
+      const customer = customers.get(hashToUse);
+
+      if (!customer) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Customer not found',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (!customer.financialProfile) {
+        return res.status(404).json({
+          error: 'NOT_FOUND',
+          message: 'Financial profile not yet submitted',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.json({
+        success: true,
+        data: customer.financialProfile,
+        processedBy: 'legacy_implementation'
+      });
+
+    } catch (error) {
+      logger.error('Error handling financial profile:', error);
+      res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to handle financial profile',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
 module.exports = router;
 module.exports.setServiceManager = setServiceManager;
 module.exports.setCoreFramework = setCoreFramework;

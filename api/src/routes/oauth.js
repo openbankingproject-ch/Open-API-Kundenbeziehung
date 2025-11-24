@@ -662,6 +662,237 @@ router.get('/userinfo', authMiddleware.required, (req, res) => {
 });
 
 /**
+ * POST /oauth/authenticate - Customer Authentication (Step 2a)
+ * Authenticates the customer before consent granting
+ * NO Bearer token required (pre-authorization step)
+ */
+router.post('/oauth/authenticate', async (req, res) => {
+  try {
+    const { processId, customerId, authenticationMethod, credentials } = req.body;
+
+    logger.info('Customer authentication request', {
+      processId,
+      customerId,
+      authenticationMethod,
+      ip: req.ip
+    });
+
+    // Simulate authentication based on method
+    let authenticated = false;
+    let sessionId = null;
+
+    switch (authenticationMethod) {
+      case 'swisseid':
+        // Simulate Swiss E-ID authentication
+        authenticated = true;
+        sessionId = 'swisseid_' + generateSecureToken(16);
+        logger.info('Swiss E-ID authentication simulated', { processId });
+        break;
+
+      case 'credentials':
+        // Simulate username/password + 2FA authentication
+        if (credentials && credentials.twoFactorCode) {
+          authenticated = true;
+          sessionId = 'session_' + generateSecureToken(16);
+          logger.info('Credentials + 2FA authentication simulated', { processId });
+        } else {
+          return res.status(401).json({
+            error: 'AUTHENTICATION_FAILED',
+            message: '2FA code required',
+            timestamp: new Date().toISOString()
+          });
+        }
+        break;
+
+      case 'biometric':
+        // Simulate biometric authentication
+        authenticated = true;
+        sessionId = 'biometric_' + generateSecureToken(16);
+        logger.info('Biometric authentication simulated', { processId });
+        break;
+
+      default:
+        return res.status(400).json({
+          error: 'INVALID_METHOD',
+          message: 'Invalid authentication method',
+          timestamp: new Date().toISOString()
+        });
+    }
+
+    if (!authenticated) {
+      return res.status(401).json({
+        error: 'AUTHENTICATION_FAILED',
+        message: 'Authentication failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Store authentication session
+    const authSession = {
+      sessionId,
+      processId,
+      customerId,
+      authenticationMethod,
+      authenticatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
+    };
+
+    // TODO: Store in session storage (Redis in production)
+
+    res.json({
+      success: true,
+      authenticated: true,
+      sessionId,
+      message: 'Authentication successful',
+      expiresAt: authSession.expiresAt
+    });
+
+  } catch (error) {
+    logger.error('Authentication error:', error);
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'Authentication failed',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /oauth/authorize/consent - Consent Granting (Step 2b)
+ * Captures the customer's consent decision
+ * NO Bearer token required (pre-authorization step)
+ */
+router.post('/oauth/authorize/consent', async (req, res) => {
+  try {
+    const { processId, customerId, authorizedScopes, consentGiven, timestamp } = req.body;
+
+    logger.info('Consent decision received', {
+      processId,
+      customerId,
+      consentGiven,
+      scopes: authorizedScopes?.length,
+      ip: req.ip
+    });
+
+    if (!consentGiven) {
+      return res.status(403).json({
+        error: 'ACCESS_DENIED',
+        message: 'User denied consent',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Generate authorization code
+    const authorizationCode = 'auth_' + generateSecureToken(32);
+    const codeExpiresAt = new Date(Date.now() + AUTHORIZATION_CODE_EXPIRY * 1000);
+
+    // Store authorization code with consent information
+    const codeData = {
+      processId,
+      customerId,
+      authorizedScopes,
+      code: authorizationCode,
+      created_at: new Date(),
+      expires_at: codeExpiresAt,
+      used: false,
+      // PKCE parameters (would be validated during token exchange)
+      code_challenge: 'simulated_challenge', // In real implementation, get from session
+      code_challenge_method: 'S256'
+    };
+
+    authorizationCodes.set(authorizationCode, codeData);
+
+    logger.info('Authorization code issued', {
+      processId,
+      code: authorizationCode.substring(0, 10) + '...',
+      expiresIn: AUTHORIZATION_CODE_EXPIRY
+    });
+
+    res.json({
+      success: true,
+      authorizationCode,
+      expiresIn: AUTHORIZATION_CODE_EXPIRY,
+      message: 'Consent granted, authorization code issued',
+      processId
+    });
+
+  } catch (error) {
+    logger.error('Consent processing error:', error);
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'Failed to process consent',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /oauth/revoke - Token Revocation (RFC 7009)
+ * Revokes access tokens or refresh tokens
+ */
+router.post('/oauth/revoke', async (req, res) => {
+  try {
+    const { token, token_type_hint, client_id } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        error: 'invalid_request',
+        error_description: 'Token parameter is required'
+      });
+    }
+
+    logger.info('Token revocation request', {
+      client_id,
+      token_type_hint,
+      token: token.substring(0, 10) + '...',
+      ip: req.ip
+    });
+
+    let revoked = false;
+
+    // Try to revoke as access token
+    if (!token_type_hint || token_type_hint === 'access_token') {
+      if (accessTokens.has(token)) {
+        accessTokens.delete(token);
+        revoked = true;
+        logger.info('Access token revoked', { token: token.substring(0, 10) + '...' });
+      }
+    }
+
+    // Try to revoke as refresh token
+    if (!revoked && (!token_type_hint || token_type_hint === 'refresh_token')) {
+      if (refreshTokens.has(token)) {
+        const refreshTokenData = refreshTokens.get(token);
+        refreshTokens.delete(token);
+
+        // Also revoke associated access token if present
+        if (refreshTokenData.access_token && accessTokens.has(refreshTokenData.access_token)) {
+          accessTokens.delete(refreshTokenData.access_token);
+          logger.info('Associated access token revoked');
+        }
+
+        revoked = true;
+        logger.info('Refresh token revoked', { token: token.substring(0, 10) + '...' });
+      }
+    }
+
+    // RFC 7009: The revocation endpoint responds with HTTP 200 even if token is invalid
+    // This prevents token scanning attacks
+    res.status(200).json({
+      success: true,
+      message: revoked ? 'Token revoked successfully' : 'Token not found or already revoked'
+    });
+
+  } catch (error) {
+    logger.error('Token revocation error:', error);
+    res.status(500).json({
+      error: 'server_error',
+      error_description: 'Internal server error'
+    });
+  }
+});
+
+/**
  * Generate secure random token
  */
 function generateSecureToken(length = 32) {

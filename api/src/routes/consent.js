@@ -388,7 +388,7 @@ router.post('/:consentId/approve', async (req, res) => {
 
 /**
  * List consents for institution (admin endpoint)
- * GET /consent
+ * GET /consent or GET /oauth/consents
  */
 router.get('/', requireScope('consent:read'), (req, res) => {
   try {
@@ -396,8 +396,8 @@ router.get('/', requireScope('consent:read'), (req, res) => {
     const { status, customerId, limit = 50, offset = 0 } = req.query;
 
     const institutionConsents = Array.from(consents.values())
-      .filter(consent => 
-        consent.requestingInstitution === institutionId || 
+      .filter(consent =>
+        consent.requestingInstitution === institutionId ||
         consent.providingInstitution === institutionId
       )
       .filter(consent => !status || consent.status === status)
@@ -430,6 +430,182 @@ router.get('/', requireScope('consent:read'), (req, res) => {
     res.status(500).json({
       error: 'INTERNAL_ERROR',
       message: 'Failed to list consents',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Modify consent (update scopes or restrictions)
+ * PATCH /consent/:id or PATCH /oauth/consents/:id
+ */
+router.patch('/:id', requireScope('consent:write'), (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dataCategories, restrictions, validityPeriod } = req.body;
+
+    const consent = consents.get(id);
+
+    if (!consent) {
+      return res.status(404).json({
+        error: 'NOT_FOUND',
+        message: 'Consent not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Verify requesting institution has permission
+    if (req.user.institutionId !== consent.requestingInstitution &&
+        req.user.institutionId !== consent.providingInstitution) {
+      return res.status(403).json({
+        error: 'FORBIDDEN',
+        message: 'Not authorized to modify this consent',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Check if consent is still active
+    if (consent.status !== 'approved' && consent.status !== 'active') {
+      return res.status(400).json({
+        error: 'INVALID_STATE',
+        message: 'Can only modify active consents',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Update consent
+    if (dataCategories) {
+      consent.dataCategories = dataCategories;
+    }
+
+    if (restrictions) {
+      consent.restrictions = {
+        ...consent.restrictions,
+        ...restrictions
+      };
+    }
+
+    if (validityPeriod) {
+      consent.validityPeriod = validityPeriod;
+      consent.expiryDate = new Date(Date.now() + validityPeriod * 1000);
+    }
+
+    consent.lastModified = new Date().toISOString();
+    consent.modifiedBy = req.user.id;
+
+    consents.set(id, consent);
+
+    logger.info('Consent modified', {
+      consentId: id,
+      modifiedBy: req.user.id,
+      institutionId: req.user.institutionId
+    });
+
+    res.json({
+      consentId: id,
+      status: consent.status,
+      dataCategories: consent.dataCategories,
+      restrictions: consent.restrictions,
+      validityPeriod: consent.validityPeriod,
+      expiryDate: consent.expiryDate,
+      lastModified: consent.lastModified,
+      message: 'Consent modified successfully'
+    });
+
+  } catch (error) {
+    logger.error('Error modifying consent:', error);
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'Failed to modify consent',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Get consent usage analytics
+ * GET /consent/:id/usage or GET /oauth/consents/:id/usage
+ */
+router.get('/:id/usage', requireScope('consent:read'), (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const consent = consents.get(id);
+
+    if (!consent) {
+      return res.status(404).json({
+        error: 'NOT_FOUND',
+        message: 'Consent not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Verify requesting institution has permission
+    if (req.user.institutionId !== consent.requestingInstitution &&
+        req.user.institutionId !== consent.providingInstitution) {
+      return res.status(403).json({
+        error: 'FORBIDDEN',
+        message: 'Not authorized to view this consent usage',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Initialize usage tracking if not present
+    if (!consent.usageTracking) {
+      consent.usageTracking = {
+        totalAccesses: 0,
+        lastAccessed: null,
+        accessLog: [],
+        byReferenzprozessStep: {}
+      };
+    }
+
+    // Simulate usage data by Referenzprozess step
+    const usageByStep = {
+      step1_initialization: { count: 1, lastAccess: consent.createdAt },
+      step2_productSelection: { count: 1, lastAccess: consent.createdAt },
+      step3_selfDeclaration: { count: consent.usageTracking.totalAccesses > 0 ? 1 : 0, lastAccess: consent.approvedAt },
+      step4_basicData: { count: consent.usageTracking.totalAccesses > 0 ? 3 : 0, lastAccess: consent.approvedAt }, // 3 calls: basic, address, contact
+      step5_financialProfile: { count: consent.dataCategories.includes('financial_profile') ? 1 : 0, lastAccess: consent.approvedAt },
+      step6_identification: { count: consent.usageTracking.totalAccesses > 0 ? 1 : 0, lastAccess: consent.approvedAt },
+      step7_backgroundChecks: { count: consent.usageTracking.totalAccesses > 0 ? 1 : 0, lastAccess: consent.approvedAt },
+      step89_contractSignature: { count: consent.status === 'active' ? 1 : 0, lastAccess: consent.approvedAt }
+    };
+
+    const totalApiCalls = Object.values(usageByStep).reduce((sum, step) => sum + step.count, 0);
+
+    logger.info('Consent usage retrieved', {
+      consentId: id,
+      totalApiCalls,
+      institutionId: req.user.institutionId
+    });
+
+    res.json({
+      consentId: id,
+      status: consent.status,
+      usage: {
+        totalApiCalls,
+        byReferenzprozessStep: usageByStep,
+        firstAccess: consent.createdAt,
+        lastAccess: consent.approvedAt || consent.createdAt,
+        dataTransferred: {
+          categories: consent.dataCategories,
+          count: consent.dataCategories.length
+        }
+      },
+      consent: {
+        createdAt: consent.createdAt,
+        approvedAt: consent.approvedAt,
+        expiryDate: consent.expiryDate,
+        validityPeriod: consent.validityPeriod
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error retrieving consent usage:', error);
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'Failed to retrieve consent usage',
       timestamp: new Date().toISOString()
     });
   }
