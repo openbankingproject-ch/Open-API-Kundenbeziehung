@@ -278,7 +278,9 @@ app.use('/', oauthRoutes);
 app.use('/', clientsRoutes);
 
 // FAPI 2.0 OAuth endpoints (require client authentication)
-app.use('/par', mtlsMiddleware, parRoutes);
+// In development, allow bypass of mTLS for demo purposes
+const parMtls = process.env.NODE_ENV === 'production' ? mtlsMiddleware : (req, res, next) => next();
+app.use('/par', parMtls, parRoutes);
 
 // API routes with authentication
 app.use('/v1/consent', authMiddleware.optional, consentRoutes);

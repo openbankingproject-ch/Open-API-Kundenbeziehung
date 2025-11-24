@@ -653,17 +653,17 @@
             </div>
         </div>
 
-        <!-- Page 8: OAuth Step 2c - Token Exchange -->
+        <!-- Page 8: OAuth Step 2c - Authorization Code Exchange -->
         <div id="pageStep2c" class="page">
             <div class="splits-container">
                 <div class="split">
-                    <h3>Step 2c: Token Exchange <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <h3>Step 2c: Authorization Code Exchange <span class="data-block-indicator">OAuth Flow</span></h3>
                     <div class="info-message">
                         <h4>Access Token Issuance</h4>
                         <p>Exchanging authorization code for access token...</p>
                     </div>
                     <div id="tokenStatus">
-                        <p>Processing token exchange...</p>
+                        <p>Processing authorization code exchange...</p>
                     </div>
                 </div>
 
@@ -729,6 +729,7 @@
                         </select>
 
                         <div class="button-container">
+                            <button type="button" onclick="fillStep3Data()">Fill Example Data</button>
                             <button type="submit">Submit Self-Declaration</button>
                         </div>
                     </form>
@@ -832,6 +833,7 @@
                         <textarea id="step5Objectives" placeholder="Describe your investment goals..."></textarea>
 
                         <div class="button-container">
+                            <button type="button" onclick="fillStep5Data()">Fill Example Data</button>
                             <button type="submit">Submit Financial Profile</button>
                         </div>
                     </form>
@@ -890,6 +892,7 @@
                         </div>
 
                         <div class="button-container">
+                            <button type="button" onclick="fillStep6Data()">Fill Example Data</button>
                             <button type="submit" id="step6SubmitBtn" disabled>Submit Identification</button>
                         </div>
                     </form>
@@ -988,6 +991,7 @@
                         </div>
 
                         <div class="button-container">
+                            <button type="button" onclick="fillStep89Data()">Accept All & Sign</button>
                             <button type="submit" id="step89SubmitBtn" disabled>Submit Signed Contracts</button>
                         </div>
                     </form>
@@ -1147,7 +1151,7 @@
                     </div>
                     <div class="sequence-step" data-step="2c">
                         <span class="step-number">Step 2c:</span>
-                        <span class="step-name">Token Exchange</span>
+                        <span class="step-name">Authorization Code Exchange</span>
                         <div class="step-detail">POST /oauth/token - Authorization code → Bearer token</div>
                     </div>
                     <div class="sequence-step" data-step="3">
@@ -1800,12 +1804,12 @@
                         <p><strong>Authorization Code:</strong> ${state.authorizationCode.substring(0, 20)}...</p>
                     </div>
                     <div class="button-container">
-                        <button onclick="startStep2c()">Next: Step 2c - Token Exchange</button>
+                        <button onclick="startStep2c()">Next: Step 2c - Authorization Code Exchange</button>
                     </div>
                 `;
             });
 
-            // Step 2c: Token Exchange
+            // Step 2c: Authorization Code Exchange
             function startStep2c() {
                 state.currentStep = 2.3;
                 updateProgress(5);
@@ -1893,6 +1897,15 @@
                 showPage('pageStep3');
                 initSequenceDiagram('Step3');
                 highlightStep('3');
+            }
+
+            function fillStep3Data() {
+                document.getElementById('step3FatcaStatus').value = 'no';
+                document.getElementById('step3TaxResidency').value = 'CH';
+                document.getElementById('step3Tin').value = '756.1234.5678.90';
+                document.getElementById('step3SourceOfFunds').value = 'employment';
+                document.getElementById('step3ExpectedActivity').value = 'medium';
+                document.getElementById('step3PepStatus').value = 'no';
             }
 
             document.getElementById('step3Form').addEventListener('submit', async (e) => {
@@ -2127,6 +2140,15 @@
                 highlightStep('5');
             }
 
+            function fillStep5Data() {
+                document.getElementById('step5Income').value = '100000-200000';
+                document.getElementById('step5NetWorth').value = '500000-1000000';
+                document.getElementById('step5Employment').value = 'employed';
+                document.getElementById('step5InvestmentExp').value = 'moderate';
+                document.getElementById('step5RiskTolerance').value = 'medium';
+                document.getElementById('step5Objectives').value = 'Long-term wealth building with balanced risk. Interested in diversified portfolio with stocks, bonds, and real estate.';
+            }
+
             document.getElementById('step5Form').addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -2200,6 +2222,18 @@
                 showPage('pageStep6');
                 initSequenceDiagram('Step6');
                 highlightStep('6');
+            }
+
+            function fillStep6Data() {
+                const today = new Date();
+                const issueDate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+                const expiryDate = new Date(today.getFullYear() + 5, today.getMonth(), today.getDate());
+
+                document.getElementById('step6DocType').value = 'id-card';
+                document.getElementById('step6DocNumber').value = 'E12345678';
+                document.getElementById('step6IssueDate').value = issueDate.toISOString().split('T')[0];
+                document.getElementById('step6ExpiryDate').value = expiryDate.toISOString().split('T')[0];
+                document.getElementById('step6IssuingCountry').value = 'CH';
             }
 
             function simulateDocUpload() {
@@ -2402,6 +2436,20 @@
                 });
 
                 productContracts.innerHTML = contractHtml;
+            }
+
+            function fillStep89Data() {
+                // Check all agreement checkboxes
+                document.getElementById('agreeAGB').checked = true;
+                document.getElementById('agreeDAS').checked = true;
+
+                // Check all product-specific contract checkboxes
+                document.querySelectorAll('.product-contract-check').forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+
+                // Simulate signature
+                simulateSignature();
             }
 
             function simulateSignature() {
