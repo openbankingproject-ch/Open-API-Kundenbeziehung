@@ -265,54 +265,6 @@ sequenceDiagram
     UserAgent->>Customer: Consent updated
 ```
 
-### Vereinfachter Consent Management Flow
-
-Für einen High-Level-Überblick zeigt diese vereinfachte Version die wesentlichen Schritte unter Beibehaltung der OAuth 2.0-Konformität. Für vollständige Implementierungsdetails siehe den detaillierten Flow oben.
-
-```mermaid
-sequenceDiagram
-    participant Customer as Customer
-    participant UserAgent as User Agent
-    participant Client as Client
-    participant AuthServer as Authorization Server
-    participant DataProvider as Data Provider
-    participant AuditLog as Audit System
-
-    Note over Customer,AuditLog: Phase 1: Consent Request & Authentication
-    Customer->>Client: Initiate service request
-    Client->>UserAgent: Redirect to Authorization Server
-    UserAgent->>AuthServer: Authorization request (scopes)
-    AuthServer->>UserAgent: Authentication challenge
-    Customer->>UserAgent: Authenticate
-    UserAgent->>AuthServer: Submit credentials
-    AuthServer-->>AuditLog: Log authentication
-
-    Note over Customer,AuditLog: Phase 2: Consent Granting
-    AuthServer->>UserAgent: Present consent screen (data scopes)
-    Customer->>UserAgent: Grant consent for scopes
-    UserAgent->>AuthServer: Submit consent decision
-    AuthServer-->>AuditLog: Log consent decision
-    AuthServer->>UserAgent: Return authorization code
-    UserAgent->>Client: Deliver authorization code
-
-    Note over Customer,AuditLog: Phase 3: Token Exchange & Data Access
-    Client->>AuthServer: Exchange code for access token
-    AuthServer->>Client: Return access token (with scopes)
-    Client->>DataProvider: Request data with access token
-    DataProvider->>AuthServer: Validate token
-    AuthServer->>DataProvider: Token valid (scopes confirmed)
-    DataProvider-->>AuditLog: Log data access
-    DataProvider->>Client: Return customer data
-    Client->>Customer: Service delivered
-
-    Note over Customer,AuditLog: Phase 4: Ongoing Consent Management
-    Customer->>AuthServer: Access consent portal (requires re-auth)
-    Customer->>AuthServer: Revoke/modify consent
-    AuthServer->>AuthServer: Revoke tokens
-    AuthServer-->>AuditLog: Log consent change
-```
-
-
 ### Übersicht existierender Consent-Flow-Modelle
 
 #### App-to-App Redirect Flow (UK Standard)
@@ -870,7 +822,7 @@ sequenceDiagram
     AuthServer->>AuthServer: Generate authorization code
     AuthServer-->>AuditLog: Log authorization decision with approved scopes
 
-    Note over Customer,AuditLog: Phase 5: Token Exchange
+    Note over Customer,AuditLog: Phase 5: Authorization Code Exchange
     AuthServer->>UserAgent: Redirect with authorization code + state
     UserAgent->>Client: Deliver authorization code
     Client->>AuthServer: POST /token (via mTLS)
