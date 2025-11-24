@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>OBP Interactive Demo</title>
+        <title>OBP Interactive Demo - 13-Step Process</title>
         <style>
             * {
                 margin: 0;
@@ -43,6 +43,22 @@
                 margin: 10px;
                 font-size: 16px;
                 cursor: pointer;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+
+            button:hover {
+                background: #0056b3;
+            }
+
+            button.secondary {
+                background: #6c757d;
+            }
+
+            button.secondary:hover {
+                background: #5a6268;
             }
 
             .splits-container {
@@ -57,6 +73,7 @@
                 border: 1px solid #ccc;
                 padding: 15px;
                 overflow-y: auto;
+                background: white;
             }
 
             .split h3 {
@@ -65,6 +82,29 @@
                 top: 0;
                 background: white;
                 padding-bottom: 10px;
+                z-index: 10;
+            }
+
+            .progress-bar {
+                background: #f0f0f0;
+                height: 30px;
+                border-radius: 15px;
+                margin-bottom: 20px;
+                overflow: hidden;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #28a745, #20c997);
+                transition: width 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
             }
 
             form {
@@ -79,9 +119,17 @@
             }
 
             input,
-            select {
+            select,
+            textarea {
                 padding: 8px;
                 font-size: 14px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+
+            textarea {
+                min-height: 80px;
+                font-family: Arial, sans-serif;
             }
 
             pre {
@@ -91,6 +139,8 @@
                 font-size: 12px;
                 white-space: pre-wrap;
                 word-wrap: break-word;
+                border-radius: 4px;
+                border: 1px solid #ddd;
             }
 
             .log-entry {
@@ -107,6 +157,8 @@
 
             .button-container {
                 margin-top: 20px;
+                display: flex;
+                gap: 10px;
             }
 
             .success-message {
@@ -117,240 +169,867 @@
                 margin-bottom: 20px;
             }
 
+            .info-message {
+                padding: 15px;
+                background: #d1ecf1;
+                border: 1px solid #bee5eb;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+
+            .warning-message {
+                padding: 15px;
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+
             .sequence-diagram {
                 font-family: monospace;
                 font-size: 11px;
                 line-height: 1.6;
             }
 
-            .sequence-phase {
-                margin: 15px 0;
-                padding: 10px;
+            .sequence-step {
+                margin: 8px 0;
+                padding: 8px;
                 background: #f8f9fa;
                 border-left: 3px solid #ddd;
                 opacity: 0.3;
-                transition:
-                    opacity 0.3s,
-                    border-color 0.3s;
+                transition: opacity 0.3s, border-color 0.3s, background 0.3s;
             }
 
-            .sequence-phase.active {
+            .sequence-step.active {
                 opacity: 1;
                 border-left-color: #28a745;
                 background: #e8f5e9;
             }
 
-            .sequence-phase.completed {
+            .sequence-step.completed {
                 opacity: 0.7;
                 border-left-color: #6c757d;
             }
 
-            .phase-title {
+            .step-number {
                 font-weight: bold;
-                margin-bottom: 8px;
                 color: #333;
+                display: inline-block;
+                min-width: 70px;
             }
 
-            .sequence-step {
-                margin: 5px 0;
-                padding-left: 15px;
-            }
-
-            .actor {
-                font-weight: bold;
+            .step-name {
                 color: #0066cc;
+                font-weight: bold;
             }
 
-            .arrow {
-                color: #666;
-                margin: 0 5px;
-            }
-
-            .note {
-                font-style: italic;
-                color: #666;
+            .step-detail {
                 font-size: 10px;
-                padding-left: 20px;
+                color: #666;
+                font-style: italic;
+                margin-top: 4px;
+            }
+
+            .product-option {
+                padding: 15px;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                margin: 10px 0;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .product-option:hover {
+                border-color: #007bff;
+                background: #f8f9fa;
+            }
+
+            .product-option.selected {
+                border-color: #28a745;
+                background: #e8f5e9;
+            }
+
+            .product-option input[type="checkbox"] {
+                margin-right: 10px;
+            }
+
+            .scope-list {
+                margin: 15px 0;
+            }
+
+            .scope-item {
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin: 8px 0;
+                background: #f8f9fa;
+            }
+
+            .scope-item input[type="checkbox"] {
+                margin-right: 10px;
+            }
+
+            .scope-justification {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
+                font-style: italic;
+            }
+
+            .token-display {
+                background: #e8f5e9;
+                padding: 15px;
+                border-radius: 4px;
+                border: 2px solid #28a745;
+                margin: 15px 0;
+                word-break: break-all;
+            }
+
+            .data-block-indicator {
+                display: inline-block;
+                padding: 5px 10px;
+                background: #007bff;
+                color: white;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-left: 10px;
+            }
+
+            .contract-box {
+                border: 2px solid #ddd;
+                padding: 15px;
+                margin: 15px 0;
+                max-height: 200px;
+                overflow-y: auto;
+                background: #f8f9fa;
+                border-radius: 4px;
+            }
+
+            .signature-pad {
+                border: 2px dashed #ddd;
+                padding: 20px;
+                text-align: center;
+                background: #f8f9fa;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .signature-pad:hover {
+                border-color: #007bff;
+                background: #e8f5e9;
+            }
+
+            .check-result {
+                padding: 10px;
+                margin: 5px 0;
+                border-radius: 4px;
+            }
+
+            .check-result.pass {
+                background: #d4edda;
+                border: 1px solid #c3e6cb;
+            }
+
+            .check-result.review {
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+            }
+
+            .check-result.fail {
+                background: #f8d7da;
+                border: 1px solid #f5c6cb;
             }
         </style>
     </head>
     <body>
-        <!-- Page 2: Demo Scenario Selection -->
-        <div id="page2" class="page active">
+        <!-- Progress Bar (shown on all pages except start pages) -->
+        <div id="progressBar" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">
+                    Step 0 of 13
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 1: Welcome -->
+        <div id="pageWelcome" class="page active">
             <div class="center-page">
-                <h1>OBP Interactive Demo</h1>
-                <h2>Wählen Sie ein Demo-Szenario</h2>
+                <h1>OBP Interactive Demo - 13-Step OAuth Process</h1>
+                <div class="info-message">
+                    <h3>Welcome to the Interactive Demo</h3>
+                    <p>This demo showcases the complete 13-step customer onboarding process with OAuth 2.0 integration:</p>
+                    <ul>
+                        <li><strong>Steps 1-2:</strong> Pre-authorization (Initialization & Product Selection)</li>
+                        <li><strong>Steps 2a-2c:</strong> OAuth Flow (Authentication → Consent → Token)</li>
+                        <li><strong>Steps 3-10:</strong> Resource Access (All data collection with Bearer token)</li>
+                    </ul>
+                    <p style="margin-top: 15px;">You'll see how a customer opens an account at Bank B while securely sharing their existing data from Bank A using OAuth 2.0.</p>
+                </div>
+                <button onclick="showPage('pageScenario')">Start Demo</button>
+            </div>
+        </div>
+
+        <!-- Page 2: Scenario Selection -->
+        <div id="pageScenario" class="page">
+            <div class="center-page">
+                <h1>Select Demo Scenario</h1>
+                <h2>Choose the type of institution</h2>
                 <button onclick="selectScenario('bank')">
-                    Demo: Banküberweisung
+                    Bank Transfer Scenario<br>
+                    <small style="font-size: 12px;">Opening account at Bank B using data from Bank A</small>
                 </button>
                 <button onclick="selectScenario('insurance')">
-                    Demo: Lebensversicherung
+                    Insurance Scenario<br>
+                    <small style="font-size: 12px;">Applying for insurance using bank data</small>
                 </button>
             </div>
         </div>
 
-        <!-- Page 3: Bank A Registration -->
-        <div id="page3" class="page">
+        <!-- Page 3: Setup - Bank A Registration (Background) -->
+        <div id="pageSetup" class="page">
             <div class="splits-container">
-                <div class="split" id="split1-page3">
-                    <h3>
-                        Eingabe:
-                        <span id="bankALabel">Bank A</span> Registrierung
-                    </h3>
-                    <form id="bankAForm">
-                        <label>Vorname:</label>
-                        <input type="text" id="firstName" required />
+                <div class="split">
+                    <h3>Setup: <span id="sourceLabel">Bank A</span> Customer Data</h3>
+                    <div class="info-message">
+                        <p>First, we need to simulate that you already have an account at <span id="sourceLabel2">Bank A</span>.</p>
+                        <p>This is background setup - the main 13-step process will start after this.</p>
+                    </div>
+                    <form id="setupForm">
+                        <label>First Name:</label>
+                        <input type="text" id="setupFirstName" required />
 
-                        <label>Nachname:</label>
-                        <input type="text" id="lastName" required />
+                        <label>Last Name:</label>
+                        <input type="text" id="setupLastName" required />
 
-                        <label>Geburtsdatum:</label>
-                        <input type="date" id="birthDate" required />
+                        <label>Date of Birth:</label>
+                        <input type="date" id="setupBirthDate" required />
 
-                        <label>Nationalität:</label>
-                        <input
-                            type="text"
-                            id="nationality"
-                            value="CH"
-                            required
-                        />
+                        <label>Nationality:</label>
+                        <input type="text" id="setupNationality" value="CH" required />
 
-                        <label>Straße:</label>
-                        <input type="text" id="street" required />
+                        <label>Street:</label>
+                        <input type="text" id="setupStreet" required />
 
-                        <label>Hausnummer:</label>
-                        <input type="text" id="houseNumber" required />
+                        <label>House Number:</label>
+                        <input type="text" id="setupHouseNumber" required />
 
-                        <label>PLZ:</label>
-                        <input type="text" id="postalCode" required />
+                        <label>Postal Code:</label>
+                        <input type="text" id="setupPostalCode" required />
 
-                        <label>Ort:</label>
-                        <input type="text" id="city" required />
+                        <label>City:</label>
+                        <input type="text" id="setupCity" required />
 
-                        <label>Land:</label>
-                        <input type="text" id="country" value="CH" required />
+                        <label>Country:</label>
+                        <input type="text" id="setupCountry" value="CH" required />
 
-                        <label>E-Mail:</label>
-                        <input type="email" id="email" required />
+                        <label>Email:</label>
+                        <input type="email" id="setupEmail" required />
 
-                        <label>Telefon:</label>
-                        <input type="tel" id="phone" required />
+                        <label>Phone:</label>
+                        <input type="tel" id="setupPhone" required />
 
                         <div class="button-container">
-                            <button type="button" onclick="fillExampleData()">
-                                Beispieldaten ausfüllen
-                            </button>
-                            <button type="submit">Registrieren</button>
+                            <button type="button" onclick="fillSetupData()">Fill Example Data</button>
+                            <button type="submit">Save Data</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="split" id="split2-page3">
+                <div class="split">
                     <h3>Request & Response</h3>
-                    <div id="requestResponse3"></div>
+                    <div id="requestResponseSetup"></div>
                 </div>
 
-                <div class="split" id="split3-page3">
-                    <h3>OAuth/Consent Flow</h3>
-                    <div id="sequenceDiagram3" class="sequence-diagram"></div>
+                <div class="split">
+                    <h3>Process Flow</h3>
+                    <div id="sequenceDiagramSetup" class="sequence-diagram"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Page 4: Data Transfer Request -->
-        <div id="page4" class="page">
+        <!-- Page 4: Stufe 1 - Initialization -->
+        <div id="pageStep1" class="page">
             <div class="splits-container">
-                <div class="split" id="split1-page4">
-                    <h3>
-                        Eingabe:
-                        <span id="bankBLabel">Bank B</span> Datenanfrage
-                    </h3>
-                    <p>
-                        Bitte geben Sie Ihre Basisdaten ein, um Ihre Daten
-                        abzurufen:
-                    </p>
-                    <form id="bankBForm">
-                        <label>Vorname:</label>
-                        <input type="text" id="firstName2" required />
+                <div class="split">
+                    <h3>Step 1: Initialization <span class="data-block-indicator">Setup Block</span></h3>
+                    <div class="info-message">
+                        <h4>Process Initialization</h4>
+                        <p>Starting the customer onboarding process at <span id="targetLabel1">Bank B</span>.</p>
+                        <p>This creates a new process instance and generates a unique processId for tracking.</p>
+                    </div>
+                    <form id="step1Form">
+                        <label>Customer initiates:</label>
+                        <select id="step1Service" required>
+                            <option value="accountOpening">Account Opening</option>
+                            <option value="loanApplication">Loan Application</option>
+                            <option value="investmentAccount">Investment Account</option>
+                        </select>
 
-                        <label>Nachname:</label>
-                        <input type="text" id="lastName2" required />
-
-                        <label>Geburtsdatum:</label>
-                        <input type="date" id="birthDate2" required />
-
-                        <label>Nationalität:</label>
-                        <input
-                            type="text"
-                            id="nationality2"
-                            value="CH"
-                            required
-                        />
+                        <label>Requesting Institution:</label>
+                        <input type="text" id="step1Institution" readonly />
 
                         <div class="button-container">
-                            <button type="submit">Daten anfordern</button>
+                            <button type="submit">Initialize Process</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="split" id="split2-page4">
+                <div class="split">
                     <h3>Request & Response</h3>
-                    <div id="requestResponse4"></div>
+                    <div id="requestResponseStep1"></div>
                 </div>
 
-                <div class="split" id="split3-page4">
-                    <h3>OAuth/Consent Flow</h3>
-                    <div id="sequenceDiagram4" class="sequence-diagram"></div>
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep1" class="sequence-diagram"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Page 5: Data Retrieval -->
-        <div id="page5" class="page">
+        <!-- Page 5: Stufe 2 - Product Selection -->
+        <div id="pageStep2" class="page">
             <div class="splits-container">
-                <div class="split" id="split1-page5">
-                    <h3>Status</h3>
-                    <div id="retrievalStatus">
-                        <p>Daten werden abgerufen...</p>
+                <div class="split">
+                    <h3>Step 2: Product Selection <span class="data-block-indicator">Setup Block</span></h3>
+                    <div class="info-message">
+                        <h4>Product Selection</h4>
+                        <p>Select the products you want to apply for. This determines which data scopes will be required.</p>
+                    </div>
+                    <form id="step2Form">
+                        <h4>Available Products:</h4>
+
+                        <div class="product-option" onclick="toggleProduct('basicAccount')">
+                            <input type="checkbox" id="productBasicAccount" />
+                            <label for="productBasicAccount" style="cursor: pointer;">
+                                <strong>Basic Current Account</strong><br>
+                                <small>Standard checking account with debit card</small>
+                            </label>
+                        </div>
+
+                        <div class="product-option" onclick="toggleProduct('premiumAccount')">
+                            <input type="checkbox" id="productPremiumAccount" />
+                            <label for="productPremiumAccount" style="cursor: pointer;">
+                                <strong>Premium Account</strong><br>
+                                <small>Enhanced account with benefits (requires financial profile)</small>
+                            </label>
+                        </div>
+
+                        <div class="product-option" onclick="toggleProduct('creditCard')">
+                            <input type="checkbox" id="productCreditCard" />
+                            <label for="productCreditCard" style="cursor: pointer;">
+                                <strong>Credit Card</strong><br>
+                                <small>Credit card with limit assessment (requires financial profile)</small>
+                            </label>
+                        </div>
+
+                        <div class="product-option" onclick="toggleProduct('investment')">
+                            <input type="checkbox" id="productInvestment" />
+                            <label for="productInvestment" style="cursor: pointer;">
+                                <strong>Investment Account</strong><br>
+                                <small>Trading and investment services (requires MiFID II assessment)</small>
+                            </label>
+                        </div>
+
+                        <div id="scopePreview" style="display: none; margin-top: 20px;">
+                            <h4>Required Data Scopes:</h4>
+                            <div id="scopeList"></div>
+                        </div>
+
+                        <div class="button-container">
+                            <button type="submit">Confirm Product Selection</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep2"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep2" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 6: OAuth Step 2a - Authentication -->
+        <div id="pageStep2a" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 2a: Authentication <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <div class="info-message">
+                        <h4>Customer Authentication</h4>
+                        <p>Authenticate yourself at <span id="sourceLabel3">Bank A</span> to access your data.</p>
+                        <p>This is where you prove your identity before granting consent.</p>
+                    </div>
+                    <form id="step2aForm">
+                        <h4>Authentication Method:</h4>
+
+                        <label>
+                            <input type="radio" name="authMethod" value="swisseid" checked />
+                            Swiss E-ID (Recommended)
+                        </label>
+
+                        <label>
+                            <input type="radio" name="authMethod" value="credentials" />
+                            Username & Password + 2FA
+                        </label>
+
+                        <label>
+                            <input type="radio" name="authMethod" value="biometric" />
+                            Biometric (Face ID / Fingerprint)
+                        </label>
+
+                        <div id="credentialsFields" style="display: none; margin-top: 15px;">
+                            <label>Username:</label>
+                            <input type="text" id="authUsername" />
+
+                            <label>Password:</label>
+                            <input type="password" id="authPassword" />
+
+                            <label>2FA Code:</label>
+                            <input type="text" id="auth2FA" placeholder="123456" />
+                        </div>
+
+                        <div class="button-container">
+                            <button type="submit">Authenticate</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep2a"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep2a" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 7: OAuth Step 2b - Consent -->
+        <div id="pageStep2b" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 2b: Consent Granting <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <div class="info-message">
+                        <h4>Data Sharing Authorization</h4>
+                        <p><span id="targetLabel2">Bank B</span> is requesting access to your data at <span id="sourceLabel4">Bank A</span>.</p>
+                        <p>Review and authorize the following data scopes:</p>
+                    </div>
+                    <form id="step2bForm">
+                        <div class="scope-list" id="consentScopeList">
+                            <!-- Scopes will be dynamically added here -->
+                        </div>
+
+                        <div class="info-message" style="margin-top: 20px;">
+                            <p><strong>Your rights:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>You can revoke this consent at any time</li>
+                                <li>Data will only be accessed for the stated purpose</li>
+                                <li>All data access is logged and auditable</li>
+                            </ul>
+                        </div>
+
+                        <div class="button-container">
+                            <button type="submit">Authorize All Scopes</button>
+                            <button type="button" class="secondary" onclick="denyConsent()">Deny</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep2b"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep2b" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 8: OAuth Step 2c - Token Exchange -->
+        <div id="pageStep2c" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 2c: Token Exchange <span class="data-block-indicator">OAuth Flow</span></h3>
+                    <div class="info-message">
+                        <h4>Access Token Issuance</h4>
+                        <p>Exchanging authorization code for access token...</p>
+                    </div>
+                    <div id="tokenStatus">
+                        <p>Processing token exchange...</p>
                     </div>
                 </div>
 
-                <div class="split" id="split2-page5">
+                <div class="split">
                     <h3>Request & Response</h3>
-                    <div id="requestResponse5"></div>
+                    <div id="requestResponseStep2c"></div>
                 </div>
 
-                <div class="split" id="split3-page5">
-                    <h3>OAuth/Consent Flow</h3>
-                    <div id="sequenceDiagram5" class="sequence-diagram"></div>
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep2c" class="sequence-diagram"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Page 6: Success -->
-        <div id="page6" class="page">
+        <!-- Page 9: Stufe 3 - Self-Declaration -->
+        <div id="pageStep3" class="page">
             <div class="splits-container">
-                <div class="split" id="split1-page6">
-                    <h3>Erfolg!</h3>
+                <div class="split">
+                    <h3>Step 3: Self-Declaration <span class="data-block-indicator">Collection Block</span></h3>
+                    <div class="info-message">
+                        <h4>Regulatory Self-Declaration</h4>
+                        <p>Please provide required regulatory information.</p>
+                    </div>
+                    <form id="step3Form">
+                        <label>Are you a US person for tax purposes (FATCA)?</label>
+                        <select id="step3FatcaStatus" required>
+                            <option value="">-- Select --</option>
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+
+                        <label>Tax Residency (Country):</label>
+                        <input type="text" id="step3TaxResidency" value="CH" required />
+
+                        <label>Tax Identification Number (TIN):</label>
+                        <input type="text" id="step3Tin" placeholder="Optional" />
+
+                        <label>Source of Funds:</label>
+                        <select id="step3SourceOfFunds" required>
+                            <option value="">-- Select --</option>
+                            <option value="employment">Employment Income</option>
+                            <option value="business">Business Income</option>
+                            <option value="inheritance">Inheritance</option>
+                            <option value="savings">Savings</option>
+                            <option value="investment">Investment Returns</option>
+                        </select>
+
+                        <label>Expected Account Activity:</label>
+                        <select id="step3ExpectedActivity" required>
+                            <option value="">-- Select --</option>
+                            <option value="low">Low (< 10 transactions/month)</option>
+                            <option value="medium">Medium (10-50 transactions/month)</option>
+                            <option value="high">High (> 50 transactions/month)</option>
+                        </select>
+
+                        <label>Are you a Politically Exposed Person (PEP)?</label>
+                        <select id="step3PepStatus" required>
+                            <option value="">-- Select --</option>
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                            <option value="family">Family member of PEP</option>
+                        </select>
+
+                        <div class="button-container">
+                            <button type="submit">Submit Self-Declaration</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep3"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep3" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 10: Stufe 4 - Basic Data Collection -->
+        <div id="pageStep4" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 4: Basic Data Collection <span class="data-block-indicator">Collection Block</span></h3>
                     <div class="success-message">
-                        <h2>Registrierung erfolgreich!</h2>
-                        <p>Ihre Daten wurden erfolgreich übertragen.</p>
+                        <h4>Retrieving Your Data</h4>
+                        <p>We're now accessing your existing data from <span id="sourceLabel5">Bank A</span> using the authorized token.</p>
+                        <p>This includes: Basic identity, Address, and Contact information.</p>
                     </div>
-                    <h4>Zusammenfassung:</h4>
-                    <div id="summary"></div>
+                    <div id="step4Status">
+                        <p>Retrieving data...</p>
+                    </div>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep4"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep4" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 11: Stufe 5 - Financial Profile -->
+        <div id="pageStep5" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 5: Financial Profile <span class="data-block-indicator">Collection Block</span></h3>
+                    <div class="info-message">
+                        <h4>MiFID II Financial Profile</h4>
+                        <p>Required for investment products and suitability assessment.</p>
+                    </div>
+                    <form id="step5Form">
+                        <label>Annual Income (CHF):</label>
+                        <select id="step5Income" required>
+                            <option value="">-- Select --</option>
+                            <option value="0-50000">Under 50,000</option>
+                            <option value="50000-100000">50,000 - 100,000</option>
+                            <option value="100000-200000">100,000 - 200,000</option>
+                            <option value="200000+">Over 200,000</option>
+                        </select>
+
+                        <label>Net Worth (CHF):</label>
+                        <select id="step5NetWorth" required>
+                            <option value="">-- Select --</option>
+                            <option value="0-100000">Under 100,000</option>
+                            <option value="100000-500000">100,000 - 500,000</option>
+                            <option value="500000-1000000">500,000 - 1,000,000</option>
+                            <option value="1000000+">Over 1,000,000</option>
+                        </select>
+
+                        <label>Employment Status:</label>
+                        <select id="step5Employment" required>
+                            <option value="">-- Select --</option>
+                            <option value="employed">Employed</option>
+                            <option value="self-employed">Self-Employed</option>
+                            <option value="retired">Retired</option>
+                            <option value="student">Student</option>
+                            <option value="unemployed">Unemployed</option>
+                        </select>
+
+                        <label>Investment Experience:</label>
+                        <select id="step5InvestmentExp" required>
+                            <option value="">-- Select --</option>
+                            <option value="none">None</option>
+                            <option value="limited">Limited (< 2 years)</option>
+                            <option value="moderate">Moderate (2-5 years)</option>
+                            <option value="extensive">Extensive (> 5 years)</option>
+                        </select>
+
+                        <label>Risk Tolerance:</label>
+                        <select id="step5RiskTolerance" required>
+                            <option value="">-- Select --</option>
+                            <option value="low">Low (Capital preservation)</option>
+                            <option value="medium">Medium (Balanced growth)</option>
+                            <option value="high">High (Aggressive growth)</option>
+                        </select>
+
+                        <label>Investment Objectives:</label>
+                        <textarea id="step5Objectives" placeholder="Describe your investment goals..."></textarea>
+
+                        <div class="button-container">
+                            <button type="submit">Submit Financial Profile</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep5"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep5" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 12: Stufe 6 - Identification -->
+        <div id="pageStep6" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 6: Identification <span class="data-block-indicator">Verification Block</span></h3>
+                    <div class="info-message">
+                        <h4>Identity Verification</h4>
+                        <p>Upload or scan your identification document.</p>
+                    </div>
+                    <form id="step6Form">
+                        <label>Document Type:</label>
+                        <select id="step6DocType" required>
+                            <option value="">-- Select --</option>
+                            <option value="passport">Passport</option>
+                            <option value="id-card">National ID Card</option>
+                            <option value="driving-license">Driving License</option>
+                        </select>
+
+                        <label>Document Number:</label>
+                        <input type="text" id="step6DocNumber" required />
+
+                        <label>Issue Date:</label>
+                        <input type="date" id="step6IssueDate" required />
+
+                        <label>Expiry Date:</label>
+                        <input type="date" id="step6ExpiryDate" required />
+
+                        <label>Issuing Country:</label>
+                        <input type="text" id="step6IssuingCountry" value="CH" required />
+
+                        <div class="info-message" style="margin-top: 20px;">
+                            <h4>Document Upload (Simulated)</h4>
+                            <div class="signature-pad" onclick="simulateDocUpload()">
+                                <p id="docUploadStatus">Click here to simulate document scan</p>
+                                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                    In production: NFC chip reading, MRZ extraction, liveness check
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="button-container">
+                            <button type="submit" id="step6SubmitBtn" disabled>Submit Identification</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep6"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep6" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 13: Stufe 7 - Background Checks -->
+        <div id="pageStep7" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Step 7: Background Checks <span class="data-block-indicator">Verification Block</span></h3>
+                    <div class="info-message">
+                        <h4>Automated Background Verification</h4>
+                        <p>Running required compliance checks...</p>
+                    </div>
+                    <div id="step7Status">
+                        <p>Initiating background checks...</p>
+                    </div>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep7"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep7" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 14: Stufe 8-9 - Contract & Signature -->
+        <div id="pageStep89" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Steps 8-9: Contract & Signature <span class="data-block-indicator">Finalization Block</span></h3>
+                    <div class="info-message">
+                        <h4>Contract Acceptance</h4>
+                        <p>Please review and sign the following documents.</p>
+                    </div>
+                    <form id="step89Form">
+                        <h4>General Terms & Conditions (AGB)</h4>
+                        <div class="contract-box">
+                            <h5>Terms of Service</h5>
+                            <p>1. Account Terms: This agreement governs your account relationship...</p>
+                            <p>2. Services: We provide banking services including...</p>
+                            <p>3. Fees: Account maintenance fees apply as per fee schedule...</p>
+                            <p>4. Privacy: Your data will be processed according to...</p>
+                            <p>5. Liability: The bank's liability is limited to...</p>
+                            <p>[... Full terms would be displayed here ...]</p>
+                        </div>
+                        <label>
+                            <input type="checkbox" id="agreeAGB" required />
+                            I have read and agree to the General Terms & Conditions
+                        </label>
+
+                        <h4 style="margin-top: 20px;">Data Processing Agreement (DAS)</h4>
+                        <div class="contract-box">
+                            <h5>Data Processing Terms</h5>
+                            <p>1. Data Controller: <span id="targetLabel3">Bank B</span> acts as data controller...</p>
+                            <p>2. Data Categories: We process the following data categories...</p>
+                            <p>3. Processing Purpose: Your data is processed for...</p>
+                            <p>4. Your Rights: You have the right to access, rectify, erase...</p>
+                            <p>5. Data Retention: Data will be retained for...</p>
+                            <p>[... Full data processing terms ...]</p>
+                        </div>
+                        <label>
+                            <input type="checkbox" id="agreeDAS" required />
+                            I have read and agree to the Data Processing Agreement
+                        </label>
+
+                        <div id="productContracts">
+                            <!-- Product-specific contracts will be added here -->
+                        </div>
+
+                        <div class="info-message" style="margin-top: 20px;">
+                            <h4>Qualified Electronic Signature (QES)</h4>
+                            <div class="signature-pad" onclick="simulateSignature()">
+                                <p id="signatureStatus">Click here to sign with QES</p>
+                                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                    In production: Swiss Mobile ID or qualified signature device
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="button-container">
+                            <button type="submit" id="step89SubmitBtn" disabled>Submit Signed Contracts</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="split">
+                    <h3>Request & Response</h3>
+                    <div id="requestResponseStep89"></div>
+                </div>
+
+                <div class="split">
+                    <h3>13-Step Process Flow</h3>
+                    <div id="sequenceDiagramStep89" class="sequence-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 15: Success -->
+        <div id="pageSuccess" class="page">
+            <div class="splits-container">
+                <div class="split">
+                    <h3>Process Complete!</h3>
+                    <div class="success-message">
+                        <h2>Account Opening Successful!</h2>
+                        <p>Your account at <span id="targetLabel4">Bank B</span> has been successfully created.</p>
+                        <p>All 13 steps of the OAuth-integrated onboarding process have been completed.</p>
+                    </div>
+                    <h4>Process Summary:</h4>
+                    <div id="successSummary"></div>
                     <div class="button-container">
-                        <button onclick="resetDemo()">Demo neu starten</button>
+                        <button onclick="resetDemo()">Start New Demo</button>
                     </div>
                 </div>
 
-                <div class="split" id="split2-page6">
-                    <h3>Datenvergleich</h3>
-                    <div id="dataComparison"></div>
+                <div class="split">
+                    <h3>Complete Data Collected</h3>
+                    <div id="dataDisplay"></div>
                 </div>
 
-                <div class="split" id="split3-page6">
-                    <h3>Vollständiger Ablauf</h3>
-                    <div id="backgroundLogs6"></div>
+                <div class="split">
+                    <h3>Full Audit Trail</h3>
+                    <div id="auditTrail"></div>
                 </div>
             </div>
         </div>
@@ -358,642 +1037,1549 @@
         <script>
             // Global state
             let state = {
-                dataMode: "custom", // 'demo' or 'custom'
-                scenario: null, // 'bank' or 'insurance'
-                customerData: null,
+                scenario: null,
+                institutionName: '',
+                currentStep: 0,
+                processId: null,
+                selectedProducts: [],
+                requiredScopes: [],
+                authorizationCode: null,
+                accessToken: null,
+                refreshToken: null,
+                customerData: {},
                 sharedCustomerHash: null,
-                consentId: null,
-                consentToken: null,
-                retrievedData: null,
-                allLogs: [],
+                auditLog: [],
+                stepData: {}
             };
 
-            // Sequence diagram structure
-            const sequenceDiagramHTML = `
-            <div class="sequence-phase" id="phase1">
-                <div class="phase-title">Phase 1: Service Initiation</div>
-                <div class="sequence-step"><span class="actor">Customer</span> <span class="arrow">→</span> <span class="actor">User Agent</span>: Request service (e.g., account opening)</div>
-                <div class="sequence-step"><span class="actor">User Agent</span> <span class="arrow">→</span> <span class="actor">Client</span>: Navigate to service</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">User Agent</span>: Explain data requirements & purpose</div>
-                <div class="sequence-step"><span class="actor">Customer</span> <span class="arrow">→</span> <span class="actor">Client</span>: Agree to proceed with data sharing</div>
-            </div>
+            // Configuration
+            const API_BASE = 'http://localhost:3000';
 
-            <div class="sequence-phase" id="phase2">
-                <div class="phase-title">Phase 2: Authorization Request (PAR)</div>
-                <div class="sequence-step"><span class="actor">Client</span>: Generate PKCE code_verifier & code_challenge</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: POST /par (Pushed Authorization Request)</div>
-                <div class="note">client_id, scope, code_challenge, redirect_uri, state</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Validate client credentials & request</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Audit Log</span>: Log authorization request</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Client</span>: Return request_uri (60s expiry)</div>
-            </div>
+            // Demo user data for setup
+            const DEMO_USER = {
+                firstName: 'Maria',
+                lastName: 'Schmidt',
+                birthDate: '1990-05-20',
+                nationality: 'CH',
+                street: 'Bahnhofstrasse',
+                houseNumber: '42',
+                postalCode: '8001',
+                city: 'Zürich',
+                country: 'CH',
+                email: 'maria.schmidt@example.ch',
+                phone: '+41791234567'
+            };
 
-            <div class="sequence-phase" id="phase3">
-                <div class="phase-title">Phase 3: Authentication</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">User Agent</span>: Redirect to authorization endpoint</div>
-                <div class="sequence-step"><span class="actor">User Agent</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: GET /authorize?request_uri=...</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Customer</span>: Present authentication challenge</div>
-                <div class="sequence-step"><span class="actor">Customer</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: Primary factor (password/PIN/biometric)</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Customer</span>: Request secondary factor</div>
-                <div class="sequence-step"><span class="actor">Customer</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: Provide 2FA (SMS/App/Hardware token)</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Validate authentication factors</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Audit Log</span>: Log authentication event</div>
-            </div>
+            // Scope definitions with justifications
+            const SCOPE_DEFINITIONS = {
+                'identity:read': {
+                    label: 'Basic Identity',
+                    description: 'Name, date of birth, nationality',
+                    justification: 'Required for all account types to identify you',
+                    required: true
+                },
+                'address:read': {
+                    label: 'Address Information',
+                    description: 'Residential address',
+                    justification: 'Required for correspondence and regulatory compliance',
+                    required: true
+                },
+                'contact:read': {
+                    label: 'Contact Information',
+                    description: 'Email address and phone number',
+                    justification: 'Required for account notifications and security',
+                    required: true
+                },
+                'kyc:selfDeclaration:write': {
+                    label: 'Self-Declaration Data',
+                    description: 'Tax status, source of funds, PEP status',
+                    justification: 'Required for KYC and AML compliance',
+                    required: true
+                },
+                'identification:read_enhanced': {
+                    label: 'Enhanced Identification',
+                    description: 'ID document data with MRZ and NFC',
+                    justification: 'Required for identity verification',
+                    required: true
+                },
+                'kyc:backgroundChecks:write': {
+                    label: 'Background Check Authorization',
+                    description: 'Permission to run compliance checks',
+                    justification: 'Required for regulatory compliance (PEP, sanctions)',
+                    required: true
+                },
+                'contract:write_detailed': {
+                    label: 'Contract Management',
+                    description: 'Contract acceptance and signature',
+                    justification: 'Required to finalize account opening',
+                    required: true
+                },
+                'financial_profile:read': {
+                    label: 'Financial Profile',
+                    description: 'Income, assets, investment experience',
+                    justification: 'Required for MiFID II compliance for investment products',
+                    required: false
+                }
+            };
 
-            <div class="sequence-phase" id="phase4">
-                <div class="phase-title">Phase 4: Authorization (Scope Approval)</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Check existing authorizations for requested scopes</div>
-                <div class="note">May skip consent screen if previously authorized</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Customer</span>: Present scope authorization screen</div>
-                <div class="note">Display requested scopes: identity:read, contact:read, kyc:basic:read with purpose & retention info</div>
-                <div class="sequence-step"><span class="actor">Customer</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: Authorize requested scopes</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Generate authorization code</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Audit Log</span>: Log authorization decision with approved scopes</div>
-            </div>
+            // 13-Step sequence diagram HTML
+            function get13StepDiagramHTML() {
+                return `
+                    <div class="sequence-step" data-step="1">
+                        <span class="step-number">Step 1:</span>
+                        <span class="step-name">Initialization</span>
+                        <div class="step-detail">POST /process/initialize - No token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="2">
+                        <span class="step-number">Step 2:</span>
+                        <span class="step-name">Product Selection</span>
+                        <div class="step-detail">POST /process/product-selection - Determines required scopes</div>
+                    </div>
+                    <div class="sequence-step" data-step="2a">
+                        <span class="step-number">Step 2a:</span>
+                        <span class="step-name">Authentication</span>
+                        <div class="step-detail">POST /oauth/authenticate - Customer authenticates</div>
+                    </div>
+                    <div class="sequence-step" data-step="2b">
+                        <span class="step-number">Step 2b:</span>
+                        <span class="step-name">Consent Granting</span>
+                        <div class="step-detail">POST /oauth/authorize/consent - Customer authorizes scopes</div>
+                    </div>
+                    <div class="sequence-step" data-step="2c">
+                        <span class="step-number">Step 2c:</span>
+                        <span class="step-name">Token Exchange</span>
+                        <div class="step-detail">POST /oauth/token - Authorization code → Bearer token</div>
+                    </div>
+                    <div class="sequence-step" data-step="3">
+                        <span class="step-number">Step 3:</span>
+                        <span class="step-name">Self-Declaration</span>
+                        <div class="step-detail">POST /process/self-declaration - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="4">
+                        <span class="step-number">Step 4:</span>
+                        <span class="step-name">Basic Data</span>
+                        <div class="step-detail">POST /customer/basic, /address, /contact - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="5">
+                        <span class="step-number">Step 5:</span>
+                        <span class="step-name">Financial Profile</span>
+                        <div class="step-detail">POST /customer/financial-profile - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="6">
+                        <span class="step-number">Step 6:</span>
+                        <span class="step-name">Identification</span>
+                        <div class="step-detail">POST /customer/identification - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="7">
+                        <span class="step-number">Step 7:</span>
+                        <span class="step-name">Background Checks</span>
+                        <div class="step-detail">POST /process/background-checks - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="8">
+                        <span class="step-number">Step 8-9:</span>
+                        <span class="step-name">Contract & Signature</span>
+                        <div class="step-detail">POST /process/contract-signature - Bearer token required</div>
+                    </div>
+                    <div class="sequence-step" data-step="10">
+                        <span class="step-number">Step 10:</span>
+                        <span class="step-name">Metadata & Completion</span>
+                        <div class="step-detail">Process complete - All data integrated</div>
+                    </div>
+                `;
+            }
 
-            <div class="sequence-phase" id="phase5">
-                <div class="phase-title">Phase 5: Token Exchange</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Client</span>: Redirect with authorization code + state</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: POST /token (via mTLS)</div>
-                <div class="note">grant_type=authorization_code, code=..., code_verifier=..., client credentials (mTLS cert)</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Verify mTLS certificate</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Validate PKCE code_verifier</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span>: Generate access token with authorized scopes</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Audit Log</span>: Log token issuance</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Client</span>: access_token + refresh_token + id_token</div>
-            </div>
-
-            <div class="sequence-phase" id="phase6">
-                <div class="phase-title">Phase 6: Resource Access</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">Resource Server</span>: GET /customer/data (Bearer access_token)</div>
-                <div class="sequence-step"><span class="actor">Resource Server</span> <span class="arrow">→</span> <span class="actor">Auth Server</span>: POST /introspect (validate token)</div>
-                <div class="sequence-step"><span class="actor">Auth Server</span> <span class="arrow">→</span> <span class="actor">Resource Server</span>: Token valid, scope: [identity:read, contact:read, kyc:basic:read]</div>
-                <div class="sequence-step"><span class="actor">Resource Server</span>: Apply scope-based access control</div>
-                <div class="sequence-step"><span class="actor">Resource Server</span>: Minimize data per approved scopes</div>
-                <div class="sequence-step"><span class="actor">Resource Server</span> <span class="arrow">→</span> <span class="actor">Audit Log</span>: Log data access with token & scope reference</div>
-                <div class="sequence-step"><span class="actor">Resource Server</span> <span class="arrow">→</span> <span class="actor">Client</span>: Return customer data (minimized per scope)</div>
-                <div class="sequence-step"><span class="actor">Client</span> <span class="arrow">→</span> <span class="actor">Customer</span>: Service delivered with authorized data</div>
-            </div>
-        `;
-
+            // Initialize sequence diagram on a page
             function initSequenceDiagram(pageId) {
-                const diagramElement = document.getElementById(
-                    `sequenceDiagram${pageId}`,
-                );
-                if (diagramElement) {
-                    diagramElement.innerHTML = sequenceDiagramHTML;
+                const element = document.getElementById(`sequenceDiagram${pageId}`);
+                if (element) {
+                    element.innerHTML = get13StepDiagramHTML();
                 }
             }
 
-            function highlightPhase(phaseId, status = "active") {
-                const allPhases = document.querySelectorAll(".sequence-phase");
-                allPhases.forEach((phase) => {
-                    if (phase.id === phaseId) {
-                        phase.classList.remove("active", "completed");
-                        phase.classList.add(status);
-                    } else if (phase.classList.contains("active")) {
-                        phase.classList.remove("active");
-                        phase.classList.add("completed");
+            // Highlight current step in sequence diagram
+            function highlightStep(step) {
+                const allSteps = document.querySelectorAll('.sequence-step');
+                allSteps.forEach(stepEl => {
+                    const stepNum = stepEl.getAttribute('data-step');
+                    if (stepNum === step) {
+                        stepEl.classList.add('active');
+                        stepEl.classList.remove('completed');
+                    } else if (isStepBefore(stepNum, step)) {
+                        stepEl.classList.add('completed');
+                        stepEl.classList.remove('active');
+                    } else {
+                        stepEl.classList.remove('active', 'completed');
                     }
                 });
             }
 
-            // Demo user data
-            const DEMO_USER = {
-                firstName: "Maria",
-                lastName: "Schmidt",
-                birthDate: "1990-05-20",
-                nationality: "CH",
-                street: "Bahnhofstrasse",
-                houseNumber: "42",
-                postalCode: "8001",
-                city: "Zürich",
-                country: "CH",
-                email: "maria.schmidt@example.ch",
-                phone: "+41791234567",
-            };
+            // Helper to determine if step A comes before step B
+            function isStepBefore(stepA, stepB) {
+                const order = ['1', '2', '2a', '2b', '2c', '3', '4', '5', '6', '7', '8', '10'];
+                return order.indexOf(stepA) < order.indexOf(stepB);
+            }
 
-            const API_BASE = "http://localhost:3000/v1";
+            // Update progress bar
+            function updateProgress(step, total = 13) {
+                const progressBar = document.getElementById('progressBar');
+                const progressFill = document.getElementById('progressFill');
+
+                if (step > 0) {
+                    progressBar.style.display = 'block';
+                    const percentage = (step / total) * 100;
+                    progressFill.style.width = percentage + '%';
+                    progressFill.textContent = `Step ${step} of ${total}`;
+                } else {
+                    progressBar.style.display = 'none';
+                }
+            }
 
             // Utility functions
             function showPage(pageId) {
-                document
-                    .querySelectorAll(".page")
-                    .forEach((p) => p.classList.remove("active"));
-                document.getElementById(pageId).classList.add("active");
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(pageId).classList.add('active');
+
+                // Initialize sequence diagram if exists
+                const pageNum = pageId.replace('page', '').replace('Step', '');
+                initSequenceDiagram(pageNum);
             }
 
-            function addLog(message, target = null) {
+            function addLog(action, details) {
                 const timestamp = new Date().toISOString();
-                const logEntry = {
+                state.auditLog.push({
                     timestamp,
-                    message,
-                };
-                state.allLogs.push(logEntry);
-
-                const logHtml = `
-                <div class="log-entry">
-                    <div class="log-timestamp">${timestamp}</div>
-                    <div>${message}</div>
-                </div>
-            `;
-
-                if (target) {
-                    const element = document.getElementById(target);
-                    if (element) {
-                        element.innerHTML += logHtml;
-                        element.scrollTop = element.scrollHeight;
-                    }
-                }
+                    action,
+                    details
+                });
             }
 
-            function displayRequestResponse(title, request, response, target) {
+            function displayRequestResponse(title, request, response, targetId) {
                 const html = `
-                <h4>${title}</h4>
-                <h5>Request:</h5>
-                <pre>${JSON.stringify(request, null, 2)}</pre>
-                <h5>Response:</h5>
-                <pre>${JSON.stringify(response, null, 2)}</pre>
-            `;
-                document.getElementById(target).innerHTML += html;
+                    <h4>${title}</h4>
+                    <h5>Request:</h5>
+                    <pre>${JSON.stringify(request, null, 2)}</pre>
+                    <h5>Response:</h5>
+                    <pre>${JSON.stringify(response, null, 2)}</pre>
+                `;
+                document.getElementById(targetId).innerHTML += html;
             }
 
             function generateHash(data) {
-                // Simple hash generation for demo (in production, use SHA-256)
                 const str = `${data.lastName}${data.firstName}${data.birthDate}${data.nationality}`;
-                // Generate a simple hex hash that meets API requirements (64+ chars, hex only)
-                let hash = "";
+                let hash = '';
                 for (let i = 0; i < str.length; i++) {
-                    hash += str.charCodeAt(i).toString(16).padStart(4, "0");
+                    hash += str.charCodeAt(i).toString(16).padStart(4, '0');
                 }
-                // Pad to at least 64 characters
                 while (hash.length < 64) {
-                    hash += "0";
+                    hash += '0';
                 }
                 return hash.substring(0, 64);
             }
 
-            function fillExampleData() {
-                // Fill the form with example data
-                document.getElementById("firstName").value =
-                    DEMO_USER.firstName;
-                document.getElementById("lastName").value = DEMO_USER.lastName;
-                document.getElementById("birthDate").value =
-                    DEMO_USER.birthDate;
-                document.getElementById("nationality").value =
-                    DEMO_USER.nationality;
-                document.getElementById("street").value = DEMO_USER.street;
-                document.getElementById("houseNumber").value =
-                    DEMO_USER.houseNumber;
-                document.getElementById("postalCode").value =
-                    DEMO_USER.postalCode;
-                document.getElementById("city").value = DEMO_USER.city;
-                document.getElementById("country").value = DEMO_USER.country;
-                document.getElementById("email").value = DEMO_USER.email;
-                document.getElementById("phone").value = DEMO_USER.phone;
+            function generateRandomToken(length = 32) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let token = '';
+                for (let i = 0; i < length; i++) {
+                    token += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return token;
             }
 
-            // Proceed to page 4 function
-            function proceedToPage4() {
-                // Pre-fill Page 4 form
-                document.getElementById("firstName2").value =
-                    state.customerData.firstName;
-                document.getElementById("lastName2").value =
-                    state.customerData.lastName;
-                document.getElementById("birthDate2").value =
-                    state.customerData.birthDate;
-                document.getElementById("nationality2").value =
-                    state.customerData.nationality;
-                showPage("page4");
-                initSequenceDiagram("4");
-                highlightPhase("phase2", "active");
-            }
-
-            // Proceed to data retrieval function
-            async function proceedToDataRetrieval() {
-                showPage("page5");
-                initSequenceDiagram("5");
-                highlightPhase("phase5", "active");
-
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-
-                retrieveCustomerData();
-            }
-
-            // Show success page function
-            function showSuccessPage() {
-                showPage("page6");
-                displaySuccess();
-            }
-
-            // Page 2: Scenario selection
+            // Scenario selection
             function selectScenario(scenario) {
                 state.scenario = scenario;
 
-                // Update labels based on scenario
-                if (scenario === "bank") {
-                    document.getElementById("bankALabel").textContent =
-                        "Bank A";
-                    document.getElementById("bankBLabel").textContent =
-                        "Bank B";
+                if (scenario === 'bank') {
+                    state.institutionName = 'Bank B';
+                    document.querySelectorAll('#sourceLabel, #sourceLabel2, #sourceLabel3, #sourceLabel4, #sourceLabel5').forEach(el => {
+                        el.textContent = 'Bank A';
+                    });
+                    document.querySelectorAll('#targetLabel1, #targetLabel2, #targetLabel3, #targetLabel4').forEach(el => {
+                        el.textContent = 'Bank B';
+                    });
                 } else {
-                    document.getElementById("bankALabel").textContent =
-                        "Bank A";
-                    document.getElementById("bankBLabel").textContent =
-                        "Lebensversicherung";
-                }
-
-                // Pre-fill form if demo mode
-                if (state.dataMode === "demo") {
-                    Object.keys(DEMO_USER).forEach((key) => {
-                        const element = document.getElementById(key);
-                        if (element) {
-                            element.value = DEMO_USER[key];
-                        }
+                    state.institutionName = 'Insurance Company';
+                    document.querySelectorAll('#sourceLabel, #sourceLabel2, #sourceLabel3, #sourceLabel4, #sourceLabel5').forEach(el => {
+                        el.textContent = 'Bank A';
+                    });
+                    document.querySelectorAll('#targetLabel1, #targetLabel2, #targetLabel3, #targetLabel4').forEach(el => {
+                        el.textContent = 'Insurance Company';
                     });
                 }
 
-                showPage("page3");
-                initSequenceDiagram("3");
-                highlightPhase("phase1", "active");
+                showPage('pageSetup');
+                initSequenceDiagram('Setup');
+                addLog('Scenario Selected', { scenario });
             }
 
-            // Page 3: Bank A Registration
-            document
-                .getElementById("bankAForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
+            // Setup form
+            function fillSetupData() {
+                Object.keys(DEMO_USER).forEach(key => {
+                    const element = document.getElementById('setup' + key.charAt(0).toUpperCase() + key.slice(1));
+                    if (element) {
+                        element.value = DEMO_USER[key];
+                    }
+                });
+            }
 
-                    // Collect form data
-                    state.customerData = {
-                        firstName: document.getElementById("firstName").value,
-                        lastName: document.getElementById("lastName").value,
-                        birthDate: document.getElementById("birthDate").value,
-                        nationality:
-                            document.getElementById("nationality").value,
-                        street: document.getElementById("street").value,
-                        houseNumber:
-                            document.getElementById("houseNumber").value,
-                        postalCode: document.getElementById("postalCode").value,
-                        city: document.getElementById("city").value,
-                        country: document.getElementById("country").value,
-                        email: document.getElementById("email").value,
-                        phone: document.getElementById("phone").value,
+            document.getElementById('setupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                state.customerData = {
+                    firstName: document.getElementById('setupFirstName').value,
+                    lastName: document.getElementById('setupLastName').value,
+                    birthDate: document.getElementById('setupBirthDate').value,
+                    nationality: document.getElementById('setupNationality').value,
+                    street: document.getElementById('setupStreet').value,
+                    houseNumber: document.getElementById('setupHouseNumber').value,
+                    postalCode: document.getElementById('setupPostalCode').value,
+                    city: document.getElementById('setupCity').value,
+                    country: document.getElementById('setupCountry').value,
+                    email: document.getElementById('setupEmail').value,
+                    phone: document.getElementById('setupPhone').value
+                };
+
+                state.sharedCustomerHash = generateHash(state.customerData);
+
+                const requestBody = {
+                    basicData: {
+                        lastName: state.customerData.lastName,
+                        givenName: state.customerData.firstName,
+                        birthDate: state.customerData.birthDate,
+                        nationality: [state.customerData.nationality]
+                    },
+                    contactInformation: {
+                        primaryEmail: state.customerData.email,
+                        mobilePhone: state.customerData.phone
+                    },
+                    addressData: {
+                        residentialAddress: {
+                            street: state.customerData.street,
+                            addressLine2: state.customerData.houseNumber,
+                            postalCode: state.customerData.postalCode,
+                            city: state.customerData.city,
+                            country: state.customerData.country
+                        }
+                    }
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/v1/customer/${state.sharedCustomerHash}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'PUT /v1/customer/:hash',
+                        { url: `/v1/customer/${state.sharedCustomerHash}`, body: requestBody },
+                        responseData,
+                        'requestResponseSetup'
+                    );
+
+                    addLog('Customer Data Registered', { hash: state.sharedCustomerHash });
+
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Show continue button
+                    document.getElementById('setupForm').innerHTML = `
+                        <div class="success-message">
+                            <h3>Setup Complete!</h3>
+                            <p>Customer data has been registered at Bank A.</p>
+                            <p>Now we'll start the 13-step onboarding process at ${state.institutionName}.</p>
+                        </div>
+                        <div class="button-container">
+                            <button onclick="startStep1()">Start Step 1: Initialization</button>
+                        </div>
+                    `;
+                } catch (error) {
+                    alert('Error: ' + error.message + '\nMake sure the API server is running at ' + API_BASE);
+                }
+            });
+
+            // Step 1: Initialization
+            function startStep1() {
+                state.currentStep = 1;
+                updateProgress(1);
+                showPage('pageStep1');
+                initSequenceDiagram('Step1');
+                highlightStep('1');
+                document.getElementById('step1Institution').value = state.institutionName;
+            }
+
+            document.getElementById('step1Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const requestBody = {
+                    requestingInstitution: state.institutionName,
+                    serviceType: document.getElementById('step1Service').value,
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/process/initialize`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+                    state.processId = responseData.processId || 'proc_' + generateRandomToken(16);
+
+                    displayRequestResponse(
+                        'POST /process/initialize',
+                        { url: '/process/initialize', body: requestBody },
+                        responseData,
+                        'requestResponseStep1'
+                    );
+
+                    addLog('Step 1: Process Initialized', { processId: state.processId });
+
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                    document.getElementById('step1Form').innerHTML = `
+                        <div class="success-message">
+                            <h3>Process Initialized</h3>
+                            <p><strong>Process ID:</strong> ${state.processId}</p>
+                        </div>
+                        <div class="button-container">
+                            <button onclick="startStep2()">Next: Step 2 - Product Selection</button>
+                        </div>
+                    `;
+                } catch (error) {
+                    // Simulate response if API not available
+                    const simulatedResponse = {
+                        success: true,
+                        processId: 'proc_' + generateRandomToken(16),
+                        message: 'Process initialized successfully'
+                    };
+                    state.processId = simulatedResponse.processId;
+
+                    displayRequestResponse(
+                        'POST /process/initialize (Simulated)',
+                        { url: '/process/initialize', body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep1'
+                    );
+
+                    addLog('Step 1: Process Initialized (Simulated)', { processId: state.processId });
+
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                    document.getElementById('step1Form').innerHTML = `
+                        <div class="success-message">
+                            <h3>Process Initialized</h3>
+                            <p><strong>Process ID:</strong> ${state.processId}</p>
+                            <p style="font-size: 12px; color: #666;">(Simulated - API not available)</p>
+                        </div>
+                        <div class="button-container">
+                            <button onclick="startStep2()">Next: Step 2 - Product Selection</button>
+                        </div>
+                    `;
+                }
+            });
+
+            // Step 2: Product Selection
+            function startStep2() {
+                state.currentStep = 2;
+                updateProgress(2);
+                showPage('pageStep2');
+                initSequenceDiagram('Step2');
+                highlightStep('2');
+            }
+
+            function toggleProduct(productId) {
+                const checkbox = document.getElementById('product' + productId.charAt(0).toUpperCase() + productId.slice(1));
+                checkbox.checked = !checkbox.checked;
+
+                const productOption = checkbox.closest('.product-option');
+                if (checkbox.checked) {
+                    productOption.classList.add('selected');
+                    if (!state.selectedProducts.includes(productId)) {
+                        state.selectedProducts.push(productId);
+                    }
+                } else {
+                    productOption.classList.remove('selected');
+                    state.selectedProducts = state.selectedProducts.filter(p => p !== productId);
+                }
+
+                updateScopePreview();
+            }
+
+            function updateScopePreview() {
+                const scopePreview = document.getElementById('scopePreview');
+                const scopeList = document.getElementById('scopeList');
+
+                if (state.selectedProducts.length === 0) {
+                    scopePreview.style.display = 'none';
+                    return;
+                }
+
+                scopePreview.style.display = 'block';
+
+                // Determine required scopes based on selected products
+                state.requiredScopes = [
+                    'identity:read',
+                    'address:read',
+                    'contact:read',
+                    'kyc:selfDeclaration:write',
+                    'identification:read_enhanced',
+                    'kyc:backgroundChecks:write',
+                    'contract:write_detailed'
+                ];
+
+                // Add financial profile scope if needed
+                if (state.selectedProducts.includes('premiumAccount') ||
+                    state.selectedProducts.includes('creditCard') ||
+                    state.selectedProducts.includes('investment')) {
+                    state.requiredScopes.push('financial_profile:read');
+                }
+
+                let scopeHtml = '';
+                state.requiredScopes.forEach(scope => {
+                    const scopeDef = SCOPE_DEFINITIONS[scope];
+                    scopeHtml += `
+                        <div class="scope-item">
+                            <strong>${scopeDef.label}</strong><br>
+                            <small>${scopeDef.description}</small>
+                        </div>
+                    `;
+                });
+
+                scopeList.innerHTML = scopeHtml;
+            }
+
+            document.getElementById('step2Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if (state.selectedProducts.length === 0) {
+                    alert('Please select at least one product');
+                    return;
+                }
+
+                const requestBody = {
+                    processId: state.processId,
+                    selectedProducts: state.selectedProducts,
+                    determinedScopes: state.requiredScopes
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/process/product-selection`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /process/product-selection',
+                        { url: '/process/product-selection', body: requestBody },
+                        responseData,
+                        'requestResponseStep2'
+                    );
+                } catch (error) {
+                    // Simulate response
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        selectedProducts: state.selectedProducts,
+                        requiredScopes: state.requiredScopes,
+                        message: 'Product selection recorded'
                     };
 
-                    // Generate hash
-                    state.sharedCustomerHash = generateHash(state.customerData);
+                    displayRequestResponse(
+                        'POST /process/product-selection (Simulated)',
+                        { url: '/process/product-selection', body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep2'
+                    );
+                }
 
-                    // Prepare API request
-                    const requestBody = {
-                        basicData: {
+                addLog('Step 2: Products Selected', { products: state.selectedProducts, scopes: state.requiredScopes });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step2Form').innerHTML = `
+                    <div class="success-message">
+                        <h3>Products Selected</h3>
+                        <p><strong>Selected:</strong> ${state.selectedProducts.join(', ')}</p>
+                        <p><strong>Required Scopes:</strong> ${state.requiredScopes.length}</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep2a()">Next: Step 2a - Authentication</button>
+                    </div>
+                `;
+            });
+
+            // Step 2a: Authentication
+            function startStep2a() {
+                state.currentStep = 2.1;
+                updateProgress(3);
+                showPage('pageStep2a');
+                initSequenceDiagram('Step2a');
+                highlightStep('2a');
+            }
+
+            // Show/hide credential fields based on auth method
+            document.querySelectorAll('input[name="authMethod"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const credFields = document.getElementById('credentialsFields');
+                    if (e.target.value === 'credentials') {
+                        credFields.style.display = 'block';
+                    } else {
+                        credFields.style.display = 'none';
+                    }
+                });
+            });
+
+            document.getElementById('step2aForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const authMethod = document.querySelector('input[name="authMethod"]:checked').value;
+
+                const requestBody = {
+                    processId: state.processId,
+                    customerId: state.sharedCustomerHash,
+                    authenticationMethod: authMethod,
+                    timestamp: new Date().toISOString()
+                };
+
+                if (authMethod === 'credentials') {
+                    requestBody.credentials = {
+                        username: document.getElementById('authUsername').value,
+                        // Password not sent in real implementation
+                        twoFactorCode: document.getElementById('auth2FA').value
+                    };
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/oauth/authenticate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /oauth/authenticate',
+                        { url: '/oauth/authenticate', body: { ...requestBody, credentials: requestBody.credentials ? '[REDACTED]' : undefined } },
+                        responseData,
+                        'requestResponseStep2a'
+                    );
+                } catch (error) {
+                    // Simulate response
+                    const simulatedResponse = {
+                        success: true,
+                        authenticated: true,
+                        sessionId: 'sess_' + generateRandomToken(16),
+                        message: 'Authentication successful'
+                    };
+
+                    displayRequestResponse(
+                        'POST /oauth/authenticate (Simulated)',
+                        { url: '/oauth/authenticate', body: { ...requestBody, credentials: '[REDACTED]' } },
+                        simulatedResponse,
+                        'requestResponseStep2a'
+                    );
+                }
+
+                addLog('Step 2a: Authentication Complete', { method: authMethod });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step2aForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>Authentication Successful</h3>
+                        <p>You have been authenticated using <strong>${authMethod}</strong></p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep2b()">Next: Step 2b - Consent Granting</button>
+                    </div>
+                `;
+            });
+
+            // Step 2b: Consent Granting
+            function startStep2b() {
+                state.currentStep = 2.2;
+                updateProgress(4);
+                showPage('pageStep2b');
+                initSequenceDiagram('Step2b');
+                highlightStep('2b');
+
+                // Build consent scope list
+                const consentScopeList = document.getElementById('consentScopeList');
+                let scopeHtml = '';
+
+                state.requiredScopes.forEach(scope => {
+                    const scopeDef = SCOPE_DEFINITIONS[scope];
+                    const required = scopeDef.required || state.requiredScopes.includes(scope);
+
+                    scopeHtml += `
+                        <div class="scope-item">
+                            <label>
+                                <input type="checkbox" ${required ? 'checked disabled' : 'checked'} />
+                                <strong>${scopeDef.label}</strong>
+                            </label>
+                            <div style="margin-left: 25px; margin-top: 5px;">
+                                <small>${scopeDef.description}</small>
+                            </div>
+                            <div class="scope-justification">
+                                Why needed: ${scopeDef.justification}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                consentScopeList.innerHTML = scopeHtml;
+            }
+
+            function denyConsent() {
+                if (confirm('Are you sure you want to deny consent? The process cannot continue without authorization.')) {
+                    alert('Consent denied. Process terminated.');
+                    resetDemo();
+                }
+            }
+
+            document.getElementById('step2bForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const requestBody = {
+                    processId: state.processId,
+                    customerId: state.sharedCustomerHash,
+                    authorizedScopes: state.requiredScopes,
+                    consentGiven: true,
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/oauth/authorize/consent`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+                    state.authorizationCode = responseData.authorizationCode || 'auth_' + generateRandomToken(32);
+
+                    displayRequestResponse(
+                        'POST /oauth/authorize/consent',
+                        { url: '/oauth/authorize/consent', body: requestBody },
+                        responseData,
+                        'requestResponseStep2b'
+                    );
+                } catch (error) {
+                    // Simulate response
+                    state.authorizationCode = 'auth_' + generateRandomToken(32);
+                    const simulatedResponse = {
+                        success: true,
+                        authorizationCode: state.authorizationCode,
+                        expiresIn: 600,
+                        message: 'Consent granted, authorization code issued'
+                    };
+
+                    displayRequestResponse(
+                        'POST /oauth/authorize/consent (Simulated)',
+                        { url: '/oauth/authorize/consent', body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep2b'
+                    );
+                }
+
+                addLog('Step 2b: Consent Granted', { scopes: state.requiredScopes, authCode: state.authorizationCode });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step2bForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>Consent Granted</h3>
+                        <p>You have authorized all required data scopes.</p>
+                        <p><strong>Authorization Code:</strong> ${state.authorizationCode.substring(0, 20)}...</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep2c()">Next: Step 2c - Token Exchange</button>
+                    </div>
+                `;
+            });
+
+            // Step 2c: Token Exchange
+            function startStep2c() {
+                state.currentStep = 2.3;
+                updateProgress(5);
+                showPage('pageStep2c');
+                initSequenceDiagram('Step2c');
+                highlightStep('2c');
+
+                // Auto-execute token exchange
+                setTimeout(executeTokenExchange, 1000);
+            }
+
+            async function executeTokenExchange() {
+                const requestBody = {
+                    grant_type: 'authorization_code',
+                    code: state.authorizationCode,
+                    client_id: 'client_' + state.institutionName.replace(/\s/g, ''),
+                    code_verifier: 'pkce_' + generateRandomToken(32)
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/oauth/token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+                    state.accessToken = responseData.access_token || 'Bearer_' + generateRandomToken(64);
+                    state.refreshToken = responseData.refresh_token || 'Refresh_' + generateRandomToken(64);
+
+                    displayRequestResponse(
+                        'POST /oauth/token',
+                        { url: '/oauth/token', body: requestBody },
+                        responseData,
+                        'requestResponseStep2c'
+                    );
+                } catch (error) {
+                    // Simulate response
+                    state.accessToken = 'Bearer_' + generateRandomToken(64);
+                    state.refreshToken = 'Refresh_' + generateRandomToken(64);
+
+                    const simulatedResponse = {
+                        access_token: state.accessToken,
+                        refresh_token: state.refreshToken,
+                        token_type: 'Bearer',
+                        expires_in: 3600,
+                        scope: state.requiredScopes.join(' ')
+                    };
+
+                    displayRequestResponse(
+                        'POST /oauth/token (Simulated)',
+                        { url: '/oauth/token', body: { ...requestBody, code_verifier: '[REDACTED]' } },
+                        simulatedResponse,
+                        'requestResponseStep2c'
+                    );
+                }
+
+                addLog('Step 2c: Token Issued', { tokenType: 'Bearer', scopes: state.requiredScopes });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('tokenStatus').innerHTML = `
+                    <div class="success-message">
+                        <h3>Access Token Issued</h3>
+                        <p>Bearer token obtained successfully!</p>
+                    </div>
+                    <div class="token-display">
+                        <strong>Access Token:</strong><br>
+                        <code style="font-size: 11px; word-break: break-all;">${state.accessToken}</code>
+                    </div>
+                    <div class="info-message">
+                        <p>This Bearer token will now be used for all subsequent API calls (Steps 3-10).</p>
+                        <p>The token contains the authorized scopes and is valid for 1 hour.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep3()">Next: Step 3 - Self-Declaration</button>
+                    </div>
+                `;
+            }
+
+            // Step 3: Self-Declaration
+            function startStep3() {
+                state.currentStep = 3;
+                updateProgress(6);
+                showPage('pageStep3');
+                initSequenceDiagram('Step3');
+                highlightStep('3');
+            }
+
+            document.getElementById('step3Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const requestBody = {
+                    processId: state.processId,
+                    fatcaStatus: document.getElementById('step3FatcaStatus').value,
+                    taxResidency: document.getElementById('step3TaxResidency').value,
+                    taxIdentificationNumber: document.getElementById('step3Tin').value || null,
+                    sourceOfFunds: document.getElementById('step3SourceOfFunds').value,
+                    expectedActivity: document.getElementById('step3ExpectedActivity').value,
+                    pepStatus: document.getElementById('step3PepStatus').value
+                };
+
+                state.stepData.selfDeclaration = requestBody;
+
+                try {
+                    const response = await fetch(`${API_BASE}/process/self-declaration`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /process/self-declaration',
+                        { url: '/process/self-declaration', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        responseData,
+                        'requestResponseStep3'
+                    );
+                } catch (error) {
+                    // Simulate response
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        message: 'Self-declaration recorded',
+                        riskScore: 'low'
+                    };
+
+                    displayRequestResponse(
+                        'POST /process/self-declaration (Simulated)',
+                        { url: '/process/self-declaration', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep3'
+                    );
+                }
+
+                addLog('Step 3: Self-Declaration Submitted', requestBody);
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step3Form').innerHTML = `
+                    <div class="success-message">
+                        <h3>Self-Declaration Complete</h3>
+                        <p>Your regulatory information has been recorded.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep4()">Next: Step 4 - Basic Data Retrieval</button>
+                    </div>
+                `;
+            });
+
+            // Step 4: Basic Data Collection
+            function startStep4() {
+                state.currentStep = 4;
+                updateProgress(7);
+                showPage('pageStep4');
+                initSequenceDiagram('Step4');
+                highlightStep('4');
+
+                // Auto-execute data retrieval
+                setTimeout(executeStep4Retrieval, 1000);
+            }
+
+            async function executeStep4Retrieval() {
+                const statusDiv = document.getElementById('step4Status');
+                statusDiv.innerHTML = '<p>Retrieving basic data from Bank A...</p>';
+
+                // Retrieve basic data
+                try {
+                    const response1 = await fetch(`${API_BASE}/customer/basic`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify({ customerId: state.sharedCustomerHash })
+                    });
+                    const data1 = await response1.json();
+
+                    displayRequestResponse(
+                        'POST /customer/basic',
+                        { url: '/customer/basic', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        data1,
+                        'requestResponseStep4'
+                    );
+                } catch (error) {
+                    // Simulate
+                    const simulatedBasic = {
+                        success: true,
+                        data: {
                             lastName: state.customerData.lastName,
                             givenName: state.customerData.firstName,
                             birthDate: state.customerData.birthDate,
-                            nationality: [state.customerData.nationality],
+                            nationality: [state.customerData.nationality]
+                        }
+                    };
+                    displayRequestResponse(
+                        'POST /customer/basic (Simulated)',
+                        { url: '/customer/basic', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        simulatedBasic,
+                        'requestResponseStep4'
+                    );
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                statusDiv.innerHTML += '<p>Retrieving address data...</p>';
+
+                // Retrieve address
+                try {
+                    const response2 = await fetch(`${API_BASE}/customer/address`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
                         },
-                        contactInformation: {
-                            primaryEmail: state.customerData.email,
-                            mobilePhone: state.customerData.phone,
-                        },
-                        addressData: {
+                        body: JSON.stringify({ customerId: state.sharedCustomerHash })
+                    });
+                    const data2 = await response2.json();
+
+                    displayRequestResponse(
+                        'POST /customer/address',
+                        { url: '/customer/address', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        data2,
+                        'requestResponseStep4'
+                    );
+                } catch (error) {
+                    // Simulate
+                    const simulatedAddress = {
+                        success: true,
+                        data: {
                             residentialAddress: {
                                 street: state.customerData.street,
                                 addressLine2: state.customerData.houseNumber,
                                 postalCode: state.customerData.postalCode,
                                 city: state.customerData.city,
-                                country: state.customerData.country,
-                            },
-                        },
+                                country: state.customerData.country
+                            }
+                        }
                     };
-
-                    try {
-                        const response = await fetch(
-                            `${API_BASE}/customer/${state.sharedCustomerHash}`,
-                            {
-                                method: "PUT",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(requestBody),
-                            },
-                        );
-
-                        const responseData = await response.json();
-
-                        displayRequestResponse(
-                            "PUT /v1/customer/:hash",
-                            {
-                                url: `/v1/customer/${state.sharedCustomerHash}`,
-                                body: requestBody,
-                            },
-                            responseData,
-                            "requestResponse3",
-                        );
-
-                        // Wait 5 seconds before showing continue button
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 2000),
-                        );
-
-                        // Show continue button
-                        document.getElementById("bankAForm").innerHTML = `
-                    <div class="success-message">
-                        <h3>Registrierung erfolgreich!</h3>
-                        <p>Kunde wurde erfolgreich bei Bank A registriert.</p>
-                    </div>
-                    <div class="button-container">
-                        <button type="button" onclick="proceedToPage4()">Weiter zur Datenanfrage</button>
-                    </div>
-                `;
-                    } catch (error) {
-                        alert(
-                            "Fehler beim Speichern der Daten. Stellen Sie sicher, dass die API läuft.",
-                        );
-                    }
-                });
-
-            // Page 4: Data Transfer Request
-            document
-                .getElementById("bankBForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    highlightPhase("phase2", "active"); // Authorization Request
-
-                    const checkData = {
-                        firstName: document.getElementById("firstName2").value,
-                        lastName: document.getElementById("lastName2").value,
-                        birthDate: document.getElementById("birthDate2").value,
-                        nationality:
-                            document.getElementById("nationality2").value,
-                    };
-
-                    // Step 1: Check customer existence
-                    const checkRequestBody = {
-                        sharedCustomerHash: state.sharedCustomerHash,
-                        basicData: {
-                            lastName: checkData.lastName,
-                            givenName: checkData.firstName,
-                            birthDate: checkData.birthDate,
-                            nationality: [checkData.nationality],
-                        },
-                    };
-
-                    try {
-                        const checkResponse = await fetch(
-                            `${API_BASE}/customer/check`,
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(checkRequestBody),
-                            },
-                        );
-
-                        const checkResponseData = await checkResponse.json();
-
-                        displayRequestResponse(
-                            "POST /v1/customer/check",
-                            {
-                                url: "/v1/customer/check",
-                                body: checkRequestBody,
-                            },
-                            checkResponseData,
-                            "requestResponse4",
-                        );
-
-                        // Wait 5 seconds before moving to next phase
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 2000),
-                        );
-
-                        // Step 2: Create consent request
-                        highlightPhase("phase3", "active"); // Authentication
-
-                        const consentRequestBody = {
-                            customerId: state.sharedCustomerHash,
-                            requestingInstitution:
-                                state.scenario === "bank"
-                                    ? "Bank B"
-                                    : "Lebensversicherung AG",
-                            dataCategories: [
-                                "basicData",
-                                "contactInformation",
-                                "addressData",
-                                "identification",
-                                "kycData",
-                            ],
-                            purpose: "accountOpening",
-                            expiryDate: new Date(
-                                Date.now() + 90 * 24 * 60 * 60 * 1000,
-                            ).toISOString(),
-                        };
-
-                        const consentResponse = await fetch(
-                            `${API_BASE}/consent`,
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify(consentRequestBody),
-                            },
-                        );
-
-                        const consentResponseData =
-                            await consentResponse.json();
-                        state.consentId = consentResponseData.consentId;
-
-                        displayRequestResponse(
-                            "POST /v1/consent",
-                            { url: "/v1/consent", body: consentRequestBody },
-                            consentResponseData,
-                            "requestResponse4",
-                        );
-
-                        // Wait 5 seconds before moving to next phase
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 2000),
-                        );
-
-                        // Step 3: Auto-approve consent
-                        highlightPhase("phase4", "active"); // Authorization (Scope Approval)
-
-                        const approveResponse = await fetch(
-                            `${API_BASE}/consent/${state.consentId}/approve`,
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({}),
-                            },
-                        );
-
-                        const approveResponseData =
-                            await approveResponse.json();
-                        state.consentToken = approveResponseData.token;
-
-                        displayRequestResponse(
-                            "POST /v1/consent/:id/approve",
-                            {
-                                url: `/v1/consent/${state.consentId}/approve`,
-                                body: {},
-                            },
-                            approveResponseData,
-                            "requestResponse4",
-                        );
-
-                        // Wait 5 seconds before showing continue button
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 2000),
-                        );
-
-                        // Show continue button
-                        document.getElementById("bankBForm").innerHTML = `
-                    <div class="success-message">
-                        <h3>Einwilligung erfolgreich!</h3>
-                        <p>Die Einwilligung wurde genehmigt und ein Token wurde erstellt.</p>
-                        <p><strong>Token:</strong> ${state.consentToken ? state.consentToken.substring(0, 40) + "..." : "N/A"}</p>
-                    </div>
-                    <div class="button-container">
-                        <button type="button" onclick="proceedToDataRetrieval()">Weiter zum Datenabruf</button>
-                    </div>
-                `;
-                    } catch (error) {
-                        alert(
-                            "Fehler beim Abrufen der Daten. Stellen Sie sicher, dass die API läuft.",
-                        );
-                    }
-                });
-
-            // Page 5: Retrieve customer data
-            async function retrieveCustomerData() {
-                highlightPhase("phase6", "active"); // Resource Access
-
-                const dataRequestBody = {
-                    sharedCustomerHash: state.sharedCustomerHash,
-                    purpose: "accountOpening",
-                    consentToken: state.consentToken,
-                };
-
-                try {
-                    const dataResponse = await fetch(
-                        `${API_BASE}/customer/data`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(dataRequestBody),
-                        },
+                    displayRequestResponse(
+                        'POST /customer/address (Simulated)',
+                        { url: '/customer/address', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        simulatedAddress,
+                        'requestResponseStep4'
                     );
+                }
 
-                    const dataResponseData = await dataResponse.json();
-                    state.retrievedData = dataResponseData;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                statusDiv.innerHTML += '<p>Retrieving contact information...</p>';
+
+                // Retrieve contact
+                try {
+                    const response3 = await fetch(`${API_BASE}/customer/contact`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify({ customerId: state.sharedCustomerHash })
+                    });
+                    const data3 = await response3.json();
 
                     displayRequestResponse(
-                        "POST /v1/customer/data",
-                        { url: "/v1/customer/data", body: dataRequestBody },
-                        dataResponseData,
-                        "requestResponse5",
+                        'POST /customer/contact',
+                        { url: '/customer/contact', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        data3,
+                        'requestResponseStep4'
                     );
+                } catch (error) {
+                    // Simulate
+                    const simulatedContact = {
+                        success: true,
+                        data: {
+                            primaryEmail: state.customerData.email,
+                            mobilePhone: state.customerData.phone
+                        }
+                    };
+                    displayRequestResponse(
+                        'POST /customer/contact (Simulated)',
+                        { url: '/customer/contact', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
+                        simulatedContact,
+                        'requestResponseStep4'
+                    );
+                }
 
-                    // Wait 5 seconds before showing success button
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                addLog('Step 4: Basic Data Retrieved', { source: 'Bank A' });
 
-                    document.getElementById("retrievalStatus").innerHTML = `
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                statusDiv.innerHTML = `
                     <div class="success-message">
-                        <h3>Daten erfolgreich abgerufen!</h3>
-                        <p>Alle Kundendaten wurden übertragen.</p>
+                        <h3>Basic Data Retrieved Successfully</h3>
+                        <p>Identity, address, and contact information collected from Bank A.</p>
                     </div>
                     <div class="button-container">
-                        <button type="button" onclick="showSuccessPage()">Zusammenfassung anzeigen</button>
+                        <button onclick="checkIfFinancialProfileNeeded()">Continue</button>
                     </div>
                 `;
-                } catch (error) {
-                    document.getElementById("retrievalStatus").innerHTML +=
-                        `<p style="color: red;">Fehler: ${error.message}</p>`;
+            }
+
+            function checkIfFinancialProfileNeeded() {
+                if (state.requiredScopes.includes('financial_profile:read')) {
+                    startStep5();
+                } else {
+                    // Skip to step 6
+                    startStep6();
                 }
             }
 
-            // Page 6: Display success
-            function displaySuccess() {
-                // Summary
-                const summaryHtml = `
-                <p><strong>Szenario:</strong> ${state.scenario === "bank" ? "Banküberweisung" : "Lebensversicherung"}</p>
-                <p><strong>Kunde:</strong> ${state.customerData.firstName} ${state.customerData.lastName}</p>
-                <p><strong>Hash:</strong> ${state.sharedCustomerHash}</p>
-                <p><strong>Einwilligungs-ID:</strong> ${state.consentId}</p>
-            `;
-                document.getElementById("summary").innerHTML = summaryHtml;
+            // Step 5: Financial Profile
+            function startStep5() {
+                state.currentStep = 5;
+                updateProgress(8);
+                showPage('pageStep5');
+                initSequenceDiagram('Step5');
+                highlightStep('5');
+            }
 
-                // Data comparison
-                const comparisonHtml = `
-                <h4>Minimale Eingabe bei Bank B:</h4>
-                <pre>${JSON.stringify(
-                    {
-                        firstName: state.customerData.firstName,
-                        lastName: state.customerData.lastName,
-                        birthDate: state.customerData.birthDate,
-                        nationality: state.customerData.nationality,
-                    },
-                    null,
-                    2,
-                )}</pre>
+            document.getElementById('step5Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-                <h4>Erhaltene vollständige Daten:</h4>
-                <pre>${JSON.stringify(state.retrievedData, null, 2)}</pre>
-            `;
-                document.getElementById("dataComparison").innerHTML =
-                    comparisonHtml;
+                const requestBody = {
+                    processId: state.processId,
+                    annualIncome: document.getElementById('step5Income').value,
+                    netWorth: document.getElementById('step5NetWorth').value,
+                    employmentStatus: document.getElementById('step5Employment').value,
+                    investmentExperience: document.getElementById('step5InvestmentExp').value,
+                    riskTolerance: document.getElementById('step5RiskTolerance').value,
+                    investmentObjectives: document.getElementById('step5Objectives').value
+                };
 
-                // Full log
-                state.allLogs.forEach((log) => {
-                    const logHtml = `
-                    <div class="log-entry">
-                        <div class="log-timestamp">${log.timestamp}</div>
-                        <div>${log.message}</div>
+                state.stepData.financialProfile = requestBody;
+
+                try {
+                    const response = await fetch(`${API_BASE}/customer/financial-profile`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /customer/financial-profile',
+                        { url: '/customer/financial-profile', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        responseData,
+                        'requestResponseStep5'
+                    );
+                } catch (error) {
+                    // Simulate
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        message: 'Financial profile recorded',
+                        mifidAssessment: 'suitable',
+                        recommendedProducts: state.selectedProducts
+                    };
+
+                    displayRequestResponse(
+                        'POST /customer/financial-profile (Simulated)',
+                        { url: '/customer/financial-profile', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep5'
+                    );
+                }
+
+                addLog('Step 5: Financial Profile Submitted', requestBody);
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step5Form').innerHTML = `
+                    <div class="success-message">
+                        <h3>Financial Profile Complete</h3>
+                        <p>MiFID II suitability assessment completed.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep6()">Next: Step 6 - Identification</button>
                     </div>
                 `;
-                    document.getElementById("backgroundLogs6").innerHTML +=
-                        logHtml;
+            });
+
+            // Step 6: Identification
+            function startStep6() {
+                state.currentStep = 6;
+                updateProgress(9);
+                showPage('pageStep6');
+                initSequenceDiagram('Step6');
+                highlightStep('6');
+            }
+
+            function simulateDocUpload() {
+                document.getElementById('docUploadStatus').innerHTML = `
+                    <strong style="color: #28a745;">✓ Document Scanned Successfully</strong><br>
+                    <small>Document verified, MRZ extracted, biometric check passed</small>
+                `;
+                document.getElementById('step6SubmitBtn').disabled = false;
+            }
+
+            document.getElementById('step6Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const requestBody = {
+                    processId: state.processId,
+                    documentType: document.getElementById('step6DocType').value,
+                    documentNumber: document.getElementById('step6DocNumber').value,
+                    issueDate: document.getElementById('step6IssueDate').value,
+                    expiryDate: document.getElementById('step6ExpiryDate').value,
+                    issuingCountry: document.getElementById('step6IssuingCountry').value,
+                    verificationMethod: 'nfc_mrz_biometric',
+                    verificationStatus: 'verified'
+                };
+
+                state.stepData.identification = requestBody;
+
+                try {
+                    const response = await fetch(`${API_BASE}/customer/identification`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /customer/identification',
+                        { url: '/customer/identification', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        responseData,
+                        'requestResponseStep6'
+                    );
+                } catch (error) {
+                    // Simulate
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        verificationStatus: 'verified',
+                        confidenceScore: 0.98,
+                        message: 'Identity verified successfully'
+                    };
+
+                    displayRequestResponse(
+                        'POST /customer/identification (Simulated)',
+                        { url: '/customer/identification', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep6'
+                    );
+                }
+
+                addLog('Step 6: Identification Verified', requestBody);
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step6Form').innerHTML = `
+                    <div class="success-message">
+                        <h3>Identity Verified</h3>
+                        <p>Your identity has been successfully verified.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep7()">Next: Step 7 - Background Checks</button>
+                    </div>
+                `;
+            });
+
+            // Step 7: Background Checks
+            function startStep7() {
+                state.currentStep = 7;
+                updateProgress(10);
+                showPage('pageStep7');
+                initSequenceDiagram('Step7');
+                highlightStep('7');
+
+                // Auto-execute background checks
+                setTimeout(executeBackgroundChecks, 1000);
+            }
+
+            async function executeBackgroundChecks() {
+                const statusDiv = document.getElementById('step7Status');
+                statusDiv.innerHTML = '<p>Running background checks...</p>';
+
+                const requestBody = {
+                    processId: state.processId,
+                    customerId: state.sharedCustomerHash,
+                    checks: ['pep', 'sanctions', 'adverseMedia', 'creditCheck']
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE}/process/background-checks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /process/background-checks',
+                        { url: '/process/background-checks', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        responseData,
+                        'requestResponseStep7'
+                    );
+
+                    state.stepData.backgroundChecks = responseData;
+                } catch (error) {
+                    // Simulate
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        checks: {
+                            pepCheck: { status: 'pass', result: 'Not a PEP' },
+                            sanctionsCheck: { status: 'pass', result: 'No sanctions matches' },
+                            adverseMediaCheck: { status: 'pass', result: 'No adverse media found' },
+                            creditCheck: { status: 'pass', result: 'Credit score: 750/850' }
+                        },
+                        overallResult: 'approved',
+                        message: 'All background checks passed'
+                    };
+
+                    displayRequestResponse(
+                        'POST /process/background-checks (Simulated)',
+                        { url: '/process/background-checks', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep7'
+                    );
+
+                    state.stepData.backgroundChecks = simulatedResponse;
+                }
+
+                addLog('Step 7: Background Checks Complete', { result: 'approved' });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Display results
+                const checks = state.stepData.backgroundChecks?.checks || {};
+                statusDiv.innerHTML = `
+                    <div class="success-message">
+                        <h3>Background Checks Complete</h3>
+                        <p>All compliance checks have been completed.</p>
+                    </div>
+                    <h4>Check Results:</h4>
+                    <div class="check-result pass">
+                        <strong>PEP Check:</strong> ${checks.pepCheck?.result || 'Pass'}
+                    </div>
+                    <div class="check-result pass">
+                        <strong>Sanctions Check:</strong> ${checks.sanctionsCheck?.result || 'Pass'}
+                    </div>
+                    <div class="check-result pass">
+                        <strong>Adverse Media Check:</strong> ${checks.adverseMediaCheck?.result || 'Pass'}
+                    </div>
+                    <div class="check-result pass">
+                        <strong>Credit Check:</strong> ${checks.creditCheck?.result || 'Pass'}
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep89()">Next: Steps 8-9 - Contract & Signature</button>
+                    </div>
+                `;
+            }
+
+            // Steps 8-9: Contract & Signature
+            function startStep89() {
+                state.currentStep = 8;
+                updateProgress(11);
+                showPage('pageStep89');
+                initSequenceDiagram('Step89');
+                highlightStep('8');
+
+                // Add product-specific contracts
+                const productContracts = document.getElementById('productContracts');
+                let contractHtml = '';
+
+                state.selectedProducts.forEach(product => {
+                    contractHtml += `
+                        <h4 style="margin-top: 20px;">${product} Product Agreement</h4>
+                        <div class="contract-box">
+                            <h5>${product} Terms</h5>
+                            <p>Specific terms and conditions for ${product}...</p>
+                            <p>[Product-specific terms would be displayed here]</p>
+                        </div>
+                        <label>
+                            <input type="checkbox" class="product-contract-check" required />
+                            I have read and agree to the ${product} Product Agreement
+                        </label>
+                    `;
+                });
+
+                productContracts.innerHTML = contractHtml;
+            }
+
+            function simulateSignature() {
+                document.getElementById('signatureStatus').innerHTML = `
+                    <strong style="color: #28a745;">✓ Signature Applied</strong><br>
+                    <small>Qualified Electronic Signature (QES) created with timestamp</small>
+                `;
+                document.getElementById('step89SubmitBtn').disabled = false;
+            }
+
+            document.getElementById('step89Form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const requestBody = {
+                    processId: state.processId,
+                    contracts: [
+                        { type: 'agb', accepted: document.getElementById('agreeAGB').checked },
+                        { type: 'das', accepted: document.getElementById('agreeDAS').checked },
+                        ...state.selectedProducts.map(p => ({ type: `product_${p}`, accepted: true }))
+                    ],
+                    signatureMethod: 'qes',
+                    signatureTimestamp: new Date().toISOString(),
+                    signatureHash: 'sig_' + generateRandomToken(64)
+                };
+
+                state.stepData.contracts = requestBody;
+
+                try {
+                    const response = await fetch(`${API_BASE}/process/contract-signature`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${state.accessToken}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const responseData = await response.json();
+
+                    displayRequestResponse(
+                        'POST /process/contract-signature',
+                        { url: '/process/contract-signature', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        responseData,
+                        'requestResponseStep89'
+                    );
+                } catch (error) {
+                    // Simulate
+                    const simulatedResponse = {
+                        success: true,
+                        processId: state.processId,
+                        contractsAccepted: requestBody.contracts.length,
+                        signatureVerified: true,
+                        message: 'Contracts signed successfully',
+                        accountNumbers: state.selectedProducts.map(p => ({
+                            product: p,
+                            accountNumber: 'CH' + Math.floor(Math.random() * 1000000000000000000)
+                        }))
+                    };
+
+                    displayRequestResponse(
+                        'POST /process/contract-signature (Simulated)',
+                        { url: '/process/contract-signature', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
+                        simulatedResponse,
+                        'requestResponseStep89'
+                    );
+
+                    state.stepData.accounts = simulatedResponse.accountNumbers;
+                }
+
+                addLog('Steps 8-9: Contracts Signed', { contracts: requestBody.contracts.length });
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                document.getElementById('step89Form').innerHTML = `
+                    <div class="success-message">
+                        <h3>Contracts Signed Successfully</h3>
+                        <p>All contracts have been accepted and signed with QES.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="completeProcess()">Complete Process</button>
+                    </div>
+                `;
+            });
+
+            // Complete Process
+            function completeProcess() {
+                state.currentStep = 13;
+                updateProgress(13);
+                showPage('pageSuccess');
+                highlightStep('10');
+
+                addLog('Process Complete', { processId: state.processId, status: 'success' });
+
+                // Display summary
+                const summaryDiv = document.getElementById('successSummary');
+                summaryDiv.innerHTML = `
+                    <p><strong>Scenario:</strong> ${state.scenario === 'bank' ? 'Bank Transfer' : 'Insurance Application'}</p>
+                    <p><strong>Institution:</strong> ${state.institutionName}</p>
+                    <p><strong>Process ID:</strong> ${state.processId}</p>
+                    <p><strong>Customer:</strong> ${state.customerData.firstName} ${state.customerData.lastName}</p>
+                    <p><strong>Products:</strong> ${state.selectedProducts.join(', ')}</p>
+                    <p><strong>Total Steps Completed:</strong> 13</p>
+                    <p><strong>OAuth Scopes Authorized:</strong> ${state.requiredScopes.length}</p>
+                    ${state.stepData.accounts ? `<p><strong>Account Numbers:</strong> ${state.stepData.accounts.map(a => a.accountNumber).join(', ')}</p>` : ''}
+                `;
+
+                // Display collected data
+                const dataDiv = document.getElementById('dataDisplay');
+                dataDiv.innerHTML = `
+                    <h4>Customer Data Collected:</h4>
+                    <pre>${JSON.stringify({
+                        basicData: {
+                            firstName: state.customerData.firstName,
+                            lastName: state.customerData.lastName,
+                            birthDate: state.customerData.birthDate,
+                            nationality: state.customerData.nationality
+                        },
+                        address: {
+                            street: state.customerData.street,
+                            houseNumber: state.customerData.houseNumber,
+                            postalCode: state.customerData.postalCode,
+                            city: state.customerData.city,
+                            country: state.customerData.country
+                        },
+                        contact: {
+                            email: state.customerData.email,
+                            phone: state.customerData.phone
+                        },
+                        selfDeclaration: state.stepData.selfDeclaration,
+                        financialProfile: state.stepData.financialProfile,
+                        identification: state.stepData.identification,
+                        backgroundChecks: state.stepData.backgroundChecks?.overallResult
+                    }, null, 2)}</pre>
+                `;
+
+                // Display audit trail
+                const auditDiv = document.getElementById('auditTrail');
+                state.auditLog.forEach(log => {
+                    auditDiv.innerHTML += `
+                        <div class="log-entry">
+                            <div class="log-timestamp">${log.timestamp}</div>
+                            <div><strong>${log.action}</strong></div>
+                            <div style="font-size: 11px; color: #666;">${JSON.stringify(log.details)}</div>
+                        </div>
+                    `;
                 });
             }
 
             // Reset demo
             function resetDemo() {
                 state = {
-                    dataMode: null,
                     scenario: null,
-                    customerData: null,
+                    institutionName: '',
+                    currentStep: 0,
+                    processId: null,
+                    selectedProducts: [],
+                    requiredScopes: [],
+                    authorizationCode: null,
+                    accessToken: null,
+                    refreshToken: null,
+                    customerData: {},
                     sharedCustomerHash: null,
-                    consentId: null,
-                    consentToken: null,
-                    retrievedData: null,
-                    allLogs: [],
+                    auditLog: [],
+                    stepData: {}
                 };
 
-                // Clear all displays
-                [
-                    "requestResponse3",
-                    "requestResponse4",
-                    "requestResponse5",
-                    "backgroundLogs6",
-                    "summary",
-                    "dataComparison",
-                ].forEach((id) => {
-                    const element = document.getElementById(id);
-                    if (element) element.innerHTML = "";
+                // Clear all response divs
+                ['Setup', 'Step1', 'Step2', 'Step2a', 'Step2b', 'Step2c', 'Step3', 'Step4', 'Step5', 'Step6', 'Step7', 'Step89'].forEach(id => {
+                    const el = document.getElementById('requestResponse' + id);
+                    if (el) el.innerHTML = '';
                 });
 
-                // Reset forms
-                document.getElementById("bankAForm").reset();
-                document.getElementById("bankBForm").reset();
+                document.getElementById('successSummary').innerHTML = '';
+                document.getElementById('dataDisplay').innerHTML = '';
+                document.getElementById('auditTrail').innerHTML = '';
 
-                showPage("page2");
+                updateProgress(0);
+                showPage('pageWelcome');
             }
         </script>
     </body>
