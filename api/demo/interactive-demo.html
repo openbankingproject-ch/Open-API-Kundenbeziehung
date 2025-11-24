@@ -1371,31 +1371,49 @@
 
                     const responseData = await response.json();
 
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     displayRequestResponse(
                         'PUT /v1/customer/:hash',
                         { url: `/v1/customer/${state.sharedCustomerHash}`, body: requestBody },
                         responseData,
                         'requestResponseSetup'
                     );
-
-                    addLog('Customer Data Registered', { hash: state.sharedCustomerHash });
-
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
-                    // Show continue button
-                    document.getElementById('setupForm').innerHTML = `
-                        <div class="success-message">
-                            <h3>Setup Complete!</h3>
-                            <p>Customer data has been registered at Bank A.</p>
-                            <p>Now we'll start the 13-step onboarding process at ${state.institutionName}.</p>
-                        </div>
-                        <div class="button-container">
-                            <button onclick="startStep1()">Start Step 1: Initialization</button>
-                        </div>
-                    `;
                 } catch (error) {
-                    alert('Error: ' + error.message + '\nMake sure the API server is running at ' + API_BASE);
+                    // Fake successful response
+                    const fakeResponse = {
+                        success: true,
+                        message: 'Customer data registered successfully',
+                        customerHash: state.sharedCustomerHash,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    displayRequestResponse(
+                        'PUT /v1/customer/:hash',
+                        { url: `/v1/customer/${state.sharedCustomerHash}`, body: requestBody },
+                        fakeResponse,
+                        'requestResponseSetup'
+                    );
                 }
+
+                addLog('Customer Data Registered', { hash: state.sharedCustomerHash });
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Show continue button
+                document.getElementById('setupForm').innerHTML = `
+                    <div class="success-message">
+                        <h3>Setup Complete!</h3>
+                        <p>Customer data has been registered at Bank A.</p>
+                        <p>Now we'll start the 13-step onboarding process at ${state.institutionName}.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="startStep1()">Start Step 1: Initialization</button>
+                    </div>
+                `;
             });
 
             // Step 1: Initialization
@@ -1425,6 +1443,12 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     state.processId = responseData.processId || 'proc_' + generateRandomToken(16);
 
                     displayRequestResponse(
@@ -1572,6 +1596,11 @@
 
                     const responseData = await response.json();
 
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     displayRequestResponse(
                         'POST /process/product-selection',
                         { url: '/process/product-selection', body: requestBody },
@@ -1661,6 +1690,11 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /oauth/authenticate',
@@ -1761,6 +1795,12 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     state.authorizationCode = responseData.authorizationCode || 'auth_' + generateRandomToken(32);
 
                     displayRequestResponse(
@@ -1910,6 +1950,11 @@
 
                     const responseData = await response.json();
 
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     displayRequestResponse(
                         'POST /process/self-declaration',
                         { url: '/process/self-declaration', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
@@ -1976,6 +2021,11 @@
                     });
                     const data1 = await response1.json();
 
+                    // Check for errors and throw to trigger fake response
+                    if (!response1.ok || data1.error) {
+                        throw new Error('API error');
+                    }
+
                     displayRequestResponse(
                         'POST /customer/basic',
                         { url: '/customer/basic', headers: { Authorization: 'Bearer [TOKEN]' }, body: { customerId: state.sharedCustomerHash } },
@@ -2015,6 +2065,11 @@
                         body: JSON.stringify({ customerId: state.sharedCustomerHash })
                     });
                     const data2 = await response2.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response2.ok || data2.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /customer/address',
@@ -2058,6 +2113,11 @@
                         body: JSON.stringify({ customerId: state.sharedCustomerHash })
                     });
                     const data3 = await response3.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response3.ok || data3.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /customer/contact',
@@ -2150,6 +2210,11 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /customer/financial-profile',
@@ -2247,6 +2312,11 @@
 
                     const responseData = await response.json();
 
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
+
                     displayRequestResponse(
                         'POST /customer/identification',
                         { url: '/customer/identification', headers: { Authorization: 'Bearer [TOKEN]' }, body: requestBody },
@@ -2319,6 +2389,11 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /process/background-checks',
@@ -2463,6 +2538,11 @@
                     });
 
                     const responseData = await response.json();
+
+                    // Check for errors and throw to trigger fake response
+                    if (!response.ok || responseData.error) {
+                        throw new Error('API error');
+                    }
 
                     displayRequestResponse(
                         'POST /process/contract-signature',
