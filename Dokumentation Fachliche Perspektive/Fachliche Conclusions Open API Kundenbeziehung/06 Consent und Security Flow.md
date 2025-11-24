@@ -230,7 +230,7 @@ sequenceDiagram
     AuthServer->>UserAgent: Redirect with authorization code + state
     UserAgent->>Client: Deliver authorization code
 
-    Note over Customer,AuditLog: Phase 4: Token Exchange
+    Note over Customer,AuditLog: Phase 4: Authorization Code Exchange
     Client->>AuthServer: POST /token (authorization code, code_verifier, client credentials)
     Note right of Client: Backend call via mTLS<br/>grant_type=authorization_code
     AuthServer->>AuthServer: Validate authorization code and client
