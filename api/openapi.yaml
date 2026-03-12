@@ -179,7 +179,7 @@ paths:
                 client_assertion:
                   type: string
                   description: JWT assertion for private_key_jwt authentication
-            exampless:
+            examples:
               authorization_code:
                 summary: Authorization Code Grant
                 value:
@@ -545,7 +545,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConsentRequest'
-            exampless:
+            examples:
               account_opening:
                 summary: Kontoeröffnung
                 value:
@@ -712,7 +712,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CustomerCheckRequest'
-            exampless:
+            examples:
               basic_check:
                 summary: Basis-Kundenprüfung
                 value:
@@ -1169,15 +1169,15 @@ components:
         customerId:
           type: string
           description: Eindeutige Kunden-ID (sharedCustomerHash)
-          exampless: ["sha256:abc123..."]
+          examples: ["sha256:abc123..."]
         requestingInstitution:
           type: string
           description: Institution die Daten anfordert
-          exampless: ["CH-BANK-001"]
+          examples: ["CH-BANK-001"]
         providingInstitution:
           type: string
           description: Institution die Daten bereitstellt
-          exampless: ["CH-BANK-002"]
+          examples: ["CH-BANK-002"]
         dataCategories:
           type: array
           items:
@@ -1259,7 +1259,7 @@ components:
         sharedCustomerHash:
           type: string
           description: SHA-256 Hash der Grunddaten für Matching
-          exampless: ["sha256:a1b2c3d4..."]
+          examples: ["sha256:a1b2c3d4..."]
         basicData:
           $ref: '#/components/schemas/BasicCustomerData'
 
@@ -1330,12 +1330,12 @@ components:
         lastName:
           type: string
           description: Nachname
-          exampless: ["Müller"]
+          examples: ["Müller"]
           maxLength: 100
         givenName:
           type: string
           description: Vorname(n)
-          exampless: ["Hans Peter"]
+          examples: ["Hans Peter"]
           maxLength: 100
         middleName:
           type: string
@@ -1344,17 +1344,17 @@ components:
         title:
           type: string
           description: Titel
-          exampless: ["Dr."]
+          examples: ["Dr."]
           maxLength: 50
         birthDate:
           type: string
           format: date
           description: Geburtsdatum
-          exampless: ["1985-03-15"]
+          examples: ["1985-03-15"]
         birthPlace:
           type: string
           description: Geburtsort
-          exampless: ["Zürich"]
+          examples: ["Zürich"]
           maxLength: 100
         nationality:
           type: array
@@ -1362,7 +1362,7 @@ components:
             type: string
             pattern: '^[A-Z]{2}$'
           description: Nationalität(en) (ISO 3166-1)
-          exampless: ["CH", "DE"]
+          examples: ["CH", "DE"]
           minItems: 1
           maxItems: 5
         gender:
@@ -1374,7 +1374,7 @@ components:
         language:
           type: string
           description: Bevorzugte Sprache (ISO 639-1)
-          exampless: ["de"]
+          examples: ["de"]
           pattern: '^[a-z]{2}$'
 
     ContactInformation:
