@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Open API Kundenbeziehung - Swiss National Standard
   description: |
@@ -179,14 +179,14 @@ paths:
                 client_assertion:
                   type: string
                   description: JWT assertion for private_key_jwt authentication
-            examples:
+            exampless:
               authorization_code:
                 summary: Authorization Code Grant
                 value:
                   grant_type: authorization_code
                   client_id: bank-client-001
                   code: auth_code_123
-                  redirect_uri: https://client.example.com/callback
+                  redirect_uri: https://client.examples.com/callback
                   code_verifier: pkce_verifier_123
       responses:
         '200':
@@ -545,7 +545,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConsentRequest'
-            examples:
+            exampless:
               account_opening:
                 summary: Kontoeröffnung
                 value:
@@ -712,7 +712,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CustomerCheckRequest'
-            examples:
+            exampless:
               basic_check:
                 summary: Basis-Kundenprüfung
                 value:
@@ -1015,45 +1015,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ParticipantList'
 
-  # PUSHED AUTHORIZATION REQUESTS (PAR) - FAPI 2.0
-  /par:
-    post:
-      summary: Pushed Authorization Request
-      description: Submits authorization request parameters to the authorization server (FAPI 2.0 required)
-      operationId: createPushedAuthorizationRequest
-      tags:
-        - FAPI 2.0 OAuth
-      security:
-        - mTLS: []
-        - PrivateKeyJWT: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PARRequest'
-            examples:
-              consent_request:
-                summary: Consent Authorization Request
-                value:
-                  client_id: "CH-BANK-001"
-                  response_type: "code"
-                  scope: "consent:read consent:write customer:read"
-                  redirect_uri: "https://client.example.com/callback"
-                  state: "xyz"
-                  code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-                  code_challenge_method: "S256"
-      responses:
-        '201':
-          description: PAR erfolgreich erstellt
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PARResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
   # HEALTH CHECK
   /health:
@@ -1114,7 +1075,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
+          example: 
             error: "UNAUTHORIZED"
             message: "Invalid or missing authentication token"
             timestamp: "2024-01-15T10:30:00Z"
@@ -1208,15 +1169,15 @@ components:
         customerId:
           type: string
           description: Eindeutige Kunden-ID (sharedCustomerHash)
-          example: "sha256:abc123..."
+          exampless: ["sha256:abc123..."]
         requestingInstitution:
           type: string
           description: Institution die Daten anfordert
-          example: "CH-BANK-001"
+          exampless: ["CH-BANK-001"]
         providingInstitution:
           type: string
           description: Institution die Daten bereitstellt
-          example: "CH-BANK-002"
+          exampless: ["CH-BANK-002"]
         dataCategories:
           type: array
           items:
@@ -1298,7 +1259,7 @@ components:
         sharedCustomerHash:
           type: string
           description: SHA-256 Hash der Grunddaten für Matching
-          example: "sha256:a1b2c3d4..."
+          exampless: ["sha256:a1b2c3d4..."]
         basicData:
           $ref: '#/components/schemas/BasicCustomerData'
 
@@ -1369,12 +1330,12 @@ components:
         lastName:
           type: string
           description: Nachname
-          example: "Müller"
+          exampless: ["Müller"]
           maxLength: 100
         givenName:
           type: string
           description: Vorname(n)
-          example: "Hans Peter"
+          exampless: ["Hans Peter"]
           maxLength: 100
         middleName:
           type: string
@@ -1383,17 +1344,17 @@ components:
         title:
           type: string
           description: Titel
-          example: "Dr."
+          exampless: ["Dr."]
           maxLength: 50
         birthDate:
           type: string
           format: date
           description: Geburtsdatum
-          example: "1985-03-15"
+          exampless: ["1985-03-15"]
         birthPlace:
           type: string
           description: Geburtsort
-          example: "Zürich"
+          exampless: ["Zürich"]
           maxLength: 100
         nationality:
           type: array
@@ -1401,7 +1362,7 @@ components:
             type: string
             pattern: '^[A-Z]{2}$'
           description: Nationalität(en) (ISO 3166-1)
-          example: ["CH", "DE"]
+          exampless: ["CH", "DE"]
           minItems: 1
           maxItems: 5
         gender:
@@ -1413,7 +1374,7 @@ components:
         language:
           type: string
           description: Bevorzugte Sprache (ISO 639-1)
-          example: "de"
+          exampless: ["de"]
           pattern: '^[a-z]{2}$'
 
     ContactInformation:
@@ -1432,7 +1393,7 @@ components:
         mobilePhone:
           type: string
           description: Mobiltelefonnummer (E.164 Format)
-          example: "+41791234567"
+          examples: ["+41791234567"]
           pattern: '^\+[1-9]\d{1,14}$'
         landlinePhone:
           type: string
@@ -1448,7 +1409,7 @@ components:
         availabilityHours:
           type: string
           description: Verfügbarkeitszeiten
-          example: "09:00-17:00"
+          examples: ["09:00-17:00"]
 
     AddressData:
       type: object
@@ -1484,7 +1445,7 @@ components:
         street:
           type: string
           description: Straße und Hausnummer
-          example: "Bahnhofstrasse 1"
+          examples: ["Bahnhofstrasse 1"]
           maxLength: 255
         addressLine2:
           type: string
@@ -1493,22 +1454,22 @@ components:
         postalCode:
           type: string
           description: Postleitzahl
-          example: "8001"
+          examples: ["8001"]
           maxLength: 20
         city:
           type: string
           description: Ort
-          example: "Zürich"
+          examples: ["Zürich"]
           maxLength: 100
         region:
           type: string
           description: Kanton/Region
-          example: "ZH"
+          examples: ["ZH"]
           maxLength: 100
         country:
           type: string
           description: Land (ISO 3166-1)
-          example: "CH"
+          examples: ["CH"]
           pattern: '^[A-Z]{2}$'
         addressType:
           type: string
@@ -1769,7 +1730,7 @@ components:
         currency:
           type: string
           description: Währung (ISO 4217)
-          example: "CHF"
+          examples: ["CHF"]
           pattern: '^[A-Z]{3}$'
 
     DataMetadata:
@@ -2038,7 +1999,7 @@ components:
         scope:
           type: string
           description: OAuth scopes
-          example: "consent:read consent:write customer:read"
+          examples: ["consent:read consent:write customer:read"]
         redirect_uri:
           type: string
           format: uri
@@ -2070,12 +2031,12 @@ components:
           type: string
           format: uri
           description: Request URI to use in authorization request
-          example: "urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY22c"
+          examples: ["urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY22c"]
         expires_in:
           type: integer
           description: Request URI lifetime in seconds (max 60 for FAPI 2.0)
           maximum: 60
-          example: 60
+          examples: [60]
 
     # REFERENZPROZESS SCHEMAS
     ProcessInitializationRequest:
@@ -2354,7 +2315,7 @@ components:
           type: string
         requiredAttribute:
           type: string
-          example: "age_minimum_18"
+          examples: ["age_minimum_18"]
         purpose:
           type: string
           enum: [cross_industry_age_gate, regulatory_compliance]
