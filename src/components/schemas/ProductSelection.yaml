@@ -1,0 +1,33 @@
+type: object
+required:
+  - accountType
+  - productPackage
+  - status
+properties:
+  accountType:
+    type: string
+    enum: [private, savings, youth, business]
+    description: Primary account category.
+  productPackage:
+    type: string
+    enum: [standard, student, youth, premium, business]
+    description: Product tier within the selected account type.
+  additionalProducts:
+    type: array
+    items:
+      type: string
+    description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
+  selectedProducts:
+    type: object
+    properties:
+      monthlyFee:
+        type: number
+        description: Recurring monthly fee for the selected product combination.
+      currency:
+        type: string
+        pattern: '^[A-Z]{3}$'
+        description: ISO 4217 currency code (e.g. CHF, EUR, USD).
+  status:
+    type: string
+    enum: [productsSelected, pending]
+    description: Current state of the product selection step.

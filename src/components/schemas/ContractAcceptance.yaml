@@ -1,0 +1,22 @@
+type: object
+required:
+  - contracts
+properties:
+  contracts:
+    type: array
+    items:
+      $ref: ./ContractItem.yaml
+  termsAccepted:
+    type: boolean
+    deprecated: true
+    description: >
+      Deprecated. Legacy field replaced by the contracts array.
+      Retained for backward compatibility.
+  contractType:
+    type: string
+    deprecated: true
+    description: Deprecated. Legacy field replaced by the contracts array.
+  contractVersion:
+    type: string
+    deprecated: true
+    description: Deprecated. Legacy field replaced by the contracts array.

@@ -1,0 +1,38 @@
+type: object
+required:
+  - signatureType
+  - signatureStatus
+  - legallyBinding
+  - mfaCompleted
+properties:
+  signatureType:
+    type: string
+    enum: [QES, AES, SES]
+    description: eIDAS signature level. QES requires QEAA-level identification.
+  signatureStatus:
+    type: string
+    enum: [completed, pending, failed]
+    description: Only completed allows the process to proceed to finalization.
+  signedContracts:
+    type: array
+    items:
+      $ref: ./SignedContract.yaml
+  signatureData:
+    type: object
+    properties:
+      certificate:
+        type: string
+        description: X.509 digital certificate (PEM or Base64-encoded DER). For QES, must be from a qualified TSP.
+      timestamp:
+        type: string
+        format: date-time
+        description: Timestamp from a trusted timestamping authority (TSA) providing non-repudiation.
+      deviceInfo:
+        type: string
+        description: Device type, OS, browser, and app version used for signing (audit and fraud detection).
+  legallyBinding:
+    type: boolean
+    description: Whether the signature is legally binding based on type and applicable jurisdiction.
+  mfaCompleted:
+    type: boolean
+    description: Whether MFA was completed during signing. Required for QES and AES.

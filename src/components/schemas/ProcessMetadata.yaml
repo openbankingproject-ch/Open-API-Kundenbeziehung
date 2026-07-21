@@ -1,0 +1,65 @@
+type: object
+properties:
+  processId:
+    type: string
+    description: End-to-end correlation ID matching initialization.processId.
+  processTimestamps:
+    type: object
+    properties:
+      initialized:
+        type: string
+        format: date-time
+      productSelected:
+        type: string
+        format: date-time
+      selfDeclared:
+        type: string
+        format: date-time
+      basicDataCompleted:
+        type: string
+        format: date-time
+      financialProfileCompleted:
+        type: string
+        format: date-time
+      identified:
+        type: string
+        format: date-time
+      backgroundChecksCompleted:
+        type: string
+        format: date-time
+      contractsAccepted:
+        type: string
+        format: date-time
+      signed:
+        type: string
+        format: date-time
+      finalized:
+        type: string
+        format: date-time
+  auditTrail:
+    type: array
+    items:
+      $ref: ./AuditEntry.yaml
+  systemIntegration:
+    type: object
+    properties:
+      coreBankingId:
+        type: string
+        description: Unique customer ID in core banking system (T24, Avaloq, Finnova, etc.).
+      accountNumber:
+        type: string
+        description: Assigned IBAN in ISO 13616 format (e.g. CH93 0076 2011 6238 5295 7).
+      cardIssuanceStatus:
+        type: string
+        description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
+      documentArchiveReference:
+        type: string
+        description: Reference ID or URL to archived onboarding documents in DMS.
+  lastUpdate:
+    type: string
+    format: date-time
+    description: ISO 8601 timestamp of the most recent metadata update.
+  status:
+    type: string
+    enum: [in_progress, completed, failed]
+    description: Overall onboarding process status. completed and failed are terminal states.

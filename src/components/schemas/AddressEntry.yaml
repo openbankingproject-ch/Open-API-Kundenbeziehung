@@ -1,0 +1,36 @@
+type: object
+required:
+  - addressType
+  - street
+  - houseNumber
+  - postalCode
+  - city
+  - country
+properties:
+  addressType:
+    type: string
+    description: Address type identifier (e.g. residential).
+  street:
+    type: string
+  houseNumber:
+    type: string
+    description: House/building number (text to accommodate formats like 12a, 3/4).
+  postalCode:
+    type: string
+  city:
+    type: string
+  country:
+    type: string
+    pattern: '^[A-Z]{2}$'
+    description: ISO 3166-1 alpha-2 country code.
+  canton:
+    type: string
+    description: Canton (CH), federal state (DE), or region. Two-letter canton code for Swiss addresses.
+  validFrom:
+    type: string
+    format: date
+    description: Date from which the customer has resided at this address (YYYY-MM-DD).
+  validTo:
+    type: string
+    format: date
+    description: Date until which the customer resided here. Empty means current address.

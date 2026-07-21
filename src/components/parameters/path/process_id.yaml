@@ -1,0 +1,6 @@
+name: processId
+in: path
+required: true
+description: Unique onboarding process identifier assigned at initialization.
+schema:
+  type: string

@@ -1,0 +1,53 @@
+type: object
+required:
+  - consentId
+  - dataCategories
+  - purposes
+  - grantedScopes
+  - status
+  - grantedAt
+  - expiresAt
+properties:
+  consentId:
+    type: string
+    format: uuid
+    description: Unique identifier for this consent grant.
+  dataCategories:
+    type: array
+    items:
+      type: string
+      enum:
+        - initialization
+        - productSelection
+        - selfDeclaration
+        - basicData
+        - financialProfile
+        - identification
+        - backgroundChecks
+        - contracts
+        - signature
+    description: Personal data categories the customer has authorized for collection.
+  purposes:
+    type: array
+    items:
+      type: string
+    description: >
+      Specific purposes for data use, each with a legal basis under GDPR/DSG.
+      Examples: account_opening, kyc_verification, credit_assessment, marketing, regulatory_reporting.
+  grantedScopes:
+    type: array
+    items:
+      type: string
+    description: OAuth 2.1 scopes granted to the consuming application (e.g. read:account, write:profile).
+  status:
+    type: string
+    enum: [active, revoked, expired]
+    description: Lifecycle state of the consent.
+  grantedAt:
+    type: string
+    format: date-time
+    description: ISO 8601 timestamp of when consent was granted.
+  expiresAt:
+    type: string
+    format: date-time
+    description: ISO 8601 timestamp after which the consent is no longer valid.

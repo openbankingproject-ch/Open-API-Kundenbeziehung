@@ -1,0 +1,20 @@
+type: object
+required:
+  - contractType
+  - version
+  - signatureTimestamp
+  - signatureId
+properties:
+  contractType:
+    type: string
+    description: Type of signed contract matching contractAcceptance step.
+  version:
+    type: string
+    description: Version of the signed contract, must match the accepted version.
+  signatureTimestamp:
+    type: string
+    format: date-time
+    description: Must be equal to or later than the corresponding acceptanceTimestamp.
+  signatureId:
+    type: string
+    description: Unique signature identifier for certificate retrieval and integrity verification.

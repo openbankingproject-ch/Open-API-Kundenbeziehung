@@ -1,0 +1,253 @@
+openapi: 3.1.0
+info:
+  title: FAPI 2.0 Digital Banking Onboarding API
+  version: 1.0.0
+  description: >
+    FAPI 2.0-compliant digital banking customer onboarding API.
+    The onboarding is structured as a 10-step pipeline, from session
+    initialization through to final account provisioning.
+
+paths:
+  /onboarding/initialization:
+    post:
+      summary: Step 1 – Initialize onboarding session
+      operationId: createInitialization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/InitializationRequest.yaml
+      responses:
+        '201':
+          description: Onboarding session created
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/InitializationResponse.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+
+  /onboarding/{processId}/product-selection:
+    put:
+      summary: Step 2 – Select banking products
+      operationId: updateProductSelection
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/ProductSelection.yaml
+      responses:
+        '200':
+          description: Product selection updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/ProductSelection.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/consent:
+    put:
+      summary: Step 3 – Record consent
+      operationId: updateConsent
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Consent.yaml
+      responses:
+        '200':
+          description: Consent recorded
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Consent.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/self-declaration:
+    put:
+      summary: Step 4 – Self declaration (FATCA / CRS / AML)
+      operationId: updateSelfDeclaration
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/SelfDeclaration.yaml
+      responses:
+        '200':
+          description: Self declaration updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/SelfDeclaration.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/base-data:
+    put:
+      summary: Step 5 – Collect base data (identity, address, contact)
+      operationId: updateBaseData
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/BaseData.yaml
+      responses:
+        '200':
+          description: Base data updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/BaseData.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/financial-profile:
+    put:
+      summary: Step 6 – Collect financial profile (MiFID II / KYC extended data)
+      operationId: updateFinancialProfile
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/FinancialProfile.yaml
+      responses:
+        '200':
+          description: Financial profile updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/FinancialProfile.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/identification:
+    put:
+      summary: Step 7 – Identity verification (KYC)
+      operationId: updateIdentification
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Identification.yaml
+      responses:
+        '200':
+          description: Identification updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Identification.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/background-checks:
+    get:
+      summary: Step 8 – Retrieve AML / compliance check results
+      operationId: getBackgroundChecks
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      responses:
+        '200':
+          description: Background check results
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/BackgroundChecks.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/contract-acceptance:
+    put:
+      summary: Step 9 – Accept contracts
+      operationId: updateContractAcceptance
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/ContractAcceptance.yaml
+      responses:
+        '200':
+          description: Contract acceptance updated
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/ContractAcceptance.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/signature:
+    put:
+      summary: Step 10 – Digital signature
+      operationId: updateSignature
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Signature.yaml
+      responses:
+        '200':
+          description: Signature recorded
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Signature.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+
+  /onboarding/{processId}/metadata:
+    get:
+      summary: Step 11 – Retrieve process metadata and audit trail
+      operationId: getMetadata
+      parameters:
+        - $ref: ./components/parameters/path/process_id.yaml
+      responses:
+        '200':
+          description: Process metadata
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/ProcessMetadata.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml

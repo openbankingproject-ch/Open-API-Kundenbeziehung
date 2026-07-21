@@ -1,0 +1,10 @@
+type: object
+properties:
+  residentialAddress:
+    allOf:
+      - $ref: ./AddressEntry.yaml
+    description: Primary domicile address required for KYC and tax residency determination.
+  correspondenceAddress:
+    allOf:
+      - $ref: ./AddressEntry.yaml
+    description: Address for physical mail. Defaults to residentialAddress if not provided.

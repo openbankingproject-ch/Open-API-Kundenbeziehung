@@ -1,0 +1,59 @@
+type: object
+required:
+  - economicBeneficiary
+  - taxDomicile
+  - usTaxLiability
+  - fatcaDeclaration
+  - sourceOfFunds
+  - nationalities
+  - taxComplianceDeclaration
+properties:
+  economicBeneficiary:
+    type: boolean
+    description: Whether the customer is the economic beneficiary (acting on their own behalf).
+  taxDomicile:
+    type: string
+    pattern: '^[A-Z]{2}$'
+    description: ISO 3166-1 alpha-2 country code of primary tax residency.
+  usTaxLiability:
+    type: boolean
+    description: Whether the customer has a US tax obligation triggering FATCA reporting.
+  fatcaDeclaration:
+    type: object
+    required:
+      - status
+      - confirmed
+    properties:
+      status:
+        type: string
+        enum: [non_us_person, us_person, recalcitrant]
+        description: Customer's FATCA classification.
+      confirmed:
+        type: boolean
+        description: Whether the customer has explicitly confirmed their FATCA status.
+  tin:
+    type: string
+    description: Tax Identification Number for the declared tax domicile (e.g. AHV/AVS for CH).
+  sourceOfFunds:
+    type: string
+    enum: [employment, business, investment, inheritance, savings, gift, real_estate, other]
+    description: Primary origin of funds for AML risk assessment per FINMA guidelines.
+  nationalities:
+    type: array
+    items:
+      type: string
+      pattern: '^[A-Z]{2}$'
+    description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes.
+  taxComplianceDeclaration:
+    type: object
+    required:
+      - confirmed
+      - declarationDate
+    properties:
+      confirmed:
+        type: boolean
+        description: Whether the customer has confirmed compliance with all applicable tax laws.
+      declarationDate:
+        type: string
+        format: date-time
+        description: ISO 8601 timestamp of when the declaration was confirmed.

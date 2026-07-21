@@ -1,0 +1,30 @@
+type: object
+required:
+  - step
+  - action
+  - originator
+  - timestamp
+  - result
+properties:
+  step:
+    type: string
+    description: Onboarding step in which this action occurred.
+  action:
+    type: string
+    description: Machine-readable action identifier (e.g. consent_granted, contract_signed).
+  originator:
+    type: string
+    enum: [user, system, partner]
+    description: Entity that performed the action.
+  timestamp:
+    type: string
+    format: date-time
+  ipAddress:
+    type: string
+    description: IP address from which the action was initiated.
+  deviceFingerprint:
+    type: string
+    description: Hash representing the device used. Used for fraud detection.
+  result:
+    type: string
+    enum: [success, failure, pending]

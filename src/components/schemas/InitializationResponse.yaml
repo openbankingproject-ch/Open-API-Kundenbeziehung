@@ -1,0 +1,14 @@
+allOf:
+  - $ref: ./InitializationRequest.yaml
+  - type: object
+    required:
+      - processId
+      - timestamp
+    properties:
+      processId:
+        type: string
+        description: Immutable unique identifier for the onboarding process. Correlation ID across all steps.
+      timestamp:
+        type: string
+        format: date-time
+        description: ISO 8601 timestamp when the onboarding session was created.
