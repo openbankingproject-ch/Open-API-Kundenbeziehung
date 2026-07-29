@@ -1,0 +1,29 @@
+type: object
+properties:
+  phoneNumber:
+    type: string
+    description: Landline in E.164 format (e.g. +41441234567).
+  mobileNumber:
+    type: string
+    description: Mobile number in E.164 format. Primary OTP and push notification channel.
+  emailAddress:
+    type: string
+    format: email
+    description: Email address for e-banking login and digital correspondence.
+  preferredChannel:
+    type: string
+    enum: [email, sms, phone, app]
+    description: Customer's preferred communication channel.
+  verificationStatus:
+    type: object
+    properties:
+      phoneVerified:
+        type: boolean
+        description: Whether the phone number has been verified via OTP or callback.
+      emailVerified:
+        type: boolean
+        description: Whether the email has been verified via confirmation link or code.
+      lastVerification:
+        type: string
+        format: date-time
+        description: ISO 8601 timestamp of the most recent successful verification.

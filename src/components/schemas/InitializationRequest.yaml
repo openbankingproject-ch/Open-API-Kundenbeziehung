@@ -1,0 +1,23 @@
+type: object
+required:
+  - cookiesAccepted
+  - dataProcessingConsent
+  - selectedCountry
+  - serviceType
+properties:
+  cookiesAccepted:
+    type: boolean
+    description: General cookie banner acceptance. Required before any session persistence.
+  cookieConsent:
+    type: boolean
+    description: Granular consent for specific cookie categories (analytics, marketing, etc.).
+  dataProcessingConsent:
+    type: boolean
+    description: GDPR/DSG consent for personal data processing. Must be granted before any data collection.
+  selectedCountry:
+    type: string
+    pattern: '^[A-Z]{2}$'
+    description: ISO 3166-1 alpha-2 country code (e.g. CH, DE, AT). Determines regulatory jurisdiction.
+  serviceType:
+    type: string
+    description: Type of banking service being onboarded (e.g. account_opening, card_application).

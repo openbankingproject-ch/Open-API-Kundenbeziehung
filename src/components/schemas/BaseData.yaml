@@ -1,0 +1,8 @@
+type: object
+properties:
+  identity:
+    $ref: ./Identity.yaml
+  address:
+    $ref: ./AddressData.yaml
+  contact:
+    $ref: ./Contact.yaml

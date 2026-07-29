@@ -1,0 +1,103 @@
+type: object
+required:
+  - identificationMethod
+  - referenceNumber
+  - verificationDate
+  - documentData
+  - verificationLevel
+properties:
+  identificationMethod:
+    type: string
+    enum: [VideoIdent, EID, PostIdent, BankIdent, AutoIdent]
+    description: Method used to verify the customer's identity.
+  referenceNumber:
+    type: string
+    description: Unique reference for this identification session.
+  verificationDate:
+    type: string
+    format: date-time
+    description: ISO 8601 timestamp of when verification was completed.
+  documentData:
+    type: object
+    required:
+      - documentType
+      - documentNumber
+      - expiryDate
+    properties:
+      documentType:
+        type: string
+        enum: [passport, id, residence_permit]
+      documentNumber:
+        type: string
+      issuingAuthority:
+        type: string
+      issueDate:
+        type: string
+        format: date
+      issuePlace:
+        type: string
+      expiryDate:
+        type: string
+        format: date
+        description: Document must not be expired at time of verification.
+      mrz:
+        type: string
+        description: Machine Readable Zone data in ICAO 9303 format.
+      nfcData:
+        type: object
+        properties:
+          chipVerified:
+            type: boolean
+            description: Whether the NFC chip was successfully read and its signature validated.
+          biometricDataHash:
+            type: string
+            description: Cryptographic hash of biometric data stored on the NFC chip.
+          securityFeaturesVerified:
+            type: number
+            description: Count of NFC chip security features successfully verified.
+          chipAuthenticationStatus:
+            type: string
+            enum: [verified, failed]
+  verificationLevel:
+    type: string
+    enum: [QEAA, EAA, self-declared]
+    description: Achieved eIDAS trust level. Determines available products and signature types.
+  biometricVerification:
+    type: object
+    properties:
+      livenessScore:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        description: Liveness detection confidence score. Minimum threshold typically 0.9.
+      faceMatchScore:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        description: Face-to-document match confidence. Minimum threshold typically 0.85.
+      documentAuthenticityScore:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        description: Document authenticity confidence based on visual security features.
+      securityFeaturesChecked:
+        type: number
+        description: Total number of security features inspected.
+      securityFeaturesVerified:
+        type: number
+        description: Number of security features that passed verification.
+  auditTrail:
+    type: object
+    properties:
+      videoReference:
+        type: string
+        description: URL/reference to the recorded identification session video.
+      documentScanReference:
+        type: string
+        description: URL/reference to scanned identity document images.
+      timestamp:
+        type: string
+        format: date-time
+      originator:
+        type: string
+        description: Agent ID (VideoIdent) or system identifier (automated methods).

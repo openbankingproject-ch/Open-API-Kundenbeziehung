@@ -1,0 +1,79 @@
+type: object
+properties:
+  totalAssets:
+    type: object
+    properties:
+      amount:
+        type: number
+        description: Total net worth as a numeric value. Either amount or assetRange must be provided.
+      currency:
+        type: string
+        pattern: '^[A-Z]{3}$'
+        description: ISO 4217 currency code. Required when amount is provided.
+      assetRange:
+        type: string
+        description: Bracketed range (e.g. 200000-500000) when exact amount is not provided.
+      lastUpdated:
+        type: string
+        format: date-time
+  income:
+    type: object
+    properties:
+      annualGrossIncome:
+        type: number
+        description: Annual gross income before taxes. Either amount or incomeRange must be provided.
+      currency:
+        type: string
+        pattern: '^[A-Z]{3}$'
+      incomeRange:
+        type: string
+        description: Bracketed range for annual gross income when exact amount is not provided.
+      incomeType:
+        type: string
+        enum: [employment, business, investment, pension, other]
+      lastUpdated:
+        type: string
+        format: date-time
+  employment:
+    type: object
+    properties:
+      profession:
+        type: string
+        description: Current job title or professional role.
+      employer:
+        type: string
+        description: Name of current employer.
+      employmentType:
+        type: string
+        enum: [permanent, temporary, self-employed, retired, student]
+      yearsWithEmployer:
+        type: number
+        description: Years with current employer. Positive factor in credit assessments.
+      industry:
+        type: string
+        description: Industry sector (e.g. finance, technology, healthcare, public_sector).
+  education:
+    type: object
+    properties:
+      highestDegree:
+        type: string
+        description: Highest completed education level (e.g. Bachelor, Master, PhD, Apprenticeship).
+      fieldOfStudy:
+        type: string
+      institution:
+        type: string
+  financialKnowledge:
+    type: object
+    properties:
+      investmentExperience:
+        type: string
+        enum: [none, basic, intermediate, advanced]
+        description: Self-assessed investment experience level. Required under MiFID II.
+      riskTolerance:
+        type: string
+        enum: [low, moderate, high]
+        description: Self-assessed investment risk willingness. Required under MiFID II.
+      investmentHorizon:
+        type: string
+        enum: [short-term, medium-term, long-term]
+        description: Intended investment timeframe for MiFID II suitability assessment.

@@ -1,0 +1,49 @@
+type: object
+properties:
+  personalData:
+    type: object
+    required:
+      - firstName
+      - lastName
+      - dateOfBirth
+    properties:
+      title:
+        type: string
+        description: Form of address or salutation (e.g. Herr, Frau, Dr.).
+      firstName:
+        type: string
+        description: Legal first name(s) as shown on identity document.
+      lastName:
+        type: string
+        description: Legal surname as shown on identity document.
+      gender:
+        type: string
+        enum: [male, female, other]
+      dateOfBirth:
+        type: string
+        format: date
+        description: Date of birth in YYYY-MM-DD format.
+      placeOfBirth:
+        type: string
+        description: City or municipality of birth.
+      placeOfOrigin:
+        type: string
+        description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
+      nationality:
+        type: array
+        items:
+          type: string
+          pattern: '^[A-Z]{2}$'
+        description: List of nationalities as ISO 3166-1 alpha-2 codes.
+      maritalStatus:
+        type: string
+        enum: [single, married, divorced, widowed, registered_partnership, separated]
+      externalIdentityId:
+        type: object
+        properties:
+          provider:
+            type: string
+            description: External identity provider (e.g. Google, Apple, Samsung).
+          id:
+            type: string
+            description: Unique user identifier from the external provider.

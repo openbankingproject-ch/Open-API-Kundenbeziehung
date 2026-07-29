@@ -1,0 +1,78 @@
+type: object
+properties:
+  checksCompleted:
+    type: object
+    properties:
+      sanctionCheck:
+        type: string
+        enum: [passed, failed, pending]
+        description: Screening against UN, EU, OFAC, SECO sanctions lists.
+      pepCheck:
+        type: string
+        enum: [passed, failed, pending]
+        description: Screening against Politically Exposed Persons databases.
+      crimeCheck:
+        type: string
+        enum: [passed, failed, pending]
+        description: Criminal background screening result.
+      creditCheck:
+        type: string
+        enum: [passed, failed, pending]
+        description: Creditworthiness assessment via CRIF, ZEK or equivalent.
+      adverseMediaCheck:
+        type: string
+        enum: [passed, failed, pending]
+        description: Screening of news and media for negative customer coverage.
+  pepDetails:
+    type: object
+    properties:
+      pepStatus:
+        type: string
+        enum: [no, yes]
+      pepCategory:
+        type: string
+        enum:
+          - head_of_state
+          - minister
+          - parliament_member
+          - senior_military
+          - judicial_official
+          - central_bank_governor
+          - state_enterprise_executive
+          - family_member
+          - close_associate
+      lastChecked:
+        type: string
+        format: date-time
+        description: Timestamp of most recent PEP screening. Must be refreshed periodically.
+  amlRiskClass:
+    type: string
+    enum: [low, medium, high]
+    description: AML risk classification derived from all check results and profile factors.
+  riskAssessment:
+    type: object
+    properties:
+      overallRisk:
+        type: string
+        enum: [low, medium, high]
+      riskScore:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: Numeric risk score where 0 is lowest and 100 is highest risk.
+      riskFactors:
+        type: array
+        items:
+          type: string
+          enum:
+            - high_risk_country
+            - cash_intensive_business
+            - complex_ownership
+            - pep_related
+      lastAssessment:
+        type: string
+        format: date-time
+  complianceStatus:
+    type: string
+    enum: [approved, rejected, pending, manual_review]
+    description: Final compliance decision. Only approved allows continuation.
