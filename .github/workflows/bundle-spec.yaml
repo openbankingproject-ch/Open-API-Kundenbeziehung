@@ -1,0 +1,74 @@
+name: Bundle OpenAPI specification
+
+# Bundles the multi-file source (src/onboardingAPI.yaml + src/components/**)
+# into a single self-contained onboardingAPI.yaml at the repo root, and commits
+# it back so the bundled file always stays in sync with the source.
+#
+# Fully self-contained: uses only the public @redocly/cli — no external
+# reusable workflows or custom plugins.
+
+on:
+  push:
+    branches:
+      - main
+      - alpha
+    paths:
+      - 'src/**'
+      - 'redocly.yaml'
+      - '.github/workflows/bundle-spec.yaml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'redocly.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Redocly CLI
+        run: npm install --no-save @redocly/cli@^1.34.5
+
+      # Reports spec-quality issues but never blocks the bundle.
+      - name: Lint specification
+        continue-on-error: true
+        run: npx redocly lint --config redocly.yaml onboarding
+
+      - name: Bundle specification
+        run: npx redocly bundle --config redocly.yaml onboarding -o onboardingAPI.yaml
+
+      # On pull requests, only verify the committed bundle is up to date
+      # (fails if a contributor forgot to run `npm run bundle`).
+      - name: Verify bundle is up to date (pull request)
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet -- onboardingAPI.yaml; then
+            echo "::error::onboardingAPI.yaml is out of date. Run 'npm run bundle' and commit the result."
+            git diff -- onboardingAPI.yaml
+            exit 1
+          fi
+
+      # On push / manual runs, commit the regenerated bundle back to the branch.
+      - name: Commit updated bundle
+        if: github.event_name != 'pull_request'
+        run: |
+          if git diff --quiet -- onboardingAPI.yaml; then
+            echo "Bundle already up to date, nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add onboardingAPI.yaml
+          git commit -m "chore: regenerate bundled onboardingAPI.yaml [skip ci]"
+          git push

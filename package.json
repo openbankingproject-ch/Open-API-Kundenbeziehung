@@ -1,0 +1,14 @@
+{
+  "name": "open-api-kundenbeziehung",
+  "version": "1.0.0",
+  "description": "Digital banking onboarding OpenAPI specification (multi-file source, bundled with Redocly).",
+  "private": true,
+  "scripts": {
+    "bundle": "redocly bundle --config redocly.yaml onboarding -o onboardingAPI.yaml",
+    "lint": "redocly lint --config redocly.yaml onboarding",
+    "preview": "redocly preview-docs --config redocly.yaml onboarding"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.5"
+  }
+}

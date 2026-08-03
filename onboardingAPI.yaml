@@ -395,7 +395,7 @@ components:
         - usTaxLiability
         - fatcaDeclaration
         - sourceOfFunds
-        - nationalities
+        - nationalityList
         - taxComplianceDeclaration
       properties:
         economicBeneficiary:
@@ -439,12 +439,12 @@ components:
             - real_estate
             - other
           description: Primary origin of funds for AML risk assessment per FINMA guidelines.
-        nationalities:
+        nationalityList:
           type: array
           items:
             type: string
             pattern: ^[A-Z]{2}$
-          description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes.
+          description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
         taxComplianceDeclaration:
           type: object
           required:
@@ -464,52 +464,67 @@ components:
         personalData:
           type: object
           required:
-            - firstName
+            - givenName
             - lastName
             - dateOfBirth
           properties:
             title:
               type: string
-              description: Form of address or salutation (e.g. Herr, Frau, Dr.).
-            firstName:
+              maxLength: 35
+              description: Official title of the person (e.g. PhD, Dr.).
+            givenName:
               type: string
-              description: Legal first name(s) as shown on identity document.
+              maxLength: 35
+              description: Given name(s) of the person as shown on the identity document.
+            middleName:
+              type: string
+              maxLength: 35
+              description: Middle name(s) of the person as shown on the identity document.
             lastName:
               type: string
+              maxLength: 35
               description: Legal surname as shown on identity document.
             gender:
               type: string
               enum:
                 - male
                 - female
-                - other
+                - divers
+              description: Gender of the person.
             dateOfBirth:
               type: string
               format: date
               description: Date of birth in YYYY-MM-DD format.
+            countryOfBirth:
+              type: string
+              pattern: ^[A-Z]{2}$
+              description: Country where the person was born, as ISO 3166-1 alpha-2 code.
             placeOfBirth:
               type: string
               description: City or municipality of birth.
             placeOfOrigin:
               type: string
               description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
-            nationality:
+            nationalityList:
               type: array
               items:
                 type: string
                 pattern: ^[A-Z]{2}$
-              description: List of nationalities as ISO 3166-1 alpha-2 codes.
-            maritalStatus:
+              description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
+            civilStatus:
               type: string
               enum:
                 - single
                 - married
                 - divorced
-                - widowed
-                - registered_partnership
+                - legallyDivorced
                 - separated
+                - stableUnion
+                - widow
+              description: Civil status of the person.
             externalIdentityId:
               type: object
+              description: External consumer identity provider reference.
               properties:
                 provider:
                   type: string
@@ -521,31 +536,39 @@ components:
       type: object
       required:
         - addressType
-        - street
-        - houseNumber
-        - postalCode
-        - city
+        - streetName
+        - buildingNumber
+        - postCode
+        - townName
         - country
       properties:
         addressType:
           type: string
           description: Address type identifier (e.g. residential).
-        street:
+        streetName:
           type: string
-        houseNumber:
+          maxLength: 35
+          description: Name of the street or thoroughfare.
+        buildingNumber:
           type: string
-          description: House/building number (text to accommodate formats like 12a, 3/4).
-        postalCode:
+          maxLength: 35
+          description: Number that identifies the position of the building on a street (text to accommodate formats like 12a, 3/4).
+        postCode:
           type: string
-        city:
+          maxLength: 35
+          description: Postal code added to a postal address to assist the sorting of mail.
+        townName:
           type: string
+          maxLength: 35
+          description: Name of the town or city.
         country:
           type: string
           pattern: ^[A-Z]{2}$
           description: ISO 3166-1 alpha-2 country code.
-        canton:
+        countrySubDivision:
           type: string
-          description: Canton (CH), federal state (DE), or region. Two-letter canton code for Swiss addresses.
+          maxLength: 35
+          description: Subdivision of a country such as canton (CH), federal state (DE), region, or county.
         validFrom:
           type: string
           format: date

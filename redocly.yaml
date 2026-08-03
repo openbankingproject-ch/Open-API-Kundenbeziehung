@@ -1,0 +1,18 @@
+# Redocly configuration for bundling the multi-file OpenAPI source
+# into a single, self-contained specification.
+#
+# Source of truth:  src/onboardingAPI.yaml  (+ src/components/**)
+# Bundled output:   onboardingAPI.yaml       (repo root, loadable in Swagger)
+#
+# Bundle locally with:  npm run bundle   (or: npx @redocly/cli bundle)
+
+apis:
+  onboarding:
+    root: src/onboardingAPI.yaml
+    output: onboardingAPI.yaml
+
+# Linting ruleset applied by `npm run lint`. `minimal` reports issues as
+# warnings; switch to `recommended` for a stricter ruleset once the spec
+# defines servers and security schemes.
+extends:
+  - minimal
