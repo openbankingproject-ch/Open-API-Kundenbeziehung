@@ -5,7 +5,7 @@ required:
   - usTaxLiability
   - fatcaDeclaration
   - sourceOfFunds
-  - nationalities
+  - nationalityList
   - taxComplianceDeclaration
 properties:
   economicBeneficiary:
@@ -38,12 +38,12 @@ properties:
     type: string
     enum: [employment, business, investment, inheritance, savings, gift, real_estate, other]
     description: Primary origin of funds for AML risk assessment per FINMA guidelines.
-  nationalities:
+  nationalityList:
     type: array
     items:
       type: string
       pattern: '^[A-Z]{2}$'
-    description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes.
+    description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
   taxComplianceDeclaration:
     type: object
     required:

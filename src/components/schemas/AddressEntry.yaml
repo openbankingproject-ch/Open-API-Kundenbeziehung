@@ -1,31 +1,39 @@
 type: object
 required:
   - addressType
-  - street
-  - houseNumber
-  - postalCode
-  - city
+  - streetName
+  - buildingNumber
+  - postCode
+  - townName
   - country
 properties:
   addressType:
     type: string
     description: Address type identifier (e.g. residential).
-  street:
+  streetName:
     type: string
-  houseNumber:
+    maxLength: 35
+    description: Name of the street or thoroughfare.
+  buildingNumber:
     type: string
-    description: House/building number (text to accommodate formats like 12a, 3/4).
-  postalCode:
+    maxLength: 35
+    description: Number that identifies the position of the building on a street (text to accommodate formats like 12a, 3/4).
+  postCode:
     type: string
-  city:
+    maxLength: 35
+    description: Postal code added to a postal address to assist the sorting of mail.
+  townName:
     type: string
+    maxLength: 35
+    description: Name of the town or city.
   country:
     type: string
     pattern: '^[A-Z]{2}$'
     description: ISO 3166-1 alpha-2 country code.
-  canton:
+  countrySubDivision:
     type: string
-    description: Canton (CH), federal state (DE), or region. Two-letter canton code for Swiss addresses.
+    maxLength: 35
+    description: Subdivision of a country such as canton (CH), federal state (DE), region, or county.
   validFrom:
     type: string
     format: date

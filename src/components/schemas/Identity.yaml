@@ -3,43 +3,57 @@ properties:
   personalData:
     type: object
     required:
-      - firstName
+      - givenName
       - lastName
       - dateOfBirth
     properties:
       title:
         type: string
-        description: Form of address or salutation (e.g. Herr, Frau, Dr.).
-      firstName:
+        maxLength: 35
+        description: Official title of the person (e.g. PhD, Dr.).
+      givenName:
         type: string
-        description: Legal first name(s) as shown on identity document.
+        maxLength: 35
+        description: Given name(s) of the person as shown on the identity document.
+      middleName:
+        type: string
+        maxLength: 35
+        description: Middle name(s) of the person as shown on the identity document.
       lastName:
         type: string
+        maxLength: 35
         description: Legal surname as shown on identity document.
       gender:
         type: string
-        enum: [male, female, other]
+        enum: [male, female, divers]
+        description: Gender of the person.
       dateOfBirth:
         type: string
         format: date
         description: Date of birth in YYYY-MM-DD format.
+      countryOfBirth:
+        type: string
+        pattern: '^[A-Z]{2}$'
+        description: Country where the person was born, as ISO 3166-1 alpha-2 code.
       placeOfBirth:
         type: string
         description: City or municipality of birth.
       placeOfOrigin:
         type: string
         description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
-      nationality:
+      nationalityList:
         type: array
         items:
           type: string
           pattern: '^[A-Z]{2}$'
-        description: List of nationalities as ISO 3166-1 alpha-2 codes.
-      maritalStatus:
+        description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
+      civilStatus:
         type: string
-        enum: [single, married, divorced, widowed, registered_partnership, separated]
+        enum: [single, married, divorced, legallyDivorced, separated, stableUnion, widow]
+        description: Civil status of the person.
       externalIdentityId:
         type: object
+        description: External consumer identity provider reference.
         properties:
           provider:
             type: string
