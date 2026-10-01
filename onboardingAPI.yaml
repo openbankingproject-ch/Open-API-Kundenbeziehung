@@ -3,38 +3,12 @@ info:
   title: FAPI 2.0 Digital Banking Onboarding API
   version: 1.0.0
   description: |
-    FAPI 2.0-compliant digital banking customer onboarding API. The onboarding is structured as a 10-step pipeline, from session
-    initialization through to final account provisioning.
-  contact:
-    email: info@common-api.ch
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
-servers:
-  - url: https://onboarding.common-api.ch
-externalDocs:
-  description: Find out more about the Common API specifications.
-  url: https://www.common-api.ch
-tags:
-  - name: contracts
-    description: Operations for accepting and signing the contracts of the onboarding process.
-  - name: customer-data
-    description: Operations for collecting personal, declarative and financial data of the customer.
-  - name: initialization
-    description: Operations for starting an onboarding process and selecting the banking products.
-  - name: process-metadata
-    description: Operations for retrieving the status, timestamps and audit trail of an onboarding process.
-  - name: verification
-    description: Operations for identity verification and compliance background checks.
-security: []
+    FAPI 2.0-compliant digital banking customer onboarding API. The onboarding is structured as a 10-step pipeline, from session initialization through to final account provisioning.
 paths:
   /onboarding/initialization:
     post:
       summary: Step 1 – Initialize onboarding session
-      description: Creates a new onboarding process and returns the processId used as correlation ID for all subsequent steps.
       operationId: createInitialization
-      tags:
-        - initialization
       requestBody:
         required: true
         content:
@@ -43,22 +17,17 @@ paths:
               $ref: '#/components/schemas/InitializationRequest'
       responses:
         '201':
-          description: Onboarding session created.
+          description: Onboarding session created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InitializationResponse'
         '400':
           $ref: '#/components/responses/standard400'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/product-selection:
     put:
       summary: Step 2 – Select banking products
-      description: Stores the account type, product package and optional add-on products selected by the customer.
       operationId: updateProductSelection
-      tags:
-        - initialization
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -69,7 +38,7 @@ paths:
               $ref: '#/components/schemas/ProductSelection'
       responses:
         '200':
-          description: Product selection updated.
+          description: Product selection updated
           content:
             application/json:
               schema:
@@ -78,15 +47,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/consent:
     put:
       summary: Step 3 – Record consent
-      description: Records the data categories, purposes and scopes the customer has consented to.
       operationId: updateConsent
-      tags:
-        - customer-data
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -97,7 +61,7 @@ paths:
               $ref: '#/components/schemas/Consent'
       responses:
         '200':
-          description: Consent recorded.
+          description: Consent recorded
           content:
             application/json:
               schema:
@@ -106,15 +70,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/self-declaration:
     put:
       summary: Step 4 – Self declaration (FATCA / CRS / AML)
-      description: Stores the customer's self declaration on beneficial ownership, tax residency and source of funds.
       operationId: updateSelfDeclaration
-      tags:
-        - customer-data
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -125,7 +84,7 @@ paths:
               $ref: '#/components/schemas/SelfDeclaration'
       responses:
         '200':
-          description: Self declaration updated.
+          description: Self declaration updated
           content:
             application/json:
               schema:
@@ -134,15 +93,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/base-data:
     put:
       summary: Step 5 – Collect base data (identity, address, contact)
-      description: Stores the identity, address and contact data of the customer.
       operationId: updateBaseData
-      tags:
-        - customer-data
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -153,7 +107,7 @@ paths:
               $ref: '#/components/schemas/BaseData'
       responses:
         '200':
-          description: Base data updated.
+          description: Base data updated
           content:
             application/json:
               schema:
@@ -162,15 +116,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/financial-profile:
     put:
       summary: Step 6 – Collect financial profile (MiFID II / KYC extended data)
-      description: Stores assets, income, employment, education and financial knowledge of the customer.
       operationId: updateFinancialProfile
-      tags:
-        - customer-data
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -181,7 +130,7 @@ paths:
               $ref: '#/components/schemas/FinancialProfile'
       responses:
         '200':
-          description: Financial profile updated.
+          description: Financial profile updated
           content:
             application/json:
               schema:
@@ -190,15 +139,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/identification:
     put:
       summary: Step 7 – Identity verification (KYC)
-      description: Stores the result of the identity verification including document, biometric and audit data.
       operationId: updateIdentification
-      tags:
-        - verification
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -209,7 +153,7 @@ paths:
               $ref: '#/components/schemas/Identification'
       responses:
         '200':
-          description: Identification updated.
+          description: Identification updated
           content:
             application/json:
               schema:
@@ -218,37 +162,25 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/background-checks:
     get:
       summary: Step 8 – Retrieve AML / compliance check results
-      description: Returns the results of sanction, PEP, crime, credit and adverse media checks and the resulting compliance decision.
       operationId: getBackgroundChecks
-      tags:
-        - verification
       parameters:
         - $ref: '#/components/parameters/process_id'
       responses:
         '200':
-          description: Background check results.
+          description: Background check results
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BackgroundChecks'
-        '400':
-          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/contract-acceptance:
     put:
       summary: Step 9 – Accept contracts
-      description: Records the acceptance of all contracts required for the selected products.
       operationId: updateContractAcceptance
-      tags:
-        - contracts
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -259,7 +191,7 @@ paths:
               $ref: '#/components/schemas/ContractAcceptance'
       responses:
         '200':
-          description: Contract acceptance updated.
+          description: Contract acceptance updated
           content:
             application/json:
               schema:
@@ -268,15 +200,10 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/signature:
     put:
       summary: Step 10 – Digital signature
-      description: Records the digital signature of the accepted contracts.
       operationId: updateSignature
-      tags:
-        - contracts
       parameters:
         - $ref: '#/components/parameters/process_id'
       requestBody:
@@ -287,7 +214,7 @@ paths:
               $ref: '#/components/schemas/Signature'
       responses:
         '200':
-          description: Signature recorded.
+          description: Signature recorded
           content:
             application/json:
               schema:
@@ -296,30 +223,21 @@ paths:
           $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
   /onboarding/{processId}/metadata:
     get:
       summary: Step 11 – Retrieve process metadata and audit trail
-      description: Returns the process status, step timestamps, audit trail and core banking integration data.
       operationId: getMetadata
-      tags:
-        - process-metadata
       parameters:
         - $ref: '#/components/parameters/process_id'
       responses:
         '200':
-          description: Process metadata.
+          description: Process metadata
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProcessMetadata'
-        '400':
-          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-        '500':
-          $ref: '#/components/responses/standard500'
 components:
   schemas:
     InitializationRequest:
@@ -1717,14 +1635,6 @@ components:
       description: |
         Client Error - The request could not be processed due to a problem in the data provided. This could be for any of the reasons of the HTTP
         standard that would result in a 4xx code.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/CommonErrorResponse'
-    standard500:
-      description: |
-        Internal Server Error - The request could not be processed due to a problem at the data provider. This could be for any of the reasons of
-        the HTTP standard that would result in a 5xx code.
       content:
         application/problem+json:
           schema:
