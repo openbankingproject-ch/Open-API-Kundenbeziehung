@@ -1,0 +1,73 @@
+# YAML style guide for the API specification (src/ and the bundled file).
+# https://yamllint.readthedocs.io/en/stable/rules.html
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+
+ignore: |
+  node_modules/
+  .github/
+
+rules:
+  anchors: disable
+  braces:
+    forbid: non-empty
+  brackets:
+    forbid: non-empty
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 2
+  comments-indentation:
+    level: warning
+  document-end:
+    present: false
+  document-start:
+    present: false
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+    level: warning
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+    level: warning
+  float-values: disable
+  hyphens:
+    max-spaces-after: 1
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+    check-multi-line-strings: true
+  key-duplicates: enable
+  key-ordering: disable
+  line-length:
+    max: 150
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  new-line-at-end-of-file: enable
+  new-lines:
+    type: unix
+  octal-values: disable
+  quoted-strings:
+    quote-type: single
+    required: only-when-needed
+    extra-allowed:
+      - '^\^'  # regex patterns
+      - '^-'
+      - '^\['
+      - '^0'  # leading zeros would otherwise be read as numbers
+    allow-quoted-quotes: true
+  trailing-spaces: enable
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: true
+    level: warning

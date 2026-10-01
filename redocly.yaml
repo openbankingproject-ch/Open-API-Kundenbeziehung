@@ -1,18 +1,129 @@
-# Redocly configuration for bundling the multi-file OpenAPI source
-# into a single, self-contained specification.
+# Redocly configuration for bundling and linting the OpenAPI specification.
 #
 # Source of truth:  src/onboardingAPI.yaml  (+ src/components/**)
 # Bundled output:   onboardingAPI.yaml       (repo root, loadable in Swagger)
 #
-# Bundle locally with:  npm run bundle   (or: npx @redocly/cli bundle)
+#   npm run bundle   bundle + autoformat (tools/autoformat.py)
+#   npm run lint     lint the bundled specification with the rules below
+#
+# Built-in rules: https://redocly.com/docs/cli/rules/built-in-rules/
+# Custom rules (conventions/*): tools/redocly/conventions.js
 
 apis:
   onboarding:
     root: src/onboardingAPI.yaml
     output: onboardingAPI.yaml
 
-# Linting ruleset applied by `npm run lint`. `minimal` reports issues as
-# warnings; switch to `recommended` for a stricter ruleset once the spec
-# defines servers and security schemes.
-extends:
-  - minimal
+plugins:
+  - tools/redocly/conventions.js
+
+rules:
+  # structure
+  struct: error
+  no-unresolved-refs: error
+  no-unused-components: warn
+  security-defined: error
+  spec-components-invalid-map-name: error
+  spec-strict-refs: error
+
+  # info
+  info-contact: error
+  info-license: error
+  info-license-strict: error
+
+  # operations
+  operation-2xx-response: warn
+  operation-4xx-response: warn
+  operation-4xx-problem-details-rfc7807: error
+  operation-description: warn
+  operation-operationId-unique: error
+  operation-operationId-url-safe: error
+  operation-summary: error
+
+  # parameters
+  no-invalid-parameter-examples: error
+  operation-parameters-unique: error
+  parameter-description: warn
+  path-declaration-must-exist: error
+  path-not-include-query: error
+  path-parameters-defined: error
+
+  # paths
+  no-ambiguous-paths: warn
+  no-http-verbs-in-paths: error
+  no-identical-paths: error
+  no-path-trailing-slash: error
+  path-segment-plural:
+    severity: error
+    ignoreLastPathSegment: true
+  paths-kebab-case: error
+
+  # requests, responses and schemas
+  no-enum-type-mismatch: error
+  no-example-value-and-externalValue: error
+  no-invalid-media-type-examples: error
+  no-invalid-schema-examples: error
+  request-mime-type:
+    severity: warn
+    allowedValues:
+      - application/json
+      - multipart/form-data
+  response-mime-type:
+    severity: warn
+    allowedValues:
+      - application/json
+      - application/problem+json
+      - application/pdf
+  scalar-property-missing-example: error
+
+  # servers
+  no-empty-servers: error
+  no-server-example.com: warn
+  no-server-trailing-slash: error
+  no-server-variables-empty-enum: error
+  no-undefined-server-variable: error
+
+  # tags
+  operation-singular-tag: error
+  operation-tag-defined: error
+  tag-description: warn
+
+  # wording
+  rule/description-full-stop:
+    severity: error
+    message: Description must end with a full stop (except multiline text).
+    subject:
+      type: any
+      property: description
+    assertions:
+      pattern: /[\n.]$/
+  rule/summary-no-full-stop:
+    severity: error
+    message: Summary must not end with a full stop.
+    subject:
+      type: any
+      property: summary
+    assertions:
+      pattern: /[^.]$/
+  rule/external-docs-description:
+    severity: error
+    message: External docs must have a description.
+    subject:
+      type: ExternalDocs
+      property: description
+    assertions:
+      defined: true
+
+  # conventions (tools/redocly/conventions.js)
+  conventions/root-order: error
+  conventions/component-order: error
+  conventions/schema-name-casing: error
+  conventions/schema-description: error
+  conventions/pattern-anchors: error
+  conventions/parameter-naming: error
+  conventions/tag-casing: error
+  conventions/info-content:
+    severity: error
+    license:
+      name: Apache 2.0
+      url: https://www.apache.org/licenses/LICENSE-2.0.html

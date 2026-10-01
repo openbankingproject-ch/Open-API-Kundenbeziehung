@@ -1,0 +1,151 @@
+name: API checks
+
+# Runs on every commit:
+#   bundle           - bundles src/ into onboardingAPI.yaml and normalises it (tools/autoformat.py)
+#   yaml-lint        - yamllint style guide (.yamllint) on src/ and the bundle
+#   openapi-lint     - Redocly naming conventions and OAS compliance (redocly.yaml)
+#   openapi-validate - ApiDOM validation of the bundle
+#
+# On push, the regenerated bundle is committed back to the branch. Commits made with
+# GITHUB_TOKEN do not trigger new workflow runs.
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: api-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r tools/requirements.txt
+
+      - name: Bundle specification
+        run: npm run bundle
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle
+          path: onboardingAPI.yaml
+
+      - name: Commit updated bundle
+        if: github.event_name != 'pull_request'
+        run: |
+          if git diff --quiet -- onboardingAPI.yaml; then
+            echo "Bundle already up to date, nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add onboardingAPI.yaml
+          git commit -m "chore: regenerate bundled onboardingAPI.yaml [skip ci]"
+          git push
+
+  yaml-lint:
+    needs: bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+
+      - name: Install yamllint
+        run: pip install -r tools/requirements.txt
+
+      - name: Lint source files
+        run: yamllint -f github src/
+
+      # The bundled file is allowed longer lines, as bundling inlines references.
+      - name: Lint bundled specification
+        run: |
+          yamllint -f github -d '{extends: .yamllint, rules: {line-length: {max: 170}}}' onboardingAPI.yaml
+
+  openapi-lint:
+    needs: bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint summary
+        env:
+          NODE_NO_WARNINGS: 1
+        run: npx redocly lint --config redocly.yaml --format=summary onboardingAPI.yaml || true
+
+      - name: Lint specification
+        env:
+          NODE_NO_WARNINGS: 1
+        run: npx redocly lint --config redocly.yaml --format=github-actions onboardingAPI.yaml
+
+  openapi-validate:
+    needs: bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle
+
+      - name: Validate OpenAPI definition
+        uses: swaggerexpert/apidom-validate@v1
+        with:
+          definition-file: onboardingAPI.yaml
+          fails-on: 1  # 1 = error, 2 = warning, 3 = information, 4 = hint

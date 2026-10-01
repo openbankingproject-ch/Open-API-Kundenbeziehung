@@ -1,14 +1,94 @@
 openapi: 3.1.0
 info:
-  title: OpenAPI Kundenbeziehung
-  version: 2.0.0
+  title: FAPI 2.0 Digital Banking Onboarding API
+  version: 1.0.0
   description: |
-    Resource-oriented digital banking API for customer management, applications, and compliance.
+    FAPI 2.0-compliant digital banking customer onboarding API. The onboarding is structured as a 10-step pipeline, from session
+    initialization through to final account provisioning.
+  contact:
+    email: info@common-api.ch
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://onboarding.common-api.ch
+externalDocs:
+  description: Find out more about the Common API specifications.
+  url: https://www.common-api.ch
+tags:
+  - name: contracts
+    description: Operations for accepting and signing the contracts of the onboarding process.
+  - name: customer-data
+    description: Operations for collecting personal, declarative and financial data of the customer.
+  - name: initialization
+    description: Operations for starting an onboarding process and selecting the banking products.
+  - name: process-metadata
+    description: Operations for retrieving the status, timestamps and audit trail of an onboarding process.
+  - name: verification
+    description: Operations for identity verification and compliance background checks.
+security: []
 paths:
-  /consents:
+  /onboarding/initialization:
     post:
-      summary: Record customer consent
-      operationId: createConsent
+      summary: Step 1 – Initialize onboarding session
+      description: Creates a new onboarding process and returns the processId used as correlation ID for all subsequent steps.
+      operationId: createInitialization
+      tags:
+        - initialization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializationRequest'
+      responses:
+        '201':
+          description: Onboarding session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitializationResponse'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/product-selection:
+    put:
+      summary: Step 2 – Select banking products
+      description: Stores the account type, product package and optional add-on products selected by the customer.
+      operationId: updateProductSelection
+      tags:
+        - initialization
+      parameters:
+        - $ref: '#/components/parameters/process_id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSelection'
+      responses:
+        '200':
+          description: Product selection updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSelection'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/consent:
+    put:
+      summary: Step 3 – Record consent
+      description: Records the data categories, purposes and scopes the customer has consented to.
+      operationId: updateConsent
+      tags:
+        - customer-data
+      parameters:
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -16,41 +96,27 @@ paths:
             schema:
               $ref: '#/components/schemas/Consent'
       responses:
-        '201':
-          description: Consent recorded
+        '200':
+          description: Consent recorded.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Consent'
         '400':
           $ref: '#/components/responses/standard400'
-
-  /customers:
-    post:
-      summary: Create a new customer record (Base Data)
-      operationId: createCustomer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BaseData'
-      responses:
-        '201':
-          description: Customer created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CustomerResponse'
-        '400':
-          $ref: '#/components/responses/standard400'
-
-  /customers/{customerId}/self-declaration:
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/self-declaration:
     put:
-      summary: Update FATCA / CRS / AML self-declaration
+      summary: Step 4 – Self declaration (FATCA / CRS / AML)
+      description: Stores the customer's self declaration on beneficial ownership, tax residency and source of funds.
       operationId: updateSelfDeclaration
+      tags:
+        - customer-data
       parameters:
-        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -59,20 +125,54 @@ paths:
               $ref: '#/components/schemas/SelfDeclaration'
       responses:
         '200':
-          description: Self declaration updated
+          description: Self declaration updated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SelfDeclaration'
+        '400':
+          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-
-  /customers/{customerId}/financial-profile:
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/base-data:
     put:
-      summary: Update financial profile (MiFID II / KYC)
-      operationId: updateFinancialProfile
+      summary: Step 5 – Collect base data (identity, address, contact)
+      description: Stores the identity, address and contact data of the customer.
+      operationId: updateBaseData
+      tags:
+        - customer-data
       parameters:
-        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/process_id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseData'
+      responses:
+        '200':
+          description: Base data updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseData'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/financial-profile:
+    put:
+      summary: Step 6 – Collect financial profile (MiFID II / KYC extended data)
+      description: Stores assets, income, employment, education and financial knowledge of the customer.
+      operationId: updateFinancialProfile
+      tags:
+        - customer-data
+      parameters:
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -81,20 +181,26 @@ paths:
               $ref: '#/components/schemas/FinancialProfile'
       responses:
         '200':
-          description: Financial profile updated
+          description: Financial profile updated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FinancialProfile'
+        '400':
+          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-
-  /customers/{customerId}/identifications:
-    post:
-      summary: Record identity verification (KYC)
-      operationId: createIdentification
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/identification:
+    put:
+      summary: Step 7 – Identity verification (KYC)
+      description: Stores the result of the identity verification including document, biometric and audit data.
+      operationId: updateIdentification
+      tags:
+        - verification
       parameters:
-        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -102,57 +208,49 @@ paths:
             schema:
               $ref: '#/components/schemas/Identification'
       responses:
-        '201':
-          description: Identification recorded
+        '200':
+          description: Identification updated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Identification'
+        '400':
+          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-
-  /customers/{customerId}/background-checks:
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/background-checks:
     get:
-      summary: Retrieve AML / compliance check results
+      summary: Step 8 – Retrieve AML / compliance check results
+      description: Returns the results of sanction, PEP, crime, credit and adverse media checks and the resulting compliance decision.
       operationId: getBackgroundChecks
+      tags:
+        - verification
       parameters:
-        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/process_id'
       responses:
         '200':
-          description: Background check results
+          description: Background check results.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BackgroundChecks'
-        '404':
-          $ref: '#/components/responses/standard404'
-
-  /applications:
-    post:
-      summary: Create a product application
-      operationId: createApplication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationRequest'
-      responses:
-        '201':
-          description: Application created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationResponse'
         '400':
           $ref: '#/components/responses/standard400'
-
-  /applications/{applicationId}/contract-acceptances:
-    post:
-      summary: Accept application contracts
-      operationId: createContractAcceptance
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/contract-acceptance:
+    put:
+      summary: Step 9 – Accept contracts
+      description: Records the acceptance of all contracts required for the selected products.
+      operationId: updateContractAcceptance
+      tags:
+        - contracts
       parameters:
-        - $ref: '#/components/parameters/application_id'
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -160,21 +258,27 @@ paths:
             schema:
               $ref: '#/components/schemas/ContractAcceptance'
       responses:
-        '201':
-          description: Contract acceptance recorded
+        '200':
+          description: Contract acceptance updated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContractAcceptance'
+        '400':
+          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-
-  /applications/{applicationId}/signatures:
-    post:
-      summary: Apply digital signature to application contracts
-      operationId: createSignature
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/signature:
+    put:
+      summary: Step 10 – Digital signature
+      description: Records the digital signature of the accepted contracts.
+      operationId: updateSignature
+      tags:
+        - contracts
       parameters:
-        - $ref: '#/components/parameters/application_id'
+        - $ref: '#/components/parameters/process_id'
       requestBody:
         required: true
         content:
@@ -182,611 +286,1460 @@ paths:
             schema:
               $ref: '#/components/schemas/Signature'
       responses:
-        '201':
-          description: Signature recorded
+        '200':
+          description: Signature recorded.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Signature'
+        '400':
+          $ref: '#/components/responses/standard400'
         '404':
           $ref: '#/components/responses/standard404'
-
+        '500':
+          $ref: '#/components/responses/standard500'
+  /onboarding/{processId}/metadata:
+    get:
+      summary: Step 11 – Retrieve process metadata and audit trail
+      description: Returns the process status, step timestamps, audit trail and core banking integration data.
+      operationId: getMetadata
+      tags:
+        - process-metadata
+      parameters:
+        - $ref: '#/components/parameters/process_id'
+      responses:
+        '200':
+          description: Process metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessMetadata'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
 components:
   schemas:
-    Error:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-
-    CustomerResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseData'
-        - type: object
-          properties:
-            customerId:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-
-    ApplicationRequest:
+    InitializationRequest:
+      title: Initialization request
+      description: Data required to start a new onboarding process.
       type: object
       required:
-        - customerId
-        - productSelection
+        - cookiesAccepted
+        - dataProcessingConsent
+        - selectedCountry
+        - serviceType
       properties:
-        customerId:
+        cookiesAccepted:
+          description: General cookie banner acceptance. Required before any session persistence.
+          type: boolean
+          examples:
+            - true
+        dataProcessingConsent:
+          description: GDPR/DSG consent for personal data processing. Must be granted before any data collection.
+          type: boolean
+          examples:
+            - true
+        selectedCountry:
+          description: ISO 3166-1 alpha-2 country code (e.g. CH, DE, AT). Determines regulatory jurisdiction.
           type: string
-          format: uuid
-        productSelection:
-          $ref: '#/components/schemas/ProductSelection'
-
-    ApplicationResponse:
+          pattern: ^[A-Z]{2}$
+          examples:
+            - CH
+        serviceType:
+          description: Type of banking service being onboarded (e.g. account_opening, card_application).
+          type: string
+          examples:
+            - account_opening
+        cookieConsent:
+          description: Granular consent for specific cookie categories (analytics, marketing, etc.).
+          type: boolean
+          examples:
+            - false
+    ProcessId:
+      title: Process id
+      description: Immutable unique identifier for the onboarding process. Correlation ID across all steps.
+      type: string
+      format: uuid
+      examples:
+        - 3f2b8c1e-7a4d-4e9b-9c61-2d5f0a8e4b17
+    InitializationResponse:
+      title: Initialization response
+      description: Newly created onboarding process including the request data.
       allOf:
-        - $ref: '#/components/schemas/ApplicationRequest'
+        - $ref: '#/components/schemas/InitializationRequest'
         - type: object
+          required:
+            - processId
+            - timestamp
           properties:
-            applicationId:
-              type: string
-              format: uuid
-            status:
-              type: string
-              enum: [ pending, approved, rejected, completed ]
-            createdAt:
+            processId:
+              $ref: '#/components/schemas/ProcessId'
+            timestamp:
+              description: ISO 8601 timestamp when the onboarding session was created.
               type: string
               format: date-time
-
+              examples:
+                - '2024-03-15T09:30:00Z'
+    CommonErrorResponse:
+      title: Common Error Response
+      description: General error response structure according to RFC 7807 (Problem Details for HTTP APIs) used in different response codes.
+      type: object
+      properties:
+        detail:
+          description: A human-readable explanation specific to this occurrence of the problem.
+          type: string
+          examples:
+            - The field selectedCountry must be an ISO 3166-1 alpha-2 country code.
+        instance:
+          description: A (relative) URI reference that identifies the specific occurrence of the problem.
+          type: string
+          examples:
+            - /onboarding/3f2b8c1e-7a4d-4e9b-9c61-2d5f0a8e4b17/base-data
+        status:
+          description: The HTTP status code generated by the origin server for this occurrence of the problem.
+          type: integer
+          examples:
+            - 400
+        title:
+          description: A short, human-readable summary of the problem type.
+          type: string
+          examples:
+            - Bad Request
+        type:
+          description: |
+            A URI reference that identifies the problem type. When "about:blank" is used, the title SHOULD be the same as the recommended HTTP
+            status phrase for that code (e.g., "Not Found" for 404, and so on).
+          type: string
+          examples:
+            - about:blank
+    Amount:
+      title: Shared amount
+      description: Amount of money, transmitted as string to avoid rounding errors of floating point numbers.
+      type: string
+      pattern: ^[0-9]{1,12}([.][0-9]{1,5})?$
+      examples:
+        - '5.00'
     ProductSelection:
+      title: Product selection
+      description: Banking products selected by the customer.
       type: object
       required:
         - accountType
         - productPackage
+        - status
       properties:
         accountType:
+          description: Primary account category.
           type: string
-          enum: [ private, savings, youth, business ]
+          enum:
+            - private
+            - savings
+            - youth
+            - business
+          examples:
+            - private
         productPackage:
+          description: Product tier within the selected account type.
           type: string
-          enum: [ standard, student, youth, premium, business ]
+          enum:
+            - standard
+            - student
+            - youth
+            - premium
+            - business
+          examples:
+            - standard
+        status:
+          description: Current state of the product selection step.
+          type: string
+          enum:
+            - productsSelected
+            - pending
+          examples:
+            - productsSelected
         additionalProducts:
+          description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
           type: array
           items:
             type: string
+            examples:
+              - debit-card
+              - e-banking
         selectedProducts:
+          description: Pricing of the selected product combination.
           type: object
           properties:
-            monthlyFee:
-              type: number
             currency:
+              description: ISO 4217 currency code (e.g. CHF, EUR, USD).
               type: string
               pattern: ^[A-Z]{3}$
-
+              examples:
+                - CHF
+            monthlyFee:
+              description: Recurring monthly fee for the selected product combination.
+              $ref: '#/components/schemas/Amount'
     Consent:
+      title: Consent
+      description: Consent of the customer for the collection and processing of personal data.
       type: object
       required:
+        - consentId
         - dataCategories
+        - expiresAt
+        - grantedAt
+        - grantedScopes
         - purposes
         - status
       properties:
         consentId:
+          description: Unique identifier for this consent grant.
           type: string
           format: uuid
-          readOnly: true
-        customerId:
-          type: string
-          format: uuid
-          description: Associated customer, if known at time of consent.
+          examples:
+            - 6b1e2c4a-9d3f-4a7e-8b52-1c0f7e9a3d64
         dataCategories:
+          description: Personal data categories the customer has authorized for collection.
           type: array
           items:
             type: string
-            enum: [ basicData, financialProfile, identification, backgroundChecks, contracts ]
-        purposes:
-          type: array
-          items:
-            type: string
-        grantedScopes:
-          type: array
-          items:
-            type: string
-        status:
-          type: string
-          enum: [ active, revoked, expired ]
-        grantedAt:
-          type: string
-          format: date-time
-          readOnly: true
+            enum:
+              - initialization
+              - productSelection
+              - selfDeclaration
+              - basicData
+              - financialProfile
+              - identification
+              - backgroundChecks
+              - contracts
+              - signature
+            examples:
+              - basicData
+              - identification
         expiresAt:
+          description: ISO 8601 timestamp after which the consent is no longer valid.
           type: string
           format: date-time
-
+          examples:
+            - '2025-03-15T09:30:00Z'
+        grantedAt:
+          description: ISO 8601 timestamp of when consent was granted.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T09:30:00Z'
+        grantedScopes:
+          description: OAuth 2.1 scopes granted to the consuming application (e.g. read:account, write:profile).
+          type: array
+          items:
+            type: string
+            examples:
+              - read:account
+              - write:profile
+        purposes:
+          description: |
+            Specific purposes for data use, each with a legal basis under GDPR/DSG.
+            Examples: account_opening, kyc_verification, credit_assessment, marketing, regulatory_reporting.
+          type: array
+          items:
+            type: string
+            examples:
+              - account_opening
+              - kyc_verification
+        status:
+          description: Lifecycle state of the consent.
+          type: string
+          enum:
+            - active
+            - revoked
+            - expired
+          examples:
+            - active
     SelfDeclaration:
+      title: Self declaration
+      description: Self declaration of the customer on beneficial ownership, tax residency and source of funds (FATCA / CRS / AML).
       type: object
       required:
         - economicBeneficiary
+        - fatcaDeclaration
+        - nationalityList
+        - sourceOfFunds
+        - taxComplianceDeclaration
         - taxDomicile
         - usTaxLiability
-        - fatcaDeclaration
-        - sourceOfFunds
-        - nationalityList
-        - taxComplianceDeclaration
       properties:
         economicBeneficiary:
+          description: Whether the customer is the economic beneficiary (acting on their own behalf).
           type: boolean
-        taxDomicile:
-          type: string
-          pattern: ^[A-Z]{2}$
-        usTaxLiability:
-          type: boolean
+          examples:
+            - true
         fatcaDeclaration:
+          description: FATCA declaration of the customer.
           type: object
+          required:
+            - confirmed
+            - status
           properties:
-            status:
-              type: string
-              enum: [ non_us_person, us_person, recalcitrant ]
             confirmed:
+              description: Whether the customer has explicitly confirmed their FATCA status.
               type: boolean
-        tin:
-          type: string
-        sourceOfFunds:
-          type: string
-          enum: [ employment, business, investment, inheritance, savings, gift, real_estate, other ]
+              examples:
+                - true
+            status:
+              description: Customer's FATCA classification.
+              type: string
+              enum:
+                - non_us_person
+                - us_person
+                - recalcitrant
+              examples:
+                - non_us_person
         nationalityList:
+          description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
           type: array
           items:
             type: string
             pattern: ^[A-Z]{2}$
+            examples:
+              - CH
+              - DE
+        sourceOfFunds:
+          description: Primary origin of funds for AML risk assessment per FINMA guidelines.
+          type: string
+          enum:
+            - employment
+            - business
+            - investment
+            - inheritance
+            - savings
+            - gift
+            - real_estate
+            - other
+          examples:
+            - employment
         taxComplianceDeclaration:
+          description: Declaration of the customer on compliance with applicable tax laws.
           type: object
+          required:
+            - confirmed
+            - declarationDate
           properties:
             confirmed:
+              description: Whether the customer has confirmed compliance with all applicable tax laws.
               type: boolean
+              examples:
+                - true
             declarationDate:
+              description: ISO 8601 timestamp of when the declaration was confirmed.
               type: string
               format: date-time
-
+              examples:
+                - '2024-03-15T09:38:00Z'
+        taxDomicile:
+          description: ISO 3166-1 alpha-2 country code of primary tax residency.
+          type: string
+          pattern: ^[A-Z]{2}$
+          examples:
+            - CH
+        usTaxLiability:
+          description: Whether the customer has a US tax obligation triggering FATCA reporting.
+          type: boolean
+          examples:
+            - false
+        tin:
+          description: Tax Identification Number for the declared tax domicile (e.g. AHV/AVS for CH).
+          type: string
+          examples:
+            - 756.1234.5678.97
+    AddressEntry:
+      title: Address entry
+      description: Structured postal address based on the ISO 20022 postal address elements.
+      type: object
+      required:
+        - addressType
+        - buildingNumber
+        - country
+        - postCode
+        - streetName
+        - townName
+      properties:
+        addressType:
+          description: Address type identifier (e.g. residential).
+          type: string
+          examples:
+            - residential
+        buildingNumber:
+          description: Number that identifies the position of the building on a street (text to accommodate formats like 12a, 3/4).
+          type: string
+          maxLength: 35
+          examples:
+            - 12a
+        country:
+          description: ISO 3166-1 alpha-2 country code.
+          type: string
+          pattern: ^[A-Z]{2}$
+          examples:
+            - CH
+        postCode:
+          description: Postal code added to a postal address to assist the sorting of mail.
+          type: string
+          maxLength: 35
+          examples:
+            - '8001'
+        streetName:
+          description: Name of the street or thoroughfare.
+          type: string
+          maxLength: 35
+          examples:
+            - Bahnhofstrasse
+        townName:
+          description: Name of the town or city.
+          type: string
+          maxLength: 35
+          examples:
+            - Zürich
+        countrySubDivision:
+          description: Subdivision of a country such as canton (CH), federal state (DE), region, or county.
+          type: string
+          maxLength: 35
+          examples:
+            - ZH
+        validFrom:
+          description: Date from which the customer has resided at this address (YYYY-MM-DD).
+          type: string
+          format: date
+          examples:
+            - '2019-04-01'
+        validTo:
+          description: Date until which the customer resided here. Empty means current address.
+          type: string
+          format: date
+          examples:
+            - '2024-03-31'
+    AddressData:
+      title: Address data
+      description: Residential and correspondence address of the customer.
+      type: object
+      properties:
+        correspondenceAddress:
+          description: Address for physical mail. Defaults to residentialAddress if not provided.
+          allOf:
+            - $ref: '#/components/schemas/AddressEntry'
+        residentialAddress:
+          description: Primary domicile address required for KYC and tax residency determination.
+          allOf:
+            - $ref: '#/components/schemas/AddressEntry'
+    Contact:
+      title: Contact
+      description: Contact details and preferred communication channel of the customer.
+      type: object
+      properties:
+        emailAddress:
+          description: Email address for e-banking login and digital correspondence.
+          type: string
+          format: email
+          examples:
+            - anna.muster@example.ch
+        mobileNumber:
+          description: Mobile number in E.164 format. Primary OTP and push notification channel.
+          type: string
+          examples:
+            - '+41791234567'
+        phoneNumber:
+          description: Landline in E.164 format (e.g. +41441234567).
+          type: string
+          examples:
+            - '+41441234567'
+        preferredChannel:
+          description: Customer's preferred communication channel.
+          type: string
+          enum:
+            - email
+            - sms
+            - phone
+            - app
+          examples:
+            - app
+        verificationStatus:
+          description: Verification state of the contact details.
+          type: object
+          properties:
+            emailVerified:
+              description: Whether the email has been verified via confirmation link or code.
+              type: boolean
+              examples:
+                - true
+            lastVerification:
+              description: ISO 8601 timestamp of the most recent successful verification.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:41:27Z'
+            phoneVerified:
+              description: Whether the phone number has been verified via OTP or callback.
+              type: boolean
+              examples:
+                - true
     Identity:
+      title: Identity
+      description: Identity data of the customer.
       type: object
       properties:
         personalData:
+          description: Personal data of the customer as shown on the identity document.
           type: object
           required:
+            - dateOfBirth
             - givenName
             - lastName
-            - dateOfBirth
           properties:
-            title:
-              type: string
-            givenName:
-              type: string
-            middleName:
-              type: string
-            lastName:
-              type: string
-            gender:
-              type: string
-              enum: [ male, female, divers ]
             dateOfBirth:
+              description: Date of birth in YYYY-MM-DD format.
               type: string
               format: date
+              examples:
+                - '1990-01-01'
+            givenName:
+              description: Given name(s) of the person as shown on the identity document.
+              type: string
+              maxLength: 35
+              examples:
+                - Anna
+            lastName:
+              description: Legal surname as shown on identity document.
+              type: string
+              maxLength: 35
+              examples:
+                - Muster
+            civilStatus:
+              description: Civil status of the person.
+              type: string
+              enum:
+                - single
+                - married
+                - divorced
+                - legallyDivorced
+                - separated
+                - stableUnion
+                - widow
+              examples:
+                - married
             countryOfBirth:
+              description: Country where the person was born, as ISO 3166-1 alpha-2 code.
               type: string
               pattern: ^[A-Z]{2}$
-            placeOfBirth:
+              examples:
+                - CH
+            externalIdentityId:
+              description: External consumer identity provider reference.
+              type: object
+              properties:
+                id:
+                  description: Unique user identifier from the external provider.
+                  type: string
+                  examples:
+                    - '108234567890123456789'
+                provider:
+                  description: External identity provider (e.g. Google, Apple, Samsung).
+                  type: string
+                  examples:
+                    - Apple
+            gender:
+              description: Gender of the person.
               type: string
-            placeOfOrigin:
+              enum:
+                - male
+                - female
+                - divers
+              examples:
+                - female
+            middleName:
+              description: Middle name(s) of the person as shown on the identity document.
               type: string
+              maxLength: 35
+              examples:
+                - Maria
             nationalityList:
+              description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
               type: array
               items:
                 type: string
                 pattern: ^[A-Z]{2}$
-            civilStatus:
+                examples:
+                  - CH
+                  - DE
+            placeOfBirth:
+              description: City or municipality of birth.
               type: string
-              enum: [ single, married, divorced, legallyDivorced, separated, stableUnion, widow ]
-            externalIdentityId:
-              type: object
-              properties:
-                provider:
-                  type: string
-                id:
-                  type: string
-
-    AddressEntry:
-      type: object
-      required:
-        - addressType
-        - streetName
-        - buildingNumber
-        - postCode
-        - townName
-        - country
-      properties:
-        addressType:
-          type: string
-        streetName:
-          type: string
-        buildingNumber:
-          type: string
-        postCode:
-          type: string
-        townName:
-          type: string
-        country:
-          type: string
-          pattern: ^[A-Z]{2}$
-        countrySubDivision:
-          type: string
-        validFrom:
-          type: string
-          format: date
-        validTo:
-          type: string
-          format: date
-
-    AddressData:
-      type: object
-      properties:
-        residentialAddress:
-          $ref: '#/components/schemas/AddressEntry'
-        correspondenceAddress:
-          $ref: '#/components/schemas/AddressEntry'
-
-    Contact:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-        mobileNumber:
-          type: string
-        emailAddress:
-          type: string
-          format: email
-        preferredChannel:
-          type: string
-          enum: [ email, sms, phone, app ]
-        verificationStatus:
-          type: object
-          properties:
-            phoneVerified:
-              type: boolean
-            emailVerified:
-              type: boolean
-            lastVerification:
+              examples:
+                - Winterthur
+            placeOfOrigin:
+              description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
               type: string
-              format: date-time
-
+              examples:
+                - Glarus
+            title:
+              description: Official title of the person (e.g. PhD, Dr.).
+              type: string
+              maxLength: 35
+              examples:
+                - Dr.
     BaseData:
+      title: Base data
+      description: Identity, address and contact data of the customer.
       type: object
       properties:
-        identity:
-          $ref: '#/components/schemas/Identity'
         address:
           $ref: '#/components/schemas/AddressData'
         contact:
           $ref: '#/components/schemas/Contact'
-
+        identity:
+          $ref: '#/components/schemas/Identity'
     FinancialProfile:
+      title: Financial profile
+      description: Financial situation, employment, education and financial knowledge of the customer (MiFID II / KYC extended data).
       type: object
       properties:
-        totalAssets:
-          type: object
-          properties:
-            amount:
-              type: number
-            currency:
-              type: string
-              pattern: ^[A-Z]{3}$
-            assetRange:
-              type: string
-            lastUpdated:
-              type: string
-              format: date-time
-        income:
-          type: object
-          properties:
-            annualGrossIncome:
-              type: number
-            currency:
-              type: string
-              pattern: ^[A-Z]{3}$
-            incomeRange:
-              type: string
-            incomeType:
-              type: string
-              enum: [ employment, business, investment, pension, other ]
-            lastUpdated:
-              type: string
-              format: date-time
-        employment:
-          type: object
-          properties:
-            profession:
-              type: string
-            employer:
-              type: string
-            employmentType:
-              type: string
-              enum: [ permanent, temporary, self-employed, retired, student ]
-            yearsWithEmployer:
-              type: number
-            industry:
-              type: string
         education:
+          description: Education background of the customer.
           type: object
           properties:
-            highestDegree:
-              type: string
             fieldOfStudy:
+              description: Field of study of the highest completed education.
               type: string
+              examples:
+                - Economics
+            highestDegree:
+              description: Highest completed education level (e.g. Bachelor, Master, PhD, Apprenticeship).
+              type: string
+              examples:
+                - Master
             institution:
+              description: Institution at which the highest degree was obtained.
               type: string
+              examples:
+                - University of Zurich
+        employment:
+          description: Current employment situation of the customer.
+          type: object
+          properties:
+            employer:
+              description: Name of current employer.
+              type: string
+              examples:
+                - Muster AG
+            employmentType:
+              description: Type of the current employment relationship.
+              type: string
+              enum:
+                - permanent
+                - temporary
+                - self-employed
+                - retired
+                - student
+              examples:
+                - permanent
+            industry:
+              description: Industry sector (e.g. finance, technology, healthcare, public_sector).
+              type: string
+              examples:
+                - finance
+            profession:
+              description: Current job title or professional role.
+              type: string
+              examples:
+                - Software Engineer
+            yearsWithEmployer:
+              description: Years with current employer. Positive factor in credit assessments.
+              type: number
+              examples:
+                - 4
         financialKnowledge:
+          description: Self-assessed financial knowledge for the MiFID II suitability assessment.
           type: object
           properties:
             investmentExperience:
+              description: Self-assessed investment experience level. Required under MiFID II.
               type: string
-              enum: [ none, basic, intermediate, advanced ]
-            riskTolerance:
-              type: string
-              enum: [ low, moderate, high ]
+              enum:
+                - none
+                - basic
+                - intermediate
+                - advanced
+              examples:
+                - intermediate
             investmentHorizon:
+              description: Intended investment timeframe for MiFID II suitability assessment.
               type: string
-              enum: [ short-term, medium-term, long-term ]
-
+              enum:
+                - short-term
+                - medium-term
+                - long-term
+              examples:
+                - long-term
+            riskTolerance:
+              description: Self-assessed investment risk willingness. Required under MiFID II.
+              type: string
+              enum:
+                - low
+                - moderate
+                - high
+              examples:
+                - moderate
+        income:
+          description: Income of the customer.
+          type: object
+          properties:
+            annualGrossIncome:
+              description: Annual gross income before taxes. Either annualGrossIncome or incomeRange must be provided.
+              $ref: '#/components/schemas/Amount'
+            currency:
+              description: ISO 4217 currency code. Required when annualGrossIncome is provided.
+              type: string
+              pattern: ^[A-Z]{3}$
+              examples:
+                - CHF
+            incomeRange:
+              description: Bracketed range for annual gross income when exact amount is not provided.
+              type: string
+              examples:
+                - 100000-150000
+            incomeType:
+              description: Primary source of the income.
+              type: string
+              enum:
+                - employment
+                - business
+                - investment
+                - pension
+                - other
+              examples:
+                - employment
+            lastUpdated:
+              description: ISO 8601 timestamp of the most recent update of the income data.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T10:12:00Z'
+        totalAssets:
+          description: Total net worth of the customer.
+          type: object
+          properties:
+            amount:
+              description: Total net worth. Either amount or assetRange must be provided.
+              $ref: '#/components/schemas/Amount'
+            assetRange:
+              description: Bracketed range (e.g. 200000-500000) when exact amount is not provided.
+              type: string
+              examples:
+                - 200000-500000
+            currency:
+              description: ISO 4217 currency code. Required when amount is provided.
+              type: string
+              pattern: ^[A-Z]{3}$
+              examples:
+                - CHF
+            lastUpdated:
+              description: ISO 8601 timestamp of the most recent update of the asset data.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T10:12:00Z'
     Identification:
+      title: Identification
+      description: Result of the identity verification of the customer (KYC).
       type: object
       required:
+        - documentData
         - identificationMethod
         - referenceNumber
         - verificationDate
-        - documentData
         - verificationLevel
       properties:
-        identificationMethod:
-          type: string
-          enum: [ VideoIdent, EID, PostIdent, BankIdent, AutoIdent ]
-        referenceNumber:
-          type: string
-        verificationDate:
-          type: string
-          format: date-time
         documentData:
+          description: Data of the identity document used for the verification.
           type: object
           required:
-            - documentType
             - documentNumber
+            - documentType
             - expiryDate
           properties:
-            documentType:
-              type: string
-              enum: [ passport, id, residence_permit ]
             documentNumber:
+              description: Number of the identity document.
               type: string
-            issuingAuthority:
+              examples:
+                - X1234567
+            documentType:
+              description: Type of the identity document.
               type: string
-            issueDate:
-              type: string
-              format: date
-            issuePlace:
-              type: string
+              enum:
+                - passport
+                - id
+                - residence_permit
+              examples:
+                - passport
             expiryDate:
+              description: Document must not be expired at time of verification.
               type: string
               format: date
-            mrz:
+              examples:
+                - '2031-06-30'
+            issueDate:
+              description: Date on which the identity document was issued.
               type: string
+              format: date
+              examples:
+                - '2021-07-01'
+            issuePlace:
+              description: Place where the identity document was issued.
+              type: string
+              examples:
+                - Zürich
+            issuingAuthority:
+              description: Authority that issued the identity document.
+              type: string
+              examples:
+                - Migrationsamt des Kantons Zürich
+            mrz:
+              description: Machine Readable Zone data in ICAO 9303 format.
+              type: string
+              examples:
+                - P<CHEMUSTER<<ANNA<<<<<<<<<<<<<<<<<<<<<<<<<<<X1234567<2CHE9001019F3106305<<<<<<<<<<<<<<04
             nfcData:
+              description: Data read from the NFC chip of the identity document.
               type: object
               properties:
-                chipVerified:
-                  type: boolean
                 biometricDataHash:
+                  description: Cryptographic hash of biometric data stored on the NFC chip.
                   type: string
-                securityFeaturesVerified:
-                  type: number
+                  examples:
+                    - 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
                 chipAuthenticationStatus:
+                  description: Result of the chip authentication.
                   type: string
-                  enum: [ verified, failed ]
-        verificationLevel:
+                  enum:
+                    - verified
+                    - failed
+                  examples:
+                    - verified
+                chipVerified:
+                  description: Whether the NFC chip was successfully read and its signature validated.
+                  type: boolean
+                  examples:
+                    - true
+                securityFeaturesVerified:
+                  description: Count of NFC chip security features successfully verified.
+                  type: number
+                  examples:
+                    - 3
+        identificationMethod:
+          description: Method used to verify the customer's identity.
           type: string
-          enum: [ QEAA, EAA, self-declared ]
-        biometricVerification:
-          type: object
-          properties:
-            livenessScore:
-              type: number
-            faceMatchScore:
-              type: number
-            documentAuthenticityScore:
-              type: number
-            securityFeaturesChecked:
-              type: number
-            securityFeaturesVerified:
-              type: number
+          enum:
+            - VideoIdent
+            - EID
+            - PostIdent
+            - BankIdent
+            - AutoIdent
+          examples:
+            - VideoIdent
+        referenceNumber:
+          description: Unique reference for this identification session.
+          type: string
+          examples:
+            - IDV-2024-0042871
+        verificationDate:
+          description: ISO 8601 timestamp of when verification was completed.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T10:48:03Z'
+        verificationLevel:
+          description: Achieved eIDAS trust level. Determines available products and signature types.
+          type: string
+          enum:
+            - QEAA
+            - EAA
+            - self-declared
+          examples:
+            - QEAA
         auditTrail:
+          description: References to the evidence recorded during the identification.
           type: object
           properties:
-            videoReference:
-              type: string
             documentScanReference:
+              description: URL/reference to scanned identity document images.
               type: string
+              examples:
+                - dms://identification/IDV-2024-0042871/document-scan
+            originator:
+              description: Agent ID (VideoIdent) or system identifier (automated methods).
+              type: string
+              examples:
+                - agent-0815
             timestamp:
+              description: ISO 8601 timestamp of when the evidence was recorded.
               type: string
               format: date-time
-            originator:
+              examples:
+                - '2024-03-15T10:48:03Z'
+            videoReference:
+              description: URL/reference to the recorded identification session video.
               type: string
-
+              examples:
+                - dms://identification/IDV-2024-0042871/video
+        biometricVerification:
+          description: Results of the biometric verification.
+          type: object
+          properties:
+            documentAuthenticityScore:
+              description: Document authenticity confidence based on visual security features.
+              type: number
+              minimum: 0
+              maximum: 1
+              examples:
+                - 0.97
+            faceMatchScore:
+              description: Face-to-document match confidence. Minimum threshold typically 0.85.
+              type: number
+              minimum: 0
+              maximum: 1
+              examples:
+                - 0.93
+            livenessScore:
+              description: Liveness detection confidence score. Minimum threshold typically 0.9.
+              type: number
+              minimum: 0
+              maximum: 1
+              examples:
+                - 0.98
+            securityFeaturesChecked:
+              description: Total number of security features inspected.
+              type: number
+              examples:
+                - 8
+            securityFeaturesVerified:
+              description: Number of security features that passed verification.
+              type: number
+              examples:
+                - 8
     BackgroundChecks:
+      title: Background checks
+      description: Results of the AML and compliance background checks and the resulting compliance decision.
       type: object
       properties:
+        amlRiskClass:
+          description: AML risk classification derived from all check results and profile factors.
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          examples:
+            - low
         checksCompleted:
+          description: Results of the individual screening checks.
           type: object
           properties:
-            sanctionCheck:
-              type: string
-              enum: [ passed, failed, pending ]
-            pepCheck:
-              type: string
-              enum: [ passed, failed, pending ]
-            crimeCheck:
-              type: string
-              enum: [ passed, failed, pending ]
-            creditCheck:
-              type: string
-              enum: [ passed, failed, pending ]
             adverseMediaCheck:
+              description: Screening of news and media for negative customer coverage.
               type: string
-              enum: [ passed, failed, pending ]
+              enum:
+                - passed
+                - failed
+                - pending
+              examples:
+                - passed
+            creditCheck:
+              description: Creditworthiness assessment via CRIF, ZEK or equivalent.
+              type: string
+              enum:
+                - passed
+                - failed
+                - pending
+              examples:
+                - passed
+            crimeCheck:
+              description: Criminal background screening result.
+              type: string
+              enum:
+                - passed
+                - failed
+                - pending
+              examples:
+                - passed
+            pepCheck:
+              description: Screening against Politically Exposed Persons databases.
+              type: string
+              enum:
+                - passed
+                - failed
+                - pending
+              examples:
+                - passed
+            sanctionCheck:
+              description: Screening against UN, EU, OFAC, SECO sanctions lists.
+              type: string
+              enum:
+                - passed
+                - failed
+                - pending
+              examples:
+                - passed
+        complianceStatus:
+          description: Final compliance decision. Only approved allows continuation.
+          type: string
+          enum:
+            - approved
+            - rejected
+            - pending
+            - manual_review
+          examples:
+            - approved
         pepDetails:
+          description: Details of the Politically Exposed Person (PEP) screening.
           type: object
           properties:
-            pepStatus:
-              type: string
-              enum: [ 'no', 'yes' ]
-            pepCategory:
-              type: string
             lastChecked:
+              description: Timestamp of most recent PEP screening. Must be refreshed periodically.
               type: string
               format: date-time
-        amlRiskClass:
-          type: string
-          enum: [ low, medium, high ]
+              examples:
+                - '2024-03-15T10:05:00Z'
+            pepCategory:
+              description: Category of the political exposure, if the customer is a PEP.
+              type: string
+              enum:
+                - head_of_state
+                - minister
+                - parliament_member
+                - senior_military
+                - judicial_official
+                - central_bank_governor
+                - state_enterprise_executive
+                - family_member
+                - close_associate
+              examples:
+                - parliament_member
+            pepStatus:
+              description: Whether the customer is classified as Politically Exposed Person.
+              type: string
+              enum:
+                - 'no'
+                - 'yes'
+              examples:
+                - 'no'
         riskAssessment:
+          description: Overall risk assessment of the customer relationship.
           type: object
           properties:
-            overallRisk:
+            lastAssessment:
+              description: ISO 8601 timestamp of the most recent risk assessment.
               type: string
-              enum: [ low, medium, high ]
-            riskScore:
-              type: number
+              format: date-time
+              examples:
+                - '2024-03-15T10:05:00Z'
+            overallRisk:
+              description: Overall risk level of the customer relationship.
+              type: string
+              enum:
+                - low
+                - medium
+                - high
+              examples:
+                - low
             riskFactors:
+              description: Risk factors identified during the assessment.
               type: array
               items:
                 type: string
-            lastAssessment:
-              type: string
-              format: date-time
-        complianceStatus:
-          type: string
-          enum: [ approved, rejected, pending, manual_review ]
-
+                enum:
+                  - high_risk_country
+                  - cash_intensive_business
+                  - complex_ownership
+                  - pep_related
+                examples:
+                  - high_risk_country
+            riskScore:
+              description: Numeric risk score where 0 is lowest and 100 is highest risk.
+              type: number
+              minimum: 0
+              maximum: 100
+              examples:
+                - 12
     ContractItem:
+      title: Contract item
+      description: Single contract document and its acceptance by the customer.
       type: object
       required:
-        - contractType
-        - contractId
-        - version
-        - accepted
         - acceptanceTimestamp
+        - accepted
+        - contractId
+        - contractType
+        - version
       properties:
-        contractType:
-          type: string
-          enum: [ termsAndConditions, dataSharingAgreement, baseContract, productAgreement ]
-        contractId:
-          type: string
-        version:
-          type: string
-        accepted:
-          type: boolean
         acceptanceTimestamp:
+          description: ISO 8601 timestamp of when the customer accepted this contract.
           type: string
           format: date-time
-        productId:
+          examples:
+            - '2024-03-15T11:02:45Z'
+        accepted:
+          description: Must be true for all required contracts before proceeding to signature.
+          type: boolean
+          examples:
+            - true
+        contractId:
+          description: Unique identifier for this contract document instance.
           type: string
-
+          examples:
+            - CTR-2024-000123
+        contractType:
+          description: Type of the contract document.
+          type: string
+          enum:
+            - termsAndConditions
+            - dataSharingAgreement
+            - baseContract
+            - productAgreement
+          examples:
+            - termsAndConditions
+        version:
+          description: Version number of the contract (e.g. 2.1, 3.0).
+          type: string
+          examples:
+            - '2.1'
+        productId:
+          description: Product catalog ID this contract applies to (relevant for productAgreement only).
+          type: string
+          examples:
+            - PRV-ACC-STD
     ContractAcceptance:
+      title: Contract acceptance
+      description: Acceptance of the contracts required for the selected products.
       type: object
       required:
         - contracts
       properties:
         contracts:
+          description: Contracts presented to and accepted by the customer.
           type: array
           items:
             $ref: '#/components/schemas/ContractItem'
-
+        contractType:
+          description: Deprecated. Legacy field replaced by the contracts array.
+          type: string
+          examples:
+            - termsAndConditions
+          deprecated: true
+        contractVersion:
+          description: Deprecated. Legacy field replaced by the contracts array.
+          type: string
+          examples:
+            - '2.1'
+          deprecated: true
+        termsAccepted:
+          description: |
+            Deprecated. Legacy field replaced by the contracts array.
+            Retained for backward compatibility.
+          type: boolean
+          examples:
+            - true
+          deprecated: true
     SignedContract:
+      title: Signed contract
+      description: Single contract covered by the digital signature.
       type: object
       required:
         - contractType
-        - version
-        - signatureTimestamp
         - signatureId
+        - signatureTimestamp
+        - version
       properties:
         contractType:
+          description: Type of signed contract matching contractAcceptance step.
           type: string
-        version:
+          examples:
+            - termsAndConditions
+        signatureId:
+          description: Unique signature identifier for certificate retrieval and integrity verification.
           type: string
+          examples:
+            - SIG-2024-000987
         signatureTimestamp:
+          description: Must be equal to or later than the corresponding acceptanceTimestamp.
           type: string
           format: date-time
-        signatureId:
+          examples:
+            - '2024-03-15T11:10:00Z'
+        version:
+          description: Version of the signed contract, must match the accepted version.
           type: string
-
+          examples:
+            - '2.1'
     Signature:
+      title: Signature
+      description: Digital signature of the accepted contracts.
       type: object
       required:
-        - signatureType
-        - signatureStatus
         - legallyBinding
         - mfaCompleted
+        - signatureStatus
+        - signatureType
       properties:
-        signatureType:
-          type: string
-          enum: [ QES, AES, SES ]
+        legallyBinding:
+          description: Whether the signature is legally binding based on type and applicable jurisdiction.
+          type: boolean
+          examples:
+            - true
+        mfaCompleted:
+          description: Whether MFA was completed during signing. Required for QES and AES.
+          type: boolean
+          examples:
+            - true
         signatureStatus:
+          description: Only completed allows the process to proceed to finalization.
           type: string
-          enum: [ completed, pending, failed ]
-        signedContracts:
-          type: array
-          items:
-            $ref: '#/components/schemas/SignedContract'
+          enum:
+            - completed
+            - pending
+            - failed
+          examples:
+            - completed
+        signatureType:
+          description: eIDAS signature level. QES requires QEAA-level identification.
+          type: string
+          enum:
+            - QES
+            - AES
+            - SES
+          examples:
+            - QES
         signatureData:
+          description: Technical data of the signature.
           type: object
           properties:
             certificate:
+              description: X.509 digital certificate (PEM or Base64-encoded DER). For QES, must be from a qualified TSP.
               type: string
+              examples:
+                - MIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJRTESMBAGA1UEChMJQmFsdGltb3Jl
+            deviceInfo:
+              description: Device type, OS, browser, and app version used for signing (audit and fraud detection).
+              type: string
+              examples:
+                - iPhone 15; iOS 17.4; Banking App 5.2.1
             timestamp:
+              description: Timestamp from a trusted timestamping authority (TSA) providing non-repudiation.
               type: string
               format: date-time
-            deviceInfo:
+              examples:
+                - '2024-03-15T11:10:00Z'
+        signedContracts:
+          description: Contracts covered by this signature.
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedContract'
+    AuditEntry:
+      title: Audit entry
+      description: Single entry of the audit trail documenting an action performed during the onboarding process.
+      type: object
+      required:
+        - action
+        - originator
+        - result
+        - step
+        - timestamp
+      properties:
+        action:
+          description: Machine-readable action identifier (e.g. consent_granted, contract_signed).
+          type: string
+          examples:
+            - consent_granted
+        originator:
+          description: Entity that performed the action.
+          type: string
+          enum:
+            - user
+            - system
+            - partner
+          examples:
+            - user
+        result:
+          description: Outcome of the action.
+          type: string
+          enum:
+            - success
+            - failure
+            - pending
+          examples:
+            - success
+        step:
+          description: Onboarding step in which this action occurred.
+          type: string
+          examples:
+            - consent
+        timestamp:
+          description: ISO 8601 timestamp of when the action was performed.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T09:32:11Z'
+        deviceFingerprint:
+          description: Hash representing the device used. Used for fraud detection.
+          type: string
+          examples:
+            - 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+        ipAddress:
+          description: IP address from which the action was initiated.
+          type: string
+          examples:
+            - 203.0.113.42
+    ProcessMetadata:
+      title: Process metadata
+      description: Status, step timestamps, audit trail and core banking integration data of an onboarding process.
+      type: object
+      properties:
+        auditTrail:
+          description: Chronological list of all actions performed during the onboarding process.
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+        lastUpdate:
+          description: ISO 8601 timestamp of the most recent metadata update.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T11:20:00Z'
+        processId:
+          $ref: '#/components/schemas/ProcessId'
+        processTimestamps:
+          description: ISO 8601 timestamps of the completion of each onboarding step.
+          type: object
+          properties:
+            backgroundChecksCompleted:
+              description: Completion of the background checks.
               type: string
-        legallyBinding:
-          type: boolean
-        mfaCompleted:
-          type: boolean
-
+              format: date-time
+              examples:
+                - '2024-03-15T10:55:00Z'
+            basicDataCompleted:
+              description: Completion of the base data step.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:45:00Z'
+            contractsAccepted:
+              description: Acceptance of all contracts.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T11:02:45Z'
+            finalized:
+              description: Finalization of the onboarding process.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T11:20:00Z'
+            financialProfileCompleted:
+              description: Completion of the financial profile step.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T10:12:00Z'
+            identified:
+              description: Completion of the identity verification.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T10:48:03Z'
+            initialized:
+              description: Creation of the onboarding process.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:30:00Z'
+            productSelected:
+              description: Completion of the product selection.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:32:00Z'
+            selfDeclared:
+              description: Completion of the self declaration.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:38:00Z'
+            signed:
+              description: Completion of the digital signature.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T11:10:00Z'
+        status:
+          description: Overall onboarding process status. completed and failed are terminal states.
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - failed
+          examples:
+            - completed
+        systemIntegration:
+          description: References to the records created in the bank's core systems.
+          type: object
+          properties:
+            accountNumber:
+              description: Assigned IBAN in ISO 13616 format (e.g. CH93 0076 2011 6238 5295 7).
+              type: string
+              examples:
+                - CH9300762011623852957
+            cardIssuanceStatus:
+              description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
+              type: string
+              examples:
+                - requested
+            coreBankingId:
+              description: Unique customer ID in core banking system (T24, Avaloq, Finnova, etc.).
+              type: string
+              examples:
+                - '100045872'
+            documentArchiveReference:
+              description: Reference ID or URL to archived onboarding documents in DMS.
+              type: string
+              examples:
+                - DMS-2024-ONB-000123
   responses:
     standard400:
-      description: Invalid request payload
+      description: |
+        Client Error - The request could not be processed due to a problem in the data provided. This could be for any of the reasons of the HTTP
+        standard that would result in a 4xx code.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard500:
+      description: |
+        Internal Server Error - The request could not be processed due to a problem at the data provider. This could be for any of the reasons of
+        the HTTP standard that would result in a 5xx code.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
     standard404:
-      description: Resource not found
+      description: Not Found - No onboarding process exists for the given processId.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: '#/components/schemas/Error'
-
+            $ref: '#/components/schemas/CommonErrorResponse'
   parameters:
-    customer_id:
-      name: customerId
+    process_id:
       in: path
+      name: processId
+      description: Unique onboarding process identifier assigned at initialization.
       required: true
-      description: Unique identifier for the customer
       schema:
-        type: string
-        format: uuid
-    application_id:
-      name: applicationId
-      in: path
-      required: true
-      description: Unique identifier for the product application
-      schema:
-        type: string
-        format: uuid
+        $ref: '#/components/schemas/ProcessId'
