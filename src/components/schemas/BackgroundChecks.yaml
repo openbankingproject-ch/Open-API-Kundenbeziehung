@@ -1,35 +1,87 @@
+title: Background checks
+description: Results of the AML and compliance background checks and the resulting compliance decision.
 type: object
 properties:
+  amlRiskClass:
+    description: AML risk classification derived from all check results and profile factors.
+    type: string
+    enum:
+      - low
+      - medium
+      - high
+    examples:
+      - low
   checksCompleted:
+    description: Results of the individual screening checks.
     type: object
     properties:
-      sanctionCheck:
-        type: string
-        enum: [passed, failed, pending]
-        description: Screening against UN, EU, OFAC, SECO sanctions lists.
-      pepCheck:
-        type: string
-        enum: [passed, failed, pending]
-        description: Screening against Politically Exposed Persons databases.
-      crimeCheck:
-        type: string
-        enum: [passed, failed, pending]
-        description: Criminal background screening result.
-      creditCheck:
-        type: string
-        enum: [passed, failed, pending]
-        description: Creditworthiness assessment via CRIF, ZEK or equivalent.
       adverseMediaCheck:
-        type: string
-        enum: [passed, failed, pending]
         description: Screening of news and media for negative customer coverage.
+        type: string
+        enum:
+          - passed
+          - failed
+          - pending
+        examples:
+          - passed
+      creditCheck:
+        description: Creditworthiness assessment via CRIF, ZEK or equivalent.
+        type: string
+        enum:
+          - passed
+          - failed
+          - pending
+        examples:
+          - passed
+      crimeCheck:
+        description: Criminal background screening result.
+        type: string
+        enum:
+          - passed
+          - failed
+          - pending
+        examples:
+          - passed
+      pepCheck:
+        description: Screening against Politically Exposed Persons databases.
+        type: string
+        enum:
+          - passed
+          - failed
+          - pending
+        examples:
+          - passed
+      sanctionCheck:
+        description: Screening against UN, EU, OFAC, SECO sanctions lists.
+        type: string
+        enum:
+          - passed
+          - failed
+          - pending
+        examples:
+          - passed
+  complianceStatus:
+    description: Final compliance decision. Only approved allows continuation.
+    type: string
+    enum:
+      - approved
+      - rejected
+      - pending
+      - manual_review
+    examples:
+      - approved
   pepDetails:
+    description: Details of the Politically Exposed Person (PEP) screening.
     type: object
     properties:
-      pepStatus:
+      lastChecked:
+        description: Timestamp of most recent PEP screening. Must be refreshed periodically.
         type: string
-        enum: [no, yes]
+        format: date-time
+        examples:
+          - '2024-03-15T10:05:00Z'
       pepCategory:
+        description: Category of the political exposure, if the customer is a PEP.
         type: string
         enum:
           - head_of_state
@@ -41,26 +93,37 @@ properties:
           - state_enterprise_executive
           - family_member
           - close_associate
-      lastChecked:
+        examples:
+          - parliament_member
+      pepStatus:
+        description: Whether the customer is classified as Politically Exposed Person.
         type: string
-        format: date-time
-        description: Timestamp of most recent PEP screening. Must be refreshed periodically.
-  amlRiskClass:
-    type: string
-    enum: [low, medium, high]
-    description: AML risk classification derived from all check results and profile factors.
+        enum:
+          - 'no'
+          - 'yes'
+        examples:
+          - 'no'
   riskAssessment:
+    description: Overall risk assessment of the customer relationship.
     type: object
     properties:
-      overallRisk:
+      lastAssessment:
+        description: ISO 8601 timestamp of the most recent risk assessment.
         type: string
-        enum: [low, medium, high]
-      riskScore:
-        type: number
-        minimum: 0
-        maximum: 100
-        description: Numeric risk score where 0 is lowest and 100 is highest risk.
+        format: date-time
+        examples:
+          - '2024-03-15T10:05:00Z'
+      overallRisk:
+        description: Overall risk level of the customer relationship.
+        type: string
+        enum:
+          - low
+          - medium
+          - high
+        examples:
+          - low
       riskFactors:
+        description: Risk factors identified during the assessment.
         type: array
         items:
           type: string
@@ -69,10 +132,12 @@ properties:
             - cash_intensive_business
             - complex_ownership
             - pep_related
-      lastAssessment:
-        type: string
-        format: date-time
-  complianceStatus:
-    type: string
-    enum: [approved, rejected, pending, manual_review]
-    description: Final compliance decision. Only approved allows continuation.
+          examples:
+            - high_risk_country
+      riskScore:
+        description: Numeric risk score where 0 is lowest and 100 is highest risk.
+        type: number
+        minimum: 0
+        maximum: 100
+        examples:
+          - 12

@@ -1,0 +1,6 @@
+title: Process id
+description: Immutable unique identifier for the onboarding process. Correlation ID across all steps.
+type: string
+format: uuid
+examples:
+  - 3f2b8c1e-7a4d-4e9b-9c61-2d5f0a8e4b17

@@ -1,0 +1,7 @@
+description: |
+  Internal Server Error - The request could not be processed due to a problem at the data provider. This could be for any of the reasons of
+  the HTTP standard that would result in a 5xx code.
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/CommonErrorResponse.yaml

@@ -1,38 +1,62 @@
+title: Signature
+description: Digital signature of the accepted contracts.
 type: object
 required:
-  - signatureType
-  - signatureStatus
   - legallyBinding
   - mfaCompleted
+  - signatureStatus
+  - signatureType
 properties:
-  signatureType:
-    type: string
-    enum: [QES, AES, SES]
-    description: eIDAS signature level. QES requires QEAA-level identification.
+  legallyBinding:
+    description: Whether the signature is legally binding based on type and applicable jurisdiction.
+    type: boolean
+    examples:
+      - true
+  mfaCompleted:
+    description: Whether MFA was completed during signing. Required for QES and AES.
+    type: boolean
+    examples:
+      - true
   signatureStatus:
-    type: string
-    enum: [completed, pending, failed]
     description: Only completed allows the process to proceed to finalization.
-  signedContracts:
-    type: array
-    items:
-      $ref: ./SignedContract.yaml
+    type: string
+    enum:
+      - completed
+      - pending
+      - failed
+    examples:
+      - completed
+  signatureType:
+    description: eIDAS signature level. QES requires QEAA-level identification.
+    type: string
+    enum:
+      - QES
+      - AES
+      - SES
+    examples:
+      - QES
   signatureData:
+    description: Technical data of the signature.
     type: object
     properties:
       certificate:
-        type: string
         description: X.509 digital certificate (PEM or Base64-encoded DER). For QES, must be from a qualified TSP.
+        type: string
+        examples:
+          - MIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJRTESMBAGA1UEChMJQmFsdGltb3Jl
+      deviceInfo:
+        description: Device type, OS, browser, and app version used for signing (audit and fraud detection).
+        type: string
+        examples:
+          - iPhone 15; iOS 17.4; Banking App 5.2.1
       timestamp:
+        description: Timestamp from a trusted timestamping authority (TSA) providing non-repudiation.
         type: string
         format: date-time
-        description: Timestamp from a trusted timestamping authority (TSA) providing non-repudiation.
-      deviceInfo:
-        type: string
-        description: Device type, OS, browser, and app version used for signing (audit and fraud detection).
-  legallyBinding:
-    type: boolean
-    description: Whether the signature is legally binding based on type and applicable jurisdiction.
-  mfaCompleted:
-    type: boolean
-    description: Whether MFA was completed during signing. Required for QES and AES.
+        examples:
+          - '2024-03-15T11:10:00Z'
+  signedContracts:
+    description: Contracts covered by this signature.
+    type: array
+    items:
+      $ref: ./SignedContract.yaml

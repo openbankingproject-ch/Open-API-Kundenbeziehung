@@ -1,63 +1,103 @@
+title: Identity
+description: Identity data of the customer.
 type: object
 properties:
   personalData:
+    description: Personal data of the customer as shown on the identity document.
     type: object
     required:
+      - dateOfBirth
       - givenName
       - lastName
-      - dateOfBirth
     properties:
-      title:
-        type: string
-        maxLength: 35
-        description: Official title of the person (e.g. PhD, Dr.).
-      givenName:
-        type: string
-        maxLength: 35
-        description: Given name(s) of the person as shown on the identity document.
-      middleName:
-        type: string
-        maxLength: 35
-        description: Middle name(s) of the person as shown on the identity document.
-      lastName:
-        type: string
-        maxLength: 35
-        description: Legal surname as shown on identity document.
-      gender:
-        type: string
-        enum: [male, female, divers]
-        description: Gender of the person.
       dateOfBirth:
+        description: Date of birth in YYYY-MM-DD format.
         type: string
         format: date
-        description: Date of birth in YYYY-MM-DD format.
+        examples:
+          - '1990-01-01'
+      givenName:
+        description: Given name(s) of the person as shown on the identity document.
+        type: string
+        maxLength: 35
+        examples:
+          - Anna
+      lastName:
+        description: Legal surname as shown on identity document.
+        type: string
+        maxLength: 35
+        examples:
+          - Muster
+      civilStatus:
+        description: Civil status of the person.
+        type: string
+        enum:
+          - single
+          - married
+          - divorced
+          - legallyDivorced
+          - separated
+          - stableUnion
+          - widow
+        examples:
+          - married
       countryOfBirth:
-        type: string
-        pattern: '^[A-Z]{2}$'
         description: Country where the person was born, as ISO 3166-1 alpha-2 code.
-      placeOfBirth:
         type: string
-        description: City or municipality of birth.
-      placeOfOrigin:
+        pattern: ^[A-Z]{2}$
+        examples:
+          - CH
+      externalIdentityId:
+        description: External consumer identity provider reference.
+        type: object
+        properties:
+          id:
+            description: Unique user identifier from the external provider.
+            type: string
+            examples:
+              - '108234567890123456789'
+          provider:
+            description: External identity provider (e.g. Google, Apple, Samsung).
+            type: string
+            examples:
+              - Apple
+      gender:
+        description: Gender of the person.
         type: string
-        description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
+        enum:
+          - male
+          - female
+          - divers
+        examples:
+          - female
+      middleName:
+        description: Middle name(s) of the person as shown on the identity document.
+        type: string
+        maxLength: 35
+        examples:
+          - Maria
       nationalityList:
+        description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
         type: array
         items:
           type: string
-          pattern: '^[A-Z]{2}$'
-        description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
-      civilStatus:
+          pattern: ^[A-Z]{2}$
+          examples:
+            - CH
+            - DE
+      placeOfBirth:
+        description: City or municipality of birth.
         type: string
-        enum: [single, married, divorced, legallyDivorced, separated, stableUnion, widow]
-        description: Civil status of the person.
-      externalIdentityId:
-        type: object
-        description: External consumer identity provider reference.
-        properties:
-          provider:
-            type: string
-            description: External identity provider (e.g. Google, Apple, Samsung).
-          id:
-            type: string
-            description: Unique user identifier from the external provider.
+        examples:
+          - Winterthur
+      placeOfOrigin:
+        description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
+        type: string
+        examples:
+          - Glarus
+      title:
+        description: Official title of the person (e.g. PhD, Dr.).
+        type: string
+        maxLength: 35
+        examples:
+          - Dr.

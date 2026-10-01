@@ -1,3 +1,5 @@
+title: Initialization request
+description: Data required to start a new onboarding process.
 type: object
 required:
   - cookiesAccepted
@@ -6,18 +8,28 @@ required:
   - serviceType
 properties:
   cookiesAccepted:
-    type: boolean
     description: General cookie banner acceptance. Required before any session persistence.
-  cookieConsent:
     type: boolean
-    description: Granular consent for specific cookie categories (analytics, marketing, etc.).
+    examples:
+      - true
   dataProcessingConsent:
-    type: boolean
     description: GDPR/DSG consent for personal data processing. Must be granted before any data collection.
+    type: boolean
+    examples:
+      - true
   selectedCountry:
-    type: string
-    pattern: '^[A-Z]{2}$'
     description: ISO 3166-1 alpha-2 country code (e.g. CH, DE, AT). Determines regulatory jurisdiction.
-  serviceType:
     type: string
+    pattern: ^[A-Z]{2}$
+    examples:
+      - CH
+  serviceType:
     description: Type of banking service being onboarded (e.g. account_opening, card_application).
+    type: string
+    examples:
+      - account_opening
+  cookieConsent:
+    description: Granular consent for specific cookie categories (analytics, marketing, etc.).
+    type: boolean
+    examples:
+      - false

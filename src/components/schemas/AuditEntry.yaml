@@ -1,30 +1,54 @@
+title: Audit entry
+description: Single entry of the audit trail documenting an action performed during the onboarding process.
 type: object
 required:
-  - step
   - action
   - originator
-  - timestamp
   - result
+  - step
+  - timestamp
 properties:
-  step:
-    type: string
-    description: Onboarding step in which this action occurred.
   action:
-    type: string
     description: Machine-readable action identifier (e.g. consent_granted, contract_signed).
-  originator:
     type: string
-    enum: [user, system, partner]
+    examples:
+      - consent_granted
+  originator:
     description: Entity that performed the action.
+    type: string
+    enum:
+      - user
+      - system
+      - partner
+    examples:
+      - user
+  result:
+    description: Outcome of the action.
+    type: string
+    enum:
+      - success
+      - failure
+      - pending
+    examples:
+      - success
+  step:
+    description: Onboarding step in which this action occurred.
+    type: string
+    examples:
+      - consent
   timestamp:
+    description: ISO 8601 timestamp of when the action was performed.
     type: string
     format: date-time
-  ipAddress:
-    type: string
-    description: IP address from which the action was initiated.
+    examples:
+      - '2024-03-15T09:32:11Z'
   deviceFingerprint:
-    type: string
     description: Hash representing the device used. Used for fraud detection.
-  result:
     type: string
-    enum: [success, failure, pending]
+    examples:
+      - 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+  ipAddress:
+    description: IP address from which the action was initiated.
+    type: string
+    examples:
+      - 203.0.113.42

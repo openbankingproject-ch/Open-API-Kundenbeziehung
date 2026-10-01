@@ -1,20 +1,30 @@
+title: Signed contract
+description: Single contract covered by the digital signature.
 type: object
 required:
   - contractType
-  - version
-  - signatureTimestamp
   - signatureId
+  - signatureTimestamp
+  - version
 properties:
   contractType:
-    type: string
     description: Type of signed contract matching contractAcceptance step.
-  version:
     type: string
-    description: Version of the signed contract, must match the accepted version.
+    examples:
+      - termsAndConditions
+  signatureId:
+    description: Unique signature identifier for certificate retrieval and integrity verification.
+    type: string
+    examples:
+      - SIG-2024-000987
   signatureTimestamp:
+    description: Must be equal to or later than the corresponding acceptanceTimestamp.
     type: string
     format: date-time
-    description: Must be equal to or later than the corresponding acceptanceTimestamp.
-  signatureId:
+    examples:
+      - '2024-03-15T11:10:00Z'
+  version:
+    description: Version of the signed contract, must match the accepted version.
     type: string
-    description: Unique signature identifier for certificate retrieval and integrity verification.
+    examples:
+      - '2.1'

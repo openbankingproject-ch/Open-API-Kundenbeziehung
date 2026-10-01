@@ -1,79 +1,149 @@
+title: Financial profile
+description: Financial situation, employment, education and financial knowledge of the customer (MiFID II / KYC extended data).
 type: object
 properties:
-  totalAssets:
-    type: object
-    properties:
-      amount:
-        type: number
-        description: Total net worth as a numeric value. Either amount or assetRange must be provided.
-      currency:
-        type: string
-        pattern: '^[A-Z]{3}$'
-        description: ISO 4217 currency code. Required when amount is provided.
-      assetRange:
-        type: string
-        description: Bracketed range (e.g. 200000-500000) when exact amount is not provided.
-      lastUpdated:
-        type: string
-        format: date-time
-  income:
-    type: object
-    properties:
-      annualGrossIncome:
-        type: number
-        description: Annual gross income before taxes. Either amount or incomeRange must be provided.
-      currency:
-        type: string
-        pattern: '^[A-Z]{3}$'
-      incomeRange:
-        type: string
-        description: Bracketed range for annual gross income when exact amount is not provided.
-      incomeType:
-        type: string
-        enum: [employment, business, investment, pension, other]
-      lastUpdated:
-        type: string
-        format: date-time
-  employment:
-    type: object
-    properties:
-      profession:
-        type: string
-        description: Current job title or professional role.
-      employer:
-        type: string
-        description: Name of current employer.
-      employmentType:
-        type: string
-        enum: [permanent, temporary, self-employed, retired, student]
-      yearsWithEmployer:
-        type: number
-        description: Years with current employer. Positive factor in credit assessments.
-      industry:
-        type: string
-        description: Industry sector (e.g. finance, technology, healthcare, public_sector).
   education:
+    description: Education background of the customer.
     type: object
     properties:
-      highestDegree:
-        type: string
-        description: Highest completed education level (e.g. Bachelor, Master, PhD, Apprenticeship).
       fieldOfStudy:
+        description: Field of study of the highest completed education.
         type: string
+        examples:
+          - Economics
+      highestDegree:
+        description: Highest completed education level (e.g. Bachelor, Master, PhD, Apprenticeship).
+        type: string
+        examples:
+          - Master
       institution:
+        description: Institution at which the highest degree was obtained.
         type: string
+        examples:
+          - University of Zurich
+  employment:
+    description: Current employment situation of the customer.
+    type: object
+    properties:
+      employer:
+        description: Name of current employer.
+        type: string
+        examples:
+          - Muster AG
+      employmentType:
+        description: Type of the current employment relationship.
+        type: string
+        enum:
+          - permanent
+          - temporary
+          - self-employed
+          - retired
+          - student
+        examples:
+          - permanent
+      industry:
+        description: Industry sector (e.g. finance, technology, healthcare, public_sector).
+        type: string
+        examples:
+          - finance
+      profession:
+        description: Current job title or professional role.
+        type: string
+        examples:
+          - Software Engineer
+      yearsWithEmployer:
+        description: Years with current employer. Positive factor in credit assessments.
+        type: number
+        examples:
+          - 4
   financialKnowledge:
+    description: Self-assessed financial knowledge for the MiFID II suitability assessment.
     type: object
     properties:
       investmentExperience:
-        type: string
-        enum: [none, basic, intermediate, advanced]
         description: Self-assessed investment experience level. Required under MiFID II.
-      riskTolerance:
         type: string
-        enum: [low, moderate, high]
-        description: Self-assessed investment risk willingness. Required under MiFID II.
+        enum:
+          - none
+          - basic
+          - intermediate
+          - advanced
+        examples:
+          - intermediate
       investmentHorizon:
-        type: string
-        enum: [short-term, medium-term, long-term]
         description: Intended investment timeframe for MiFID II suitability assessment.
+        type: string
+        enum:
+          - short-term
+          - medium-term
+          - long-term
+        examples:
+          - long-term
+      riskTolerance:
+        description: Self-assessed investment risk willingness. Required under MiFID II.
+        type: string
+        enum:
+          - low
+          - moderate
+          - high
+        examples:
+          - moderate
+  income:
+    description: Income of the customer.
+    type: object
+    properties:
+      annualGrossIncome:
+        description: Annual gross income before taxes. Either annualGrossIncome or incomeRange must be provided.
+        $ref: ./generic/Amount.yaml
+      currency:
+        description: ISO 4217 currency code. Required when annualGrossIncome is provided.
+        type: string
+        pattern: ^[A-Z]{3}$
+        examples:
+          - CHF
+      incomeRange:
+        description: Bracketed range for annual gross income when exact amount is not provided.
+        type: string
+        examples:
+          - 100000-150000
+      incomeType:
+        description: Primary source of the income.
+        type: string
+        enum:
+          - employment
+          - business
+          - investment
+          - pension
+          - other
+        examples:
+          - employment
+      lastUpdated:
+        description: ISO 8601 timestamp of the most recent update of the income data.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T10:12:00Z'
+  totalAssets:
+    description: Total net worth of the customer.
+    type: object
+    properties:
+      amount:
+        description: Total net worth. Either amount or assetRange must be provided.
+        $ref: ./generic/Amount.yaml
+      assetRange:
+        description: Bracketed range (e.g. 200000-500000) when exact amount is not provided.
+        type: string
+        examples:
+          - 200000-500000
+      currency:
+        description: ISO 4217 currency code. Required when amount is provided.
+        type: string
+        pattern: ^[A-Z]{3}$
+        examples:
+          - CHF
+      lastUpdated:
+        description: ISO 8601 timestamp of the most recent update of the asset data.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T10:12:00Z'

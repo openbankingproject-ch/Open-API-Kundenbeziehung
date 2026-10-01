@@ -1,65 +1,114 @@
+title: Process metadata
+description: Status, step timestamps, audit trail and core banking integration data of an onboarding process.
 type: object
 properties:
-  processId:
-    type: string
-    description: End-to-end correlation ID matching initialization.processId.
-  processTimestamps:
-    type: object
-    properties:
-      initialized:
-        type: string
-        format: date-time
-      productSelected:
-        type: string
-        format: date-time
-      selfDeclared:
-        type: string
-        format: date-time
-      basicDataCompleted:
-        type: string
-        format: date-time
-      financialProfileCompleted:
-        type: string
-        format: date-time
-      identified:
-        type: string
-        format: date-time
-      backgroundChecksCompleted:
-        type: string
-        format: date-time
-      contractsAccepted:
-        type: string
-        format: date-time
-      signed:
-        type: string
-        format: date-time
-      finalized:
-        type: string
-        format: date-time
   auditTrail:
+    description: Chronological list of all actions performed during the onboarding process.
     type: array
     items:
       $ref: ./AuditEntry.yaml
-  systemIntegration:
-    type: object
-    properties:
-      coreBankingId:
-        type: string
-        description: Unique customer ID in core banking system (T24, Avaloq, Finnova, etc.).
-      accountNumber:
-        type: string
-        description: Assigned IBAN in ISO 13616 format (e.g. CH93 0076 2011 6238 5295 7).
-      cardIssuanceStatus:
-        type: string
-        description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
-      documentArchiveReference:
-        type: string
-        description: Reference ID or URL to archived onboarding documents in DMS.
   lastUpdate:
+    description: ISO 8601 timestamp of the most recent metadata update.
     type: string
     format: date-time
-    description: ISO 8601 timestamp of the most recent metadata update.
+    examples:
+      - '2024-03-15T11:20:00Z'
+  processId:
+    $ref: ./ProcessId.yaml
+  processTimestamps:
+    description: ISO 8601 timestamps of the completion of each onboarding step.
+    type: object
+    properties:
+      backgroundChecksCompleted:
+        description: Completion of the background checks.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T10:55:00Z'
+      basicDataCompleted:
+        description: Completion of the base data step.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T09:45:00Z'
+      contractsAccepted:
+        description: Acceptance of all contracts.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T11:02:45Z'
+      finalized:
+        description: Finalization of the onboarding process.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T11:20:00Z'
+      financialProfileCompleted:
+        description: Completion of the financial profile step.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T10:12:00Z'
+      identified:
+        description: Completion of the identity verification.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T10:48:03Z'
+      initialized:
+        description: Creation of the onboarding process.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T09:30:00Z'
+      productSelected:
+        description: Completion of the product selection.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T09:32:00Z'
+      selfDeclared:
+        description: Completion of the self declaration.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T09:38:00Z'
+      signed:
+        description: Completion of the digital signature.
+        type: string
+        format: date-time
+        examples:
+          - '2024-03-15T11:10:00Z'
   status:
-    type: string
-    enum: [in_progress, completed, failed]
     description: Overall onboarding process status. completed and failed are terminal states.
+    type: string
+    enum:
+      - in_progress
+      - completed
+      - failed
+    examples:
+      - completed
+  systemIntegration:
+    description: References to the records created in the bank's core systems.
+    type: object
+    properties:
+      accountNumber:
+        description: Assigned IBAN in ISO 13616 format (e.g. CH93 0076 2011 6238 5295 7).
+        type: string
+        examples:
+          - CH9300762011623852957
+      cardIssuanceStatus:
+        description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
+        type: string
+        examples:
+          - requested
+      coreBankingId:
+        description: Unique customer ID in core banking system (T24, Avaloq, Finnova, etc.).
+        type: string
+        examples:
+          - '100045872'
+      documentArchiveReference:
+        description: Reference ID or URL to archived onboarding documents in DMS.
+        type: string
+        examples:
+          - DMS-2024-ONB-000123

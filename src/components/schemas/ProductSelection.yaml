@@ -1,3 +1,5 @@
+title: Product selection
+description: Banking products selected by the customer.
 type: object
 required:
   - accountType
@@ -5,29 +7,52 @@ required:
   - status
 properties:
   accountType:
-    type: string
-    enum: [private, savings, youth, business]
     description: Primary account category.
-  productPackage:
     type: string
-    enum: [standard, student, youth, premium, business]
+    enum:
+      - private
+      - savings
+      - youth
+      - business
+    examples:
+      - private
+  productPackage:
     description: Product tier within the selected account type.
+    type: string
+    enum:
+      - standard
+      - student
+      - youth
+      - premium
+      - business
+    examples:
+      - standard
+  status:
+    description: Current state of the product selection step.
+    type: string
+    enum:
+      - productsSelected
+      - pending
+    examples:
+      - productsSelected
   additionalProducts:
+    description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
     type: array
     items:
       type: string
-    description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
+      examples:
+        - debit-card
+        - e-banking
   selectedProducts:
+    description: Pricing of the selected product combination.
     type: object
     properties:
-      monthlyFee:
-        type: number
-        description: Recurring monthly fee for the selected product combination.
       currency:
-        type: string
-        pattern: '^[A-Z]{3}$'
         description: ISO 4217 currency code (e.g. CHF, EUR, USD).
-  status:
-    type: string
-    enum: [productsSelected, pending]
-    description: Current state of the product selection step.
+        type: string
+        pattern: ^[A-Z]{3}$
+        examples:
+          - CHF
+      monthlyFee:
+        description: Recurring monthly fee for the selected product combination.
+        $ref: ./generic/Amount.yaml

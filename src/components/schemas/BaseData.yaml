@@ -1,8 +1,10 @@
+title: Base data
+description: Identity, address and contact data of the customer.
 type: object
 properties:
-  identity:
-    $ref: ./Identity.yaml
   address:
     $ref: ./AddressData.yaml
   contact:
     $ref: ./Contact.yaml
+  identity:
+    $ref: ./Identity.yaml

@@ -1,44 +1,64 @@
+title: Address entry
+description: Structured postal address based on the ISO 20022 postal address elements.
 type: object
 required:
   - addressType
-  - streetName
   - buildingNumber
-  - postCode
-  - townName
   - country
+  - postCode
+  - streetName
+  - townName
 properties:
   addressType:
-    type: string
     description: Address type identifier (e.g. residential).
-  streetName:
     type: string
-    maxLength: 35
-    description: Name of the street or thoroughfare.
+    examples:
+      - residential
   buildingNumber:
-    type: string
-    maxLength: 35
     description: Number that identifies the position of the building on a street (text to accommodate formats like 12a, 3/4).
-  postCode:
     type: string
     maxLength: 35
-    description: Postal code added to a postal address to assist the sorting of mail.
-  townName:
-    type: string
-    maxLength: 35
-    description: Name of the town or city.
+    examples:
+      - 12a
   country:
-    type: string
-    pattern: '^[A-Z]{2}$'
     description: ISO 3166-1 alpha-2 country code.
-  countrySubDivision:
+    type: string
+    pattern: ^[A-Z]{2}$
+    examples:
+      - CH
+  postCode:
+    description: Postal code added to a postal address to assist the sorting of mail.
     type: string
     maxLength: 35
+    examples:
+      - '8001'
+  streetName:
+    description: Name of the street or thoroughfare.
+    type: string
+    maxLength: 35
+    examples:
+      - Bahnhofstrasse
+  townName:
+    description: Name of the town or city.
+    type: string
+    maxLength: 35
+    examples:
+      - Zürich
+  countrySubDivision:
     description: Subdivision of a country such as canton (CH), federal state (DE), region, or county.
+    type: string
+    maxLength: 35
+    examples:
+      - ZH
   validFrom:
-    type: string
-    format: date
     description: Date from which the customer has resided at this address (YYYY-MM-DD).
-  validTo:
     type: string
     format: date
+    examples:
+      - '2019-04-01'
+  validTo:
     description: Date until which the customer resided here. Empty means current address.
+    type: string
+    format: date
+    examples:
+      - '2024-03-31'

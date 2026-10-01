@@ -1,5 +1,7 @@
-description: Invalid request payload
+description: |
+  Client Error - The request could not be processed due to a problem in the data provided. This could be for any of the reasons of the HTTP
+  standard that would result in a 4xx code.
 content:
-  application/json:
+  application/problem+json:
     schema:
-      $ref: ../schemas/Error.yaml
+      $ref: ../schemas/CommonErrorResponse.yaml

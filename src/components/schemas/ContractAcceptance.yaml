@@ -1,22 +1,31 @@
+title: Contract acceptance
+description: Acceptance of the contracts required for the selected products.
 type: object
 required:
   - contracts
 properties:
   contracts:
+    description: Contracts presented to and accepted by the customer.
     type: array
     items:
       $ref: ./ContractItem.yaml
-  termsAccepted:
-    type: boolean
+  contractType:
+    description: Deprecated. Legacy field replaced by the contracts array.
+    type: string
+    examples:
+      - termsAndConditions
     deprecated: true
-    description: >
+  contractVersion:
+    description: Deprecated. Legacy field replaced by the contracts array.
+    type: string
+    examples:
+      - '2.1'
+    deprecated: true
+  termsAccepted:
+    description: |
       Deprecated. Legacy field replaced by the contracts array.
       Retained for backward compatibility.
-  contractType:
-    type: string
+    type: boolean
+    examples:
+      - true
     deprecated: true
-    description: Deprecated. Legacy field replaced by the contracts array.
-  contractVersion:
-    type: string
-    deprecated: true
-    description: Deprecated. Legacy field replaced by the contracts array.

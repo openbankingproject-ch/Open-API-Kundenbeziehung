@@ -1,10 +1,12 @@
+title: Address data
+description: Residential and correspondence address of the customer.
 type: object
 properties:
-  residentialAddress:
-    allOf:
-      - $ref: ./AddressEntry.yaml
-    description: Primary domicile address required for KYC and tax residency determination.
   correspondenceAddress:
+    description: Address for physical mail. Defaults to residentialAddress if not provided.
     allOf:
       - $ref: ./AddressEntry.yaml
-    description: Address for physical mail. Defaults to residentialAddress if not provided.
+  residentialAddress:
+    description: Primary domicile address required for KYC and tax residency determination.
+    allOf:
+      - $ref: ./AddressEntry.yaml

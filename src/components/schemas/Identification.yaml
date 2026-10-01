@@ -1,103 +1,177 @@
+title: Identification
+description: Result of the identity verification of the customer (KYC).
 type: object
 required:
+  - documentData
   - identificationMethod
   - referenceNumber
   - verificationDate
-  - documentData
   - verificationLevel
 properties:
-  identificationMethod:
-    type: string
-    enum: [VideoIdent, EID, PostIdent, BankIdent, AutoIdent]
-    description: Method used to verify the customer's identity.
-  referenceNumber:
-    type: string
-    description: Unique reference for this identification session.
-  verificationDate:
-    type: string
-    format: date-time
-    description: ISO 8601 timestamp of when verification was completed.
   documentData:
+    description: Data of the identity document used for the verification.
     type: object
     required:
-      - documentType
       - documentNumber
+      - documentType
       - expiryDate
     properties:
-      documentType:
-        type: string
-        enum: [passport, id, residence_permit]
       documentNumber:
+        description: Number of the identity document.
         type: string
-      issuingAuthority:
+        examples:
+          - X1234567
+      documentType:
+        description: Type of the identity document.
         type: string
-      issueDate:
-        type: string
-        format: date
-      issuePlace:
-        type: string
+        enum:
+          - passport
+          - id
+          - residence_permit
+        examples:
+          - passport
       expiryDate:
+        description: Document must not be expired at time of verification.
         type: string
         format: date
-        description: Document must not be expired at time of verification.
-      mrz:
+        examples:
+          - '2031-06-30'
+      issueDate:
+        description: Date on which the identity document was issued.
         type: string
+        format: date
+        examples:
+          - '2021-07-01'
+      issuePlace:
+        description: Place where the identity document was issued.
+        type: string
+        examples:
+          - Zürich
+      issuingAuthority:
+        description: Authority that issued the identity document.
+        type: string
+        examples:
+          - Migrationsamt des Kantons Zürich
+      mrz:
         description: Machine Readable Zone data in ICAO 9303 format.
+        type: string
+        examples:
+          - P<CHEMUSTER<<ANNA<<<<<<<<<<<<<<<<<<<<<<<<<<<X1234567<2CHE9001019F3106305<<<<<<<<<<<<<<04
       nfcData:
+        description: Data read from the NFC chip of the identity document.
         type: object
         properties:
-          chipVerified:
-            type: boolean
-            description: Whether the NFC chip was successfully read and its signature validated.
           biometricDataHash:
-            type: string
             description: Cryptographic hash of biometric data stored on the NFC chip.
-          securityFeaturesVerified:
-            type: number
-            description: Count of NFC chip security features successfully verified.
-          chipAuthenticationStatus:
             type: string
-            enum: [verified, failed]
-  verificationLevel:
+            examples:
+              - 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
+          chipAuthenticationStatus:
+            description: Result of the chip authentication.
+            type: string
+            enum:
+              - verified
+              - failed
+            examples:
+              - verified
+          chipVerified:
+            description: Whether the NFC chip was successfully read and its signature validated.
+            type: boolean
+            examples:
+              - true
+          securityFeaturesVerified:
+            description: Count of NFC chip security features successfully verified.
+            type: number
+            examples:
+              - 3
+  identificationMethod:
+    description: Method used to verify the customer's identity.
     type: string
-    enum: [QEAA, EAA, self-declared]
+    enum:
+      - VideoIdent
+      - EID
+      - PostIdent
+      - BankIdent
+      - AutoIdent
+    examples:
+      - VideoIdent
+  referenceNumber:
+    description: Unique reference for this identification session.
+    type: string
+    examples:
+      - IDV-2024-0042871
+  verificationDate:
+    description: ISO 8601 timestamp of when verification was completed.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T10:48:03Z'
+  verificationLevel:
     description: Achieved eIDAS trust level. Determines available products and signature types.
-  biometricVerification:
-    type: object
-    properties:
-      livenessScore:
-        type: number
-        minimum: 0.0
-        maximum: 1.0
-        description: Liveness detection confidence score. Minimum threshold typically 0.9.
-      faceMatchScore:
-        type: number
-        minimum: 0.0
-        maximum: 1.0
-        description: Face-to-document match confidence. Minimum threshold typically 0.85.
-      documentAuthenticityScore:
-        type: number
-        minimum: 0.0
-        maximum: 1.0
-        description: Document authenticity confidence based on visual security features.
-      securityFeaturesChecked:
-        type: number
-        description: Total number of security features inspected.
-      securityFeaturesVerified:
-        type: number
-        description: Number of security features that passed verification.
+    type: string
+    enum:
+      - QEAA
+      - EAA
+      - self-declared
+    examples:
+      - QEAA
   auditTrail:
+    description: References to the evidence recorded during the identification.
     type: object
     properties:
-      videoReference:
-        type: string
-        description: URL/reference to the recorded identification session video.
       documentScanReference:
-        type: string
         description: URL/reference to scanned identity document images.
+        type: string
+        examples:
+          - dms://identification/IDV-2024-0042871/document-scan
+      originator:
+        description: Agent ID (VideoIdent) or system identifier (automated methods).
+        type: string
+        examples:
+          - agent-0815
       timestamp:
+        description: ISO 8601 timestamp of when the evidence was recorded.
         type: string
         format: date-time
-      originator:
+        examples:
+          - '2024-03-15T10:48:03Z'
+      videoReference:
+        description: URL/reference to the recorded identification session video.
         type: string
-        description: Agent ID (VideoIdent) or system identifier (automated methods).
+        examples:
+          - dms://identification/IDV-2024-0042871/video
+  biometricVerification:
+    description: Results of the biometric verification.
+    type: object
+    properties:
+      documentAuthenticityScore:
+        description: Document authenticity confidence based on visual security features.
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        examples:
+          - 0.97
+      faceMatchScore:
+        description: Face-to-document match confidence. Minimum threshold typically 0.85.
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        examples:
+          - 0.93
+      livenessScore:
+        description: Liveness detection confidence score. Minimum threshold typically 0.9.
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        examples:
+          - 0.98
+      securityFeaturesChecked:
+        description: Total number of security features inspected.
+        type: number
+        examples:
+          - 8
+      securityFeaturesVerified:
+        description: Number of security features that passed verification.
+        type: number
+        examples:
+          - 8
