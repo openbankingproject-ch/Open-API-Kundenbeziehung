@@ -1,58 +1,65 @@
 openapi: 3.1.0
 info:
-  title: FAPI 2.0 Digital Banking Onboarding API
-  version: 1.0.0
+  title: Customer Relationship API
+  version: 2.0.0
   description: |
-    FAPI 2.0-compliant digital banking customer onboarding API. The onboarding is structured as a 10-step pipeline, from session initialization through to final account provisioning.
+    API for establishing a customer relationship (Kundenbeziehung) with a financial institution, from the consent of the customer through to
+    an opened account.
+
+    The API is resource-oriented: consents, customers, KYC data, contracts, signatures and accounts are independent resources. The API does
+    not prescribe an order of operations. The reference process, i.e. the order in which a client collects data and calls the operations of
+    this API, is implemented by the clients and documented separately.
+
+    Regardless of the order chosen by a client, the provider enforces the regulatory invariants. A request that would violate an invariant
+    is rejected with 422 Unprocessable Content, and the problem type names the violated invariant:
+    - CONSENT_MISSING: personal data is only stored under an active consent that covers its data category.
+    - PRECONDITION_NOT_MET: a resource the operation depends on is missing or not in the required state, e.g. a signed contract that was not
+    accepted, or an account for a customer whose background check is not approved.
+
+    The invariants enforced by an operation are listed in its description.
+  contact:
+    email: info@common-api.ch
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://onboarding.common-api.ch/v2
+externalDocs:
+  description: Find out more about the Common API specifications.
+  url: https://www.common-api.ch
+tags:
+  - name: accounts
+    description: Opening of accounts for a customer and retrieval of the resulting core banking references.
+  - name: audit-events
+    description: Retrieval of the audit trail recorded by the provider for all changes of the resources of a customer.
+  - name: consents
+    description: Consent of the customer for the collection and processing of personal data, the legal basis for all other resources.
+  - name: contracts
+    description: Contract documents, their acceptance by the customer and their electronic signature.
+  - name: customers
+    description: Identity, address and contact data of the customer.
+  - name: kyc
+    description: Know-your-customer data, i.e. self declaration, financial profile, identity verification and AML / compliance screening.
+security:
+  - OAuth2: []
 paths:
-  /onboarding/initialization:
+  /consents:
     post:
-      summary: Step 1 – Initialize onboarding session
-      operationId: createInitialization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InitializationRequest'
-      responses:
-        '201':
-          description: Onboarding session created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InitializationResponse'
-        '400':
-          $ref: '#/components/responses/standard400'
-  /onboarding/{processId}/product-selection:
-    put:
-      summary: Step 2 – Select banking products
-      operationId: updateProductSelection
+      tags:
+        - consents
+      summary: Create a consent
+      description: |
+        Records the consent of the customer for the collection and processing of personal data. A consent is the legal basis for every resource that
+        stores personal data, so it is created before the customer and referenced by it.
+      operationId: createConsent
+      security:
+        - OAuth2:
+            - consents:write
       parameters:
-        - $ref: '#/components/parameters/process_id'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductSelection'
-      responses:
-        '200':
-          description: Product selection updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductSelection'
-        '400':
-          $ref: '#/components/responses/standard400'
-        '404':
-          $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/consent:
-    put:
-      summary: Step 3 – Record consent
-      operationId: updateConsent
-      parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -60,22 +67,285 @@ paths:
             schema:
               $ref: '#/components/schemas/Consent'
       responses:
-        '200':
-          description: Consent recorded
+        '201':
+          description: Consent created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Consent'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /consents/{consentId}:
+    get:
+      tags:
+        - consents
+      summary: Get a consent
+      description: Returns a specific consent including its current lifecycle state.
+      operationId: getConsent
+      security:
+        - OAuth2:
+            - consents:read
+      parameters:
+        - $ref: '#/components/parameters/consent_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The specified consent.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/self-declaration:
-    put:
-      summary: Step 4 – Self declaration (FATCA / CRS / AML)
-      operationId: updateSelfDeclaration
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    delete:
+      tags:
+        - consents
+      summary: Revoke a consent
+      description: |
+        Revokes the consent. The provider retains the consent for audit purposes, so a subsequent request returns it with status revoked. No
+        personal data can be stored under a revoked consent.
+      operationId: revokeConsent
+      security:
+        - OAuth2:
+            - consents:write
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/consent_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '204':
+          description: Consent revoked.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '409':
+          $ref: '#/components/responses/standard409'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers:
+    post:
+      tags:
+        - customers
+      summary: Create a customer
+      description: |
+        Creates a customer with identity, address and contact data. Invariants: CONSENT_MISSING if the consent of the customer is not active or does
+        not cover the data category identity (and address or contact, if provided).
+      operationId: createCustomer
+      security:
+        - OAuth2:
+            - customers:write
+      parameters:
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Customer created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}:
+    get:
+      tags:
+        - customers
+      summary: Get a customer
+      description: Returns the identity, address and contact data of a specific customer.
+      operationId: getCustomer
+      security:
+        - OAuth2:
+            - customers:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The specified customer.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    patch:
+      tags:
+        - customers
+      summary: Update a customer
+      description: |
+        Updates the data of a customer with JSON merge patch semantics (RFC 7396): provided properties replace the stored ones, properties set to
+        null are removed, omitted properties remain unchanged. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not
+        cover the data category of each changed property.
+      operationId: updateCustomer
+      security:
+        - OAuth2:
+            - customers:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdate'
+      responses:
+        '200':
+          description: The updated customer.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/self-declaration:
+    get:
+      tags:
+        - kyc
+      summary: Get the self declaration of a customer
+      description: Returns the self declaration of a specific customer.
+      operationId: getSelfDeclaration
+      security:
+        - OAuth2:
+            - kyc:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The self declaration of the customer.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelfDeclaration'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    put:
+      tags:
+        - kyc
+      summary: Replace the self declaration of a customer
+      description: |
+        Stores the self declaration of the customer on beneficial ownership, tax residency and source of funds (FATCA / CRS / AML). Replaces the
+        stored self declaration as a whole. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not cover the data
+        category selfDeclaration.
+      operationId: updateSelfDeclaration
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -84,44 +354,82 @@ paths:
               $ref: '#/components/schemas/SelfDeclaration'
       responses:
         '200':
-          description: Self declaration updated
+          description: The stored self declaration.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SelfDeclaration'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/base-data:
-    put:
-      summary: Step 5 – Collect base data (identity, address, contact)
-      operationId: updateBaseData
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/financial-profile:
+    get:
+      tags:
+        - kyc
+      summary: Get the financial profile of a customer
+      description: Returns the financial profile of a specific customer.
+      operationId: getFinancialProfile
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BaseData'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       responses:
         '200':
-          description: Base data updated
+          description: The financial profile of the customer.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BaseData'
+                $ref: '#/components/schemas/FinancialProfile'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/financial-profile:
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
     put:
-      summary: Step 6 – Collect financial profile (MiFID II / KYC extended data)
+      tags:
+        - kyc
+      summary: Replace the financial profile of a customer
+      description: |
+        Stores assets, income, employment, education and financial knowledge of the customer (MiFID II / KYC extended data). Replaces the stored
+        financial profile as a whole. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not cover the data category
+        financialProfile.
       operationId: updateFinancialProfile
+      security:
+        - OAuth2:
+            - kyc:write
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -130,21 +438,95 @@ paths:
               $ref: '#/components/schemas/FinancialProfile'
       responses:
         '200':
-          description: Financial profile updated
+          description: The stored financial profile.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FinancialProfile'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/identification:
-    put:
-      summary: Step 7 – Identity verification (KYC)
-      operationId: updateIdentification
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/identifications:
+    get:
+      tags:
+        - kyc
+      summary: Get a list of all identifications of a customer
+      description: Returns all identity verifications of a specific customer, most recent first.
+      operationId: listIdentifications
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of identifications.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - identifications
+                properties:
+                  identifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Identification'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    post:
+      tags:
+        - kyc
+      summary: Create an identification
+      description: |
+        Records the result of an identity verification of the customer, including document, biometric and audit data. A customer can have several
+        identifications; the most recent one determines the verification level of the customer. Invariants: CONSENT_MISSING if the consent of the
+        customer does not cover the data category identification; PRECONDITION_NOT_MET if the identity document was expired at the time of
+        verification.
+      operationId: createIdentification
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -152,37 +534,354 @@ paths:
             schema:
               $ref: '#/components/schemas/Identification'
       responses:
-        '200':
-          description: Identification updated
+        '201':
+          description: Identification created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Identification'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/background-checks:
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/identifications/{identificationId}:
     get:
-      summary: Step 8 – Retrieve AML / compliance check results
-      operationId: getBackgroundChecks
+      tags:
+        - kyc
+      summary: Get an identification
+      description: Returns a specific identity verification of a customer.
+      operationId: getIdentification
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/identification_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       responses:
         '200':
-          description: Background check results
+          description: The specified identification.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BackgroundChecks'
+                $ref: '#/components/schemas/Identification'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/contract-acceptance:
-    put:
-      summary: Step 9 – Accept contracts
-      operationId: updateContractAcceptance
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/background-checks:
+    get:
+      tags:
+        - kyc
+      summary: Get a list of all background checks of a customer
+      description: Returns all AML and compliance background checks of a specific customer, most recent first.
+      operationId: listBackgroundChecks
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of background checks.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - backgroundChecks
+                properties:
+                  backgroundChecks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BackgroundCheck'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    post:
+      tags:
+        - kyc
+      summary: Request a background check
+      description: |
+        Requests AML and compliance screening (sanctions, PEP, crime, credit and adverse media) of the customer based on the data currently stored.
+        The screening runs asynchronously: the background check is returned with complianceStatus pending and can be polled at the returned location
+        until complianceStatus changes. manual_review requires handling by the provider. Invariants: CONSENT_MISSING if the consent of the customer
+        is not active or does not cover the data category backgroundCheck.
+      operationId: createBackgroundCheck
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '202':
+          description: Background check requested.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackgroundCheck'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/background-checks/{backgroundCheckId}:
+    get:
+      tags:
+        - kyc
+      summary: Get a background check
+      description: Returns a specific background check including the check results and the compliance decision.
+      operationId: getBackgroundCheck
+      security:
+        - OAuth2:
+            - kyc:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/background_check_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The specified background check.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackgroundCheck'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/contracts:
+    get:
+      tags:
+        - contracts
+      summary: Get a list of all contracts of a customer
+      description: Returns all contracts of a specific customer and whether the customer accepted them.
+      operationId: listContracts
+      security:
+        - OAuth2:
+            - contracts:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of contracts.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - contracts
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    post:
+      tags:
+        - contracts
+      summary: Create a contract
+      description: |
+        Creates a contract document for the customer. The provider determines the applicable version and document. Opening an account requires
+        termsAndConditions, baseContract and a productAgreement for each selected product. Invariants: CONSENT_MISSING if the consent of the
+        customer is not active or does not cover the data category contract.
+      operationId: createContract
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+      responses:
+        '201':
+          description: Contract created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/contracts/{contractId}:
+    get:
+      tags:
+        - contracts
+      summary: Get a contract
+      description: Returns a specific contract of a customer.
+      operationId: getContract
+      security:
+        - OAuth2:
+            - contracts:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/contract_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The specified contract.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/contracts/{contractId}/acceptance:
+    put:
+      tags:
+        - contracts
+      summary: Accept a contract
+      description: |
+        Records whether the customer accepts the contract. A contract covered by a completed signature can no longer be changed and is rejected with
+        409 Conflict.
+      operationId: updateContractAcceptance
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/contract_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -191,21 +890,95 @@ paths:
               $ref: '#/components/schemas/ContractAcceptance'
       responses:
         '200':
-          description: Contract acceptance updated
+          description: The updated contract.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContractAcceptance'
+                $ref: '#/components/schemas/Contract'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/signature:
-    put:
-      summary: Step 10 – Digital signature
-      operationId: updateSignature
+        '409':
+          $ref: '#/components/responses/standard409'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/signatures:
+    get:
+      tags:
+        - contracts
+      summary: Get a list of all signatures of a customer
+      description: Returns all electronic signatures of a specific customer.
+      operationId: listSignatures
+      security:
+        - OAuth2:
+            - contracts:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of signatures.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - signatures
+                properties:
+                  signatures:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Signature'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    post:
+      tags:
+        - contracts
+      summary: Create a signature
+      description: |
+        Records the electronic signature of one or more contracts. The provider validates the signature and determines signatureStatus and
+        legallyBinding. Invariants: CONSENT_MISSING if the consent of the customer does not cover the data category signature; PRECONDITION_NOT_MET
+        if a signed contract does not belong to the customer, is not accepted or its version does not match, if a QES is submitted without a
+        QEAA-level identification of the customer, or if a QES or AES is submitted without completed MFA.
+      operationId: createSignature
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       requestBody:
         required: true
         content:
@@ -213,94 +986,356 @@ paths:
             schema:
               $ref: '#/components/schemas/Signature'
       responses:
-        '200':
-          description: Signature recorded
+        '201':
+          description: Signature created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Signature'
         '400':
           $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
-  /onboarding/{processId}/metadata:
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/signatures/{signatureId}:
     get:
-      summary: Step 11 – Retrieve process metadata and audit trail
-      operationId: getMetadata
+      tags:
+        - contracts
+      summary: Get a signature
+      description: Returns a specific electronic signature of a customer.
+      operationId: getSignature
+      security:
+        - OAuth2:
+            - contracts:read
       parameters:
-        - $ref: '#/components/parameters/process_id'
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/signature_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
       responses:
         '200':
-          description: Process metadata
+          description: The specified signature.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessMetadata'
+                $ref: '#/components/schemas/Signature'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
         '404':
           $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/accounts:
+    get:
+      tags:
+        - accounts
+      summary: Get a list of all accounts of a customer
+      description: Returns all accounts opened for a specific customer.
+      operationId: listAccounts
+      security:
+        - OAuth2:
+            - accounts:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of accounts.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - accounts
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+    post:
+      tags:
+        - accounts
+      summary: Open an account
+      description: |
+        Opens an account with the selected products for the customer. Provisioning in the core banking system runs asynchronously: the account is
+        returned with status pending and can be polled at the returned location until it is active or rejected.
+
+        Invariants (PRECONDITION_NOT_MET unless stated otherwise):
+        - The consent of the customer is active and covers the data categories of all resources below (CONSENT_MISSING).
+        - The customer has a self declaration.
+        - The most recent identification of the customer meets the verification level required for the selected products.
+        - The most recent background check of the customer has complianceStatus approved.
+        - The customer has a financial profile if a selected product requires a MiFID II suitability assessment.
+        - signatureId references a completed, legally binding signature of the customer that covers accepted termsAndConditions, baseContract and a
+        productAgreement for each selected product.
+      operationId: createAccount
+      security:
+        - OAuth2:
+            - accounts:write
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/idempotency_key'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        '202':
+          description: Account opening requested.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '422':
+          $ref: '#/components/responses/standard422'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/accounts/{accountId}:
+    get:
+      tags:
+        - accounts
+      summary: Get an account
+      description: Returns a specific account including its provisioning status and core banking references.
+      operationId: getAccount
+      security:
+        - OAuth2:
+            - accounts:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/account_id'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: The specified account.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
+  /customers/{customerId}/audit-events:
+    get:
+      tags:
+        - audit-events
+      summary: Get the audit trail of a customer
+      description: Returns the audit events recorded by the provider for all changes of the resources of a specific customer, in chronological order.
+      operationId: listAuditEvents
+      security:
+        - OAuth2:
+            - audit:read
+      parameters:
+        - $ref: '#/components/parameters/customer_id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/correlation'
+        - $ref: '#/components/parameters/psu_ip'
+        - $ref: '#/components/parameters/psu_user_agent'
+      responses:
+        '200':
+          description: Paginated list of audit events.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+            X-Next-Cursor:
+              $ref: '#/components/headers/X-Next-Cursor'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - auditEvents
+                properties:
+                  auditEvents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+        '400':
+          $ref: '#/components/responses/standard400'
+        '401':
+          $ref: '#/components/responses/standard401'
+        '403':
+          $ref: '#/components/responses/standard403'
+        '404':
+          $ref: '#/components/responses/standard404'
+        '500':
+          $ref: '#/components/responses/standard500'
+        '503':
+          $ref: '#/components/responses/standard503'
 components:
   schemas:
-    InitializationRequest:
-      title: Initialization request
-      description: Data required to start a new onboarding process.
+    Id:
+      title: Shared identifier
+      description: Technical identifier of a resource, assigned by the provider.
+      type: string
+      maxLength: 256
+      pattern: ^[A-Za-z0-9](([A-Za-z0-9._]|-){0,254}[A-Za-z0-9]){0,1}$
+      examples:
+        - c-7f3a9b2e
+    Consent:
+      title: Consent
+      description: |
+        Consent of the customer for the collection and processing of personal data. Every operation that stores personal data checks that an active
+        consent covers the affected data category.
       type: object
       required:
-        - cookiesAccepted
-        - dataProcessingConsent
-        - selectedCountry
-        - serviceType
+        - consentId
+        - dataCategories
+        - expiresAt
+        - grantedAt
+        - grantedScopes
+        - jurisdiction
+        - purposes
+        - status
       properties:
-        cookiesAccepted:
-          description: General cookie banner acceptance. Required before any session persistence.
-          type: boolean
+        consentId:
+          description: Unique identifier for this consent grant.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
+        dataCategories:
+          description: Personal data categories the customer has authorized for collection and processing.
+          type: array
+          items:
+            type: string
+            enum:
+              - identity
+              - address
+              - contact
+              - selfDeclaration
+              - financialProfile
+              - identification
+              - backgroundCheck
+              - contract
+              - signature
+            examples:
+              - identity
+              - identification
+        expiresAt:
+          description: ISO 8601 timestamp after which the consent is no longer valid.
+          type: string
+          format: date-time
           examples:
-            - true
-        dataProcessingConsent:
-          description: GDPR/DSG consent for personal data processing. Must be granted before any data collection.
-          type: boolean
+            - '2025-03-15T09:30:00Z'
+        grantedAt:
+          description: ISO 8601 timestamp of when consent was granted.
+          type: string
+          format: date-time
           examples:
-            - true
-        selectedCountry:
-          description: ISO 3166-1 alpha-2 country code (e.g. CH, DE, AT). Determines regulatory jurisdiction.
+            - '2024-03-15T09:30:00Z'
+          readOnly: true
+        grantedScopes:
+          description: OAuth scopes granted to the consuming application (e.g. customers:read, kyc:write).
+          type: array
+          items:
+            type: string
+            examples:
+              - customers:read
+              - kyc:write
+        jurisdiction:
+          description: ISO 3166-1 alpha-2 country code of the jurisdiction whose data protection law applies (e.g. CH for DSG, DE for GDPR).
           type: string
           pattern: ^[A-Z]{2}$
           examples:
             - CH
-        serviceType:
-          description: Type of banking service being onboarded (e.g. account_opening, card_application).
+        purposes:
+          description: |
+            Specific purposes for data use, each with a legal basis under GDPR/DSG.
+            Examples: account_opening, kyc_verification, credit_assessment, marketing, regulatory_reporting.
+          type: array
+          items:
+            type: string
+            examples:
+              - account_opening
+              - kyc_verification
+        status:
+          description: Lifecycle state of the consent. A revoked or expired consent no longer permits storing personal data.
           type: string
+          enum:
+            - active
+            - revoked
+            - expired
           examples:
-            - account_opening
-        cookieConsent:
-          description: Granular consent for specific cookie categories (analytics, marketing, etc.).
-          type: boolean
-          examples:
-            - false
-    ProcessId:
-      title: Process id
-      description: Immutable unique identifier for the onboarding process. Correlation ID across all steps.
-      type: string
-      format: uuid
-      examples:
-        - 3f2b8c1e-7a4d-4e9b-9c61-2d5f0a8e4b17
-    InitializationResponse:
-      title: Initialization response
-      description: Newly created onboarding process including the request data.
-      allOf:
-        - $ref: '#/components/schemas/InitializationRequest'
-        - type: object
-          required:
-            - processId
-            - timestamp
-          properties:
-            processId:
-              $ref: '#/components/schemas/ProcessId'
-            timestamp:
-              description: ISO 8601 timestamp when the onboarding session was created.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T09:30:00Z'
+            - active
+          readOnly: true
     CommonErrorResponse:
       title: Common Error Response
       description: General error response structure according to RFC 7807 (Problem Details for HTTP APIs) used in different response codes.
@@ -310,12 +1345,12 @@ components:
           description: A human-readable explanation specific to this occurrence of the problem.
           type: string
           examples:
-            - The field selectedCountry must be an ISO 3166-1 alpha-2 country code.
+            - The field country must be an ISO 3166-1 alpha-2 country code.
         instance:
           description: A (relative) URI reference that identifies the specific occurrence of the problem.
           type: string
           examples:
-            - /onboarding/3f2b8c1e-7a4d-4e9b-9c61-2d5f0a8e4b17/base-data
+            - /customers/c-7f3a9b2e
         status:
           description: The HTTP status code generated by the origin server for this occurrence of the problem.
           type: integer
@@ -333,244 +1368,110 @@ components:
           type: string
           examples:
             - about:blank
-    Amount:
-      title: Shared amount
-      description: Amount of money, transmitted as string to avoid rounding errors of floating point numbers.
-      type: string
-      pattern: ^[0-9]{1,12}([.][0-9]{1,5})?$
-      examples:
-        - '5.00'
-    ProductSelection:
-      title: Product selection
-      description: Banking products selected by the customer.
+    Identity:
+      title: Identity
+      description: Identity data of the customer.
       type: object
-      required:
-        - accountType
-        - productPackage
-        - status
       properties:
-        accountType:
-          description: Primary account category.
-          type: string
-          enum:
-            - private
-            - savings
-            - youth
-            - business
-          examples:
-            - private
-        productPackage:
-          description: Product tier within the selected account type.
-          type: string
-          enum:
-            - standard
-            - student
-            - youth
-            - premium
-            - business
-          examples:
-            - standard
-        status:
-          description: Current state of the product selection step.
-          type: string
-          enum:
-            - productsSelected
-            - pending
-          examples:
-            - productsSelected
-        additionalProducts:
-          description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
-          type: array
-          items:
-            type: string
-            examples:
-              - debit-card
-              - e-banking
-        selectedProducts:
-          description: Pricing of the selected product combination.
-          type: object
-          properties:
-            currency:
-              description: ISO 4217 currency code (e.g. CHF, EUR, USD).
-              type: string
-              pattern: ^[A-Z]{3}$
-              examples:
-                - CHF
-            monthlyFee:
-              description: Recurring monthly fee for the selected product combination.
-              $ref: '#/components/schemas/Amount'
-    Consent:
-      title: Consent
-      description: Consent of the customer for the collection and processing of personal data.
-      type: object
-      required:
-        - consentId
-        - dataCategories
-        - expiresAt
-        - grantedAt
-        - grantedScopes
-        - purposes
-        - status
-      properties:
-        consentId:
-          description: Unique identifier for this consent grant.
-          type: string
-          format: uuid
-          examples:
-            - 6b1e2c4a-9d3f-4a7e-8b52-1c0f7e9a3d64
-        dataCategories:
-          description: Personal data categories the customer has authorized for collection.
-          type: array
-          items:
-            type: string
-            enum:
-              - initialization
-              - productSelection
-              - selfDeclaration
-              - basicData
-              - financialProfile
-              - identification
-              - backgroundChecks
-              - contracts
-              - signature
-            examples:
-              - basicData
-              - identification
-        expiresAt:
-          description: ISO 8601 timestamp after which the consent is no longer valid.
-          type: string
-          format: date-time
-          examples:
-            - '2025-03-15T09:30:00Z'
-        grantedAt:
-          description: ISO 8601 timestamp of when consent was granted.
-          type: string
-          format: date-time
-          examples:
-            - '2024-03-15T09:30:00Z'
-        grantedScopes:
-          description: OAuth 2.1 scopes granted to the consuming application (e.g. read:account, write:profile).
-          type: array
-          items:
-            type: string
-            examples:
-              - read:account
-              - write:profile
-        purposes:
-          description: |
-            Specific purposes for data use, each with a legal basis under GDPR/DSG.
-            Examples: account_opening, kyc_verification, credit_assessment, marketing, regulatory_reporting.
-          type: array
-          items:
-            type: string
-            examples:
-              - account_opening
-              - kyc_verification
-        status:
-          description: Lifecycle state of the consent.
-          type: string
-          enum:
-            - active
-            - revoked
-            - expired
-          examples:
-            - active
-    SelfDeclaration:
-      title: Self declaration
-      description: Self declaration of the customer on beneficial ownership, tax residency and source of funds (FATCA / CRS / AML).
-      type: object
-      required:
-        - economicBeneficiary
-        - fatcaDeclaration
-        - nationalityList
-        - sourceOfFunds
-        - taxComplianceDeclaration
-        - taxDomicile
-        - usTaxLiability
-      properties:
-        economicBeneficiary:
-          description: Whether the customer is the economic beneficiary (acting on their own behalf).
-          type: boolean
-          examples:
-            - true
-        fatcaDeclaration:
-          description: FATCA declaration of the customer.
+        personalData:
+          description: Personal data of the customer as shown on the identity document.
           type: object
           required:
-            - confirmed
-            - status
+            - dateOfBirth
+            - givenName
+            - lastName
           properties:
-            confirmed:
-              description: Whether the customer has explicitly confirmed their FATCA status.
-              type: boolean
+            dateOfBirth:
+              description: Date of birth in YYYY-MM-DD format.
+              type: string
+              format: date
               examples:
-                - true
-            status:
-              description: Customer's FATCA classification.
+                - '1990-01-01'
+            givenName:
+              description: Given name(s) of the person as shown on the identity document.
+              type: string
+              maxLength: 35
+              examples:
+                - Anna
+            lastName:
+              description: Legal surname as shown on identity document.
+              type: string
+              maxLength: 35
+              examples:
+                - Muster
+            civilStatus:
+              description: Civil status of the person.
               type: string
               enum:
-                - non_us_person
-                - us_person
-                - recalcitrant
+                - single
+                - married
+                - divorced
+                - legallyDivorced
+                - separated
+                - stableUnion
+                - widow
               examples:
-                - non_us_person
-        nationalityList:
-          description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
-          type: array
-          items:
-            type: string
-            pattern: ^[A-Z]{2}$
-            examples:
-              - CH
-              - DE
-        sourceOfFunds:
-          description: Primary origin of funds for AML risk assessment per FINMA guidelines.
-          type: string
-          enum:
-            - employment
-            - business
-            - investment
-            - inheritance
-            - savings
-            - gift
-            - real_estate
-            - other
-          examples:
-            - employment
-        taxComplianceDeclaration:
-          description: Declaration of the customer on compliance with applicable tax laws.
-          type: object
-          required:
-            - confirmed
-            - declarationDate
-          properties:
-            confirmed:
-              description: Whether the customer has confirmed compliance with all applicable tax laws.
-              type: boolean
-              examples:
-                - true
-            declarationDate:
-              description: ISO 8601 timestamp of when the declaration was confirmed.
+                - married
+            countryOfBirth:
+              description: Country where the person was born, as ISO 3166-1 alpha-2 code.
               type: string
-              format: date-time
+              pattern: ^[A-Z]{2}$
               examples:
-                - '2024-03-15T09:38:00Z'
-        taxDomicile:
-          description: ISO 3166-1 alpha-2 country code of primary tax residency.
-          type: string
-          pattern: ^[A-Z]{2}$
-          examples:
-            - CH
-        usTaxLiability:
-          description: Whether the customer has a US tax obligation triggering FATCA reporting.
-          type: boolean
-          examples:
-            - false
-        tin:
-          description: Tax Identification Number for the declared tax domicile (e.g. AHV/AVS for CH).
-          type: string
-          examples:
-            - 756.1234.5678.97
+                - CH
+            externalIdentityId:
+              description: External consumer identity provider reference.
+              type: object
+              properties:
+                id:
+                  description: Unique user identifier from the external provider.
+                  type: string
+                  examples:
+                    - '108234567890123456789'
+                provider:
+                  description: External identity provider (e.g. Google, Apple, Samsung).
+                  type: string
+                  examples:
+                    - Apple
+            gender:
+              description: Gender of the person.
+              type: string
+              enum:
+                - male
+                - female
+                - divers
+              examples:
+                - female
+            middleName:
+              description: Middle name(s) of the person as shown on the identity document.
+              type: string
+              maxLength: 35
+              examples:
+                - Maria
+            nationalityList:
+              description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
+              type: array
+              items:
+                type: string
+                pattern: ^[A-Z]{2}$
+                examples:
+                  - CH
+                  - DE
+            placeOfBirth:
+              description: City or municipality of birth.
+              type: string
+              examples:
+                - Winterthur
+            placeOfOrigin:
+              description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
+              type: string
+              examples:
+                - Glarus
+            title:
+              description: Official title of the person (e.g. PhD, Dr.).
+              type: string
+              maxLength: 35
+              examples:
+                - Dr.
     AddressEntry:
       title: Address entry
       description: Structured postal address based on the ISO 20022 postal address elements.
@@ -700,121 +1601,165 @@ components:
               type: boolean
               examples:
                 - true
-    Identity:
-      title: Identity
-      description: Identity data of the customer.
+    Customer:
+      title: Customer
+      description: Natural person for whom the customer relationship is established, with identity, address and contact data.
       type: object
+      required:
+        - consentId
+        - customerId
+        - identity
       properties:
-        personalData:
-          description: Personal data of the customer as shown on the identity document.
-          type: object
-          required:
-            - dateOfBirth
-            - givenName
-            - lastName
-          properties:
-            dateOfBirth:
-              description: Date of birth in YYYY-MM-DD format.
-              type: string
-              format: date
-              examples:
-                - '1990-01-01'
-            givenName:
-              description: Given name(s) of the person as shown on the identity document.
-              type: string
-              maxLength: 35
-              examples:
-                - Anna
-            lastName:
-              description: Legal surname as shown on identity document.
-              type: string
-              maxLength: 35
-              examples:
-                - Muster
-            civilStatus:
-              description: Civil status of the person.
-              type: string
-              enum:
-                - single
-                - married
-                - divorced
-                - legallyDivorced
-                - separated
-                - stableUnion
-                - widow
-              examples:
-                - married
-            countryOfBirth:
-              description: Country where the person was born, as ISO 3166-1 alpha-2 code.
-              type: string
-              pattern: ^[A-Z]{2}$
-              examples:
-                - CH
-            externalIdentityId:
-              description: External consumer identity provider reference.
-              type: object
-              properties:
-                id:
-                  description: Unique user identifier from the external provider.
-                  type: string
-                  examples:
-                    - '108234567890123456789'
-                provider:
-                  description: External identity provider (e.g. Google, Apple, Samsung).
-                  type: string
-                  examples:
-                    - Apple
-            gender:
-              description: Gender of the person.
-              type: string
-              enum:
-                - male
-                - female
-                - divers
-              examples:
-                - female
-            middleName:
-              description: Middle name(s) of the person as shown on the identity document.
-              type: string
-              maxLength: 35
-              examples:
-                - Maria
-            nationalityList:
-              description: Nationalities as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
-              type: array
-              items:
-                type: string
-                pattern: ^[A-Z]{2}$
-                examples:
-                  - CH
-                  - DE
-            placeOfBirth:
-              description: City or municipality of birth.
-              type: string
-              examples:
-                - Winterthur
-            placeOfOrigin:
-              description: Swiss Heimatort/Buergerort. Required for Swiss nationals only.
-              type: string
-              examples:
-                - Glarus
-            title:
-              description: Official title of the person (e.g. PhD, Dr.).
-              type: string
-              maxLength: 35
-              examples:
-                - Dr.
-    BaseData:
-      title: Base data
-      description: Identity, address and contact data of the customer.
-      type: object
-      properties:
+        consentId:
+          description: Consent under which the personal data of this customer is collected and processed.
+          $ref: '#/components/schemas/Id'
+        customerId:
+          description: Unique identifier of the customer, assigned by the provider.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
+        identity:
+          $ref: '#/components/schemas/Identity'
         address:
           $ref: '#/components/schemas/AddressData'
         contact:
           $ref: '#/components/schemas/Contact'
+        coreBankingId:
+          description: Unique customer ID in the core banking system (T24, Avaloq, Finnova, etc.). Assigned once the first account is opened.
+          type: string
+          examples:
+            - '100045872'
+          readOnly: true
+        createdAt:
+          description: ISO 8601 timestamp of when the customer was created.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T09:45:00Z'
+          readOnly: true
+        updatedAt:
+          description: ISO 8601 timestamp of the most recent change of the customer.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T09:45:00Z'
+          readOnly: true
+    CustomerUpdate:
+      title: Customer update
+      description: Properties of a customer to change. Omitted properties remain unchanged.
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/AddressData'
+        consentId:
+          description: Consent under which the personal data of this customer is collected and processed.
+          $ref: '#/components/schemas/Id'
+        contact:
+          $ref: '#/components/schemas/Contact'
         identity:
           $ref: '#/components/schemas/Identity'
+    SelfDeclaration:
+      title: Self declaration
+      description: Self declaration of the customer on beneficial ownership, tax residency and source of funds (FATCA / CRS / AML).
+      type: object
+      required:
+        - economicBeneficiary
+        - fatcaDeclaration
+        - nationalityList
+        - sourceOfFunds
+        - taxComplianceDeclaration
+        - taxDomicile
+        - usTaxLiability
+      properties:
+        economicBeneficiary:
+          description: Whether the customer is the economic beneficiary (acting on their own behalf).
+          type: boolean
+          examples:
+            - true
+        fatcaDeclaration:
+          description: FATCA declaration of the customer.
+          type: object
+          required:
+            - confirmed
+            - status
+          properties:
+            confirmed:
+              description: Whether the customer has explicitly confirmed their FATCA status.
+              type: boolean
+              examples:
+                - true
+            status:
+              description: Customer's FATCA classification.
+              type: string
+              enum:
+                - non_us_person
+                - us_person
+                - recalcitrant
+              examples:
+                - non_us_person
+        nationalityList:
+          description: All nationalities held by the customer as ISO 3166-1 alpha-2 codes. The first entry represents the main nationality.
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z]{2}$
+            examples:
+              - CH
+              - DE
+        sourceOfFunds:
+          description: Primary origin of funds for AML risk assessment per FINMA guidelines.
+          type: string
+          enum:
+            - employment
+            - business
+            - investment
+            - inheritance
+            - savings
+            - gift
+            - real_estate
+            - other
+          examples:
+            - employment
+        taxComplianceDeclaration:
+          description: Declaration of the customer on compliance with applicable tax laws.
+          type: object
+          required:
+            - confirmed
+            - declarationDate
+          properties:
+            confirmed:
+              description: Whether the customer has confirmed compliance with all applicable tax laws.
+              type: boolean
+              examples:
+                - true
+            declarationDate:
+              description: ISO 8601 timestamp of when the declaration was confirmed.
+              type: string
+              format: date-time
+              examples:
+                - '2024-03-15T09:38:00Z'
+        taxDomicile:
+          description: ISO 3166-1 alpha-2 country code of primary tax residency.
+          type: string
+          pattern: ^[A-Z]{2}$
+          examples:
+            - CH
+        usTaxLiability:
+          description: Whether the customer has a US tax obligation triggering FATCA reporting.
+          type: boolean
+          examples:
+            - false
+        tin:
+          description: Tax Identification Number for the declared tax domicile (e.g. AHV/AVS for CH).
+          type: string
+          examples:
+            - 756.1234.5678.97
+    Amount:
+      title: Shared amount
+      description: Amount of money, transmitted as string to avoid rounding errors of floating point numbers.
+      type: string
+      pattern: ^[0-9]{1,12}([.][0-9]{1,5})?$
+      examples:
+        - '5.00'
     FinancialProfile:
       title: Financial profile
       description: Financial situation, employment, education and financial knowledge of the customer (MiFID II / KYC extended data).
@@ -971,6 +1916,7 @@ components:
       type: object
       required:
         - documentData
+        - identificationId
         - identificationMethod
         - referenceNumber
         - verificationDate
@@ -1052,6 +1998,10 @@ components:
                   type: number
                   examples:
                     - 3
+        identificationId:
+          description: Unique identifier of the identification, assigned by the provider.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
         identificationMethod:
           description: Method used to verify the customer's identity.
           type: string
@@ -1075,7 +2025,7 @@ components:
           examples:
             - '2024-03-15T10:48:03Z'
         verificationLevel:
-          description: Achieved eIDAS trust level. Determines available products and signature types.
+          description: Achieved eIDAS trust level. Determines available products and signature types (QES requires QEAA).
           type: string
           enum:
             - QEAA
@@ -1143,11 +2093,38 @@ components:
               type: number
               examples:
                 - 8
-    BackgroundChecks:
-      title: Background checks
-      description: Results of the AML and compliance background checks and the resulting compliance decision.
+    BackgroundCheck:
+      title: Background check
+      description: |
+        AML and compliance screening of a customer and the resulting compliance decision. Created by the client, performed asynchronously by the
+        provider.
       type: object
+      required:
+        - backgroundCheckId
+        - complianceStatus
+        - requestedAt
       properties:
+        backgroundCheckId:
+          description: Unique identifier of the background check, assigned by the provider.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
+        complianceStatus:
+          description: Compliance decision. Opening an account requires the most recent background check of the customer to be approved.
+          type: string
+          enum:
+            - approved
+            - rejected
+            - pending
+            - manual_review
+          examples:
+            - approved
+        requestedAt:
+          description: ISO 8601 timestamp of when the background check was requested.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T10:50:00Z'
+          readOnly: true
         amlRiskClass:
           description: AML risk classification derived from all check results and profile factors.
           type: string
@@ -1206,16 +2183,13 @@ components:
                 - pending
               examples:
                 - passed
-        complianceStatus:
-          description: Final compliance decision. Only approved allows continuation.
+        completedAt:
+          description: ISO 8601 timestamp of when the provider completed the background check.
           type: string
-          enum:
-            - approved
-            - rejected
-            - pending
-            - manual_review
+          format: date-time
           examples:
-            - approved
+            - '2024-03-15T10:55:00Z'
+          readOnly: true
         pepDetails:
           description: Details of the Politically Exposed Person (PEP) screening.
           type: object
@@ -1287,33 +2261,26 @@ components:
               maximum: 100
               examples:
                 - 12
-    ContractItem:
-      title: Contract item
-      description: Single contract document and its acceptance by the customer.
+    Contract:
+      title: Contract
+      description: Contract document presented to the customer, and its acceptance.
       type: object
       required:
-        - acceptanceTimestamp
         - accepted
         - contractId
         - contractType
         - version
       properties:
-        acceptanceTimestamp:
-          description: ISO 8601 timestamp of when the customer accepted this contract.
-          type: string
-          format: date-time
-          examples:
-            - '2024-03-15T11:02:45Z'
         accepted:
-          description: Must be true for all required contracts before proceeding to signature.
+          description: Whether the customer has accepted this contract. Set via the acceptance sub-resource.
           type: boolean
           examples:
             - true
+          readOnly: true
         contractId:
           description: Unique identifier for this contract document instance.
-          type: string
-          examples:
-            - CTR-2024-000123
+          $ref: '#/components/schemas/Id'
+          readOnly: true
         contractType:
           description: Type of the contract document.
           type: string
@@ -1325,100 +2292,106 @@ components:
           examples:
             - termsAndConditions
         version:
-          description: Version number of the contract (e.g. 2.1, 3.0).
+          description: Version number of the contract (e.g. 2.1, 3.0), assigned by the provider.
           type: string
           examples:
             - '2.1'
+          readOnly: true
+        acceptanceTimestamp:
+          description: ISO 8601 timestamp of when the customer accepted this contract.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T11:02:45Z'
+          readOnly: true
+        documentUrl:
+          description: Relative URL from which the contract document can be retrieved.
+          type: string
+          examples:
+            - /documents/CTR-2024-000123.pdf
+          readOnly: true
         productId:
-          description: Product catalog ID this contract applies to (relevant for productAgreement only).
+          description: Product catalog ID this contract applies to. Required for productAgreement only.
           type: string
           examples:
             - PRV-ACC-STD
     ContractAcceptance:
       title: Contract acceptance
-      description: Acceptance of the contracts required for the selected products.
+      description: Acceptance of a single contract by the customer.
       type: object
       required:
-        - contracts
+        - acceptanceTimestamp
+        - accepted
       properties:
-        contracts:
-          description: Contracts presented to and accepted by the customer.
-          type: array
-          items:
-            $ref: '#/components/schemas/ContractItem'
-        contractType:
-          description: Deprecated. Legacy field replaced by the contracts array.
+        acceptanceTimestamp:
+          description: ISO 8601 timestamp of when the customer accepted the contract.
           type: string
+          format: date-time
           examples:
-            - termsAndConditions
-          deprecated: true
-        contractVersion:
-          description: Deprecated. Legacy field replaced by the contracts array.
-          type: string
-          examples:
-            - '2.1'
-          deprecated: true
-        termsAccepted:
-          description: |
-            Deprecated. Legacy field replaced by the contracts array.
-            Retained for backward compatibility.
+            - '2024-03-15T11:02:45Z'
+        accepted:
+          description: Whether the customer accepts the contract.
           type: boolean
           examples:
             - true
-          deprecated: true
     SignedContract:
       title: Signed contract
-      description: Single contract covered by the digital signature.
+      description: Single contract covered by an electronic signature.
       type: object
       required:
-        - contractType
-        - signatureId
-        - signatureTimestamp
+        - contractId
         - version
       properties:
+        contractId:
+          description: Contract covered by the signature.
+          $ref: '#/components/schemas/Id'
+        version:
+          description: Version of the signed contract. Must match the accepted version.
+          type: string
+          examples:
+            - '2.1'
         contractType:
-          description: Type of signed contract matching contractAcceptance step.
+          description: Type of the signed contract.
           type: string
           examples:
             - termsAndConditions
-        signatureId:
-          description: Unique signature identifier for certificate retrieval and integrity verification.
-          type: string
-          examples:
-            - SIG-2024-000987
+          readOnly: true
         signatureTimestamp:
-          description: Must be equal to or later than the corresponding acceptanceTimestamp.
+          description: ISO 8601 timestamp of the signature. Equal to or later than the acceptanceTimestamp of the contract.
           type: string
           format: date-time
           examples:
             - '2024-03-15T11:10:00Z'
-        version:
-          description: Version of the signed contract, must match the accepted version.
-          type: string
-          examples:
-            - '2.1'
+          readOnly: true
     Signature:
       title: Signature
-      description: Digital signature of the accepted contracts.
+      description: Electronic signature of one or more accepted contracts.
       type: object
       required:
         - legallyBinding
         - mfaCompleted
+        - signatureId
         - signatureStatus
         - signatureType
+        - signedContracts
       properties:
         legallyBinding:
-          description: Whether the signature is legally binding based on type and applicable jurisdiction.
+          description: Whether the signature is legally binding based on type and applicable jurisdiction. Determined by the provider.
           type: boolean
           examples:
             - true
+          readOnly: true
         mfaCompleted:
           description: Whether MFA was completed during signing. Required for QES and AES.
           type: boolean
           examples:
             - true
+        signatureId:
+          description: Unique identifier of the signature, assigned by the provider.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
         signatureStatus:
-          description: Only completed allows the process to proceed to finalization.
+          description: Validation state of the signature. Only a completed signature can be referenced when opening an account.
           type: string
           enum:
             - completed
@@ -1426,8 +2399,9 @@ components:
             - failed
           examples:
             - completed
+          readOnly: true
         signatureType:
-          description: eIDAS signature level. QES requires QEAA-level identification.
+          description: eIDAS signature level. QES requires a QEAA-level identification of the customer.
           type: string
           enum:
             - QES
@@ -1435,6 +2409,18 @@ components:
             - SES
           examples:
             - QES
+        signedContracts:
+          description: Contracts covered by this signature. Every contract must have been accepted by the customer.
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedContract'
+        createdAt:
+          description: ISO 8601 timestamp of when the signature was recorded.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T11:10:00Z'
+          readOnly: true
         signatureData:
           description: Technical data of the signature.
           type: object
@@ -1455,27 +2441,122 @@ components:
               format: date-time
               examples:
                 - '2024-03-15T11:10:00Z'
-        signedContracts:
-          description: Contracts covered by this signature.
+    Account:
+      title: Account
+      description: Banking account opened for a customer, including the selected products and the references created in the core banking system.
+      type: object
+      required:
+        - accountId
+        - accountType
+        - productPackage
+        - signatureId
+        - status
+      properties:
+        accountId:
+          description: Unique identifier of the account, assigned by the provider.
+          $ref: '#/components/schemas/Id'
+          readOnly: true
+        accountType:
+          description: Primary account category.
+          type: string
+          enum:
+            - private
+            - savings
+            - youth
+            - business
+          examples:
+            - private
+        productPackage:
+          description: Product tier within the selected account type.
+          type: string
+          enum:
+            - standard
+            - student
+            - youth
+            - premium
+            - business
+          examples:
+            - standard
+        signatureId:
+          description: Completed signature covering the contracts required for the selected products.
+          $ref: '#/components/schemas/Id'
+        status:
+          description: Provisioning state of the account in the core banking system.
+          type: string
+          enum:
+            - pending
+            - active
+            - rejected
+          examples:
+            - active
+          readOnly: true
+        additionalProducts:
+          description: Optional add-on product catalog IDs (e.g. credit cards, e-banking modules).
           type: array
           items:
-            $ref: '#/components/schemas/SignedContract'
-    AuditEntry:
-      title: Audit entry
-      description: Single entry of the audit trail documenting an action performed during the onboarding process.
+            type: string
+            examples:
+              - debit-card
+              - e-banking
+        cardIssuanceStatus:
+          description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
+          type: string
+          examples:
+            - requested
+          readOnly: true
+        createdAt:
+          description: ISO 8601 timestamp of when the account opening was requested.
+          type: string
+          format: date-time
+          examples:
+            - '2024-03-15T11:15:00Z'
+          readOnly: true
+        documentArchiveReference:
+          description: Reference ID or URL to the archived account opening documents in the DMS.
+          type: string
+          examples:
+            - DMS-2024-ONB-000123
+          readOnly: true
+        iban:
+          description: Assigned IBAN in ISO 13616 format. Available once the account is active.
+          type: string
+          pattern: ^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$
+          examples:
+            - CH9300762011623852957
+          readOnly: true
+        monthlyFee:
+          description: Recurring monthly fee for the selected product combination.
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/Amount'
+        monthlyFeeCurrency:
+          description: ISO 4217 currency code of the monthly fee.
+          type: string
+          pattern: ^[A-Z]{3}$
+          examples:
+            - CHF
+          readOnly: true
+    AuditEvent:
+      title: Audit event
+      description: Single entry of the audit trail of a customer, recorded by the provider for every change of a resource.
       type: object
       required:
         - action
+        - eventId
         - originator
+        - resourceId
+        - resourceType
         - result
-        - step
         - timestamp
       properties:
         action:
-          description: Machine-readable action identifier (e.g. consent_granted, contract_signed).
+          description: Machine-readable action identifier (e.g. consent_granted, contract_accepted).
           type: string
           examples:
-            - consent_granted
+            - contract_accepted
+        eventId:
+          description: Unique identifier of the audit event.
+          $ref: '#/components/schemas/Id'
         originator:
           description: Entity that performed the action.
           type: string
@@ -1485,6 +2566,24 @@ components:
             - partner
           examples:
             - user
+        resourceId:
+          description: Identifier of the resource affected by the action.
+          $ref: '#/components/schemas/Id'
+        resourceType:
+          description: Type of the resource affected by the action.
+          type: string
+          enum:
+            - consent
+            - customer
+            - selfDeclaration
+            - financialProfile
+            - identification
+            - backgroundCheck
+            - contract
+            - signature
+            - account
+          examples:
+            - contract
         result:
           description: Outcome of the action.
           type: string
@@ -1494,17 +2593,17 @@ components:
             - pending
           examples:
             - success
-        step:
-          description: Onboarding step in which this action occurred.
-          type: string
-          examples:
-            - consent
         timestamp:
           description: ISO 8601 timestamp of when the action was performed.
           type: string
           format: date-time
           examples:
-            - '2024-03-15T09:32:11Z'
+            - '2024-03-15T11:02:45Z'
+        correlationId:
+          description: X-Correlation-ID of the request that triggered the action.
+          type: string
+          examples:
+            - f058ebd6-02f7-4d3f-942e-904344e8cde5
         deviceFingerprint:
           description: Hash representing the device used. Used for fraud detection.
           type: string
@@ -1515,141 +2614,325 @@ components:
           type: string
           examples:
             - 203.0.113.42
-    ProcessMetadata:
-      title: Process metadata
-      description: Status, step timestamps, audit trail and core banking integration data of an onboarding process.
-      type: object
-      properties:
-        auditTrail:
-          description: Chronological list of all actions performed during the onboarding process.
-          type: array
-          items:
-            $ref: '#/components/schemas/AuditEntry'
-        lastUpdate:
-          description: ISO 8601 timestamp of the most recent metadata update.
-          type: string
-          format: date-time
-          examples:
-            - '2024-03-15T11:20:00Z'
-        processId:
-          $ref: '#/components/schemas/ProcessId'
-        processTimestamps:
-          description: ISO 8601 timestamps of the completion of each onboarding step.
-          type: object
-          properties:
-            backgroundChecksCompleted:
-              description: Completion of the background checks.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T10:55:00Z'
-            basicDataCompleted:
-              description: Completion of the base data step.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T09:45:00Z'
-            contractsAccepted:
-              description: Acceptance of all contracts.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T11:02:45Z'
-            finalized:
-              description: Finalization of the onboarding process.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T11:20:00Z'
-            financialProfileCompleted:
-              description: Completion of the financial profile step.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T10:12:00Z'
-            identified:
-              description: Completion of the identity verification.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T10:48:03Z'
-            initialized:
-              description: Creation of the onboarding process.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T09:30:00Z'
-            productSelected:
-              description: Completion of the product selection.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T09:32:00Z'
-            selfDeclared:
-              description: Completion of the self declaration.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T09:38:00Z'
-            signed:
-              description: Completion of the digital signature.
-              type: string
-              format: date-time
-              examples:
-                - '2024-03-15T11:10:00Z'
-        status:
-          description: Overall onboarding process status. completed and failed are terminal states.
-          type: string
-          enum:
-            - in_progress
-            - completed
-            - failed
-          examples:
-            - completed
-        systemIntegration:
-          description: References to the records created in the bank's core systems.
-          type: object
-          properties:
-            accountNumber:
-              description: Assigned IBAN in ISO 13616 format (e.g. CH93 0076 2011 6238 5295 7).
-              type: string
-              examples:
-                - CH9300762011623852957
-            cardIssuanceStatus:
-              description: Card issuance status (e.g. not_requested, requested, in_production, shipped, activated).
-              type: string
-              examples:
-                - requested
-            coreBankingId:
-              description: Unique customer ID in core banking system (T24, Avaloq, Finnova, etc.).
-              type: string
-              examples:
-                - '100045872'
-            documentArchiveReference:
-              description: Reference ID or URL to archived onboarding documents in DMS.
-              type: string
-              examples:
-                - DMS-2024-ONB-000123
   responses:
     standard400:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
       description: |
-        Client Error - The request could not be processed due to a problem in the data provided. This could be for any of the reasons of the HTTP
-        standard that would result in a 4xx code.
+        Bad Request - The format of the request was invalid.
+
+        Examples:
+        - InvalidPayload:
+        type: /problems/INVALID_PAYLOAD
+        title: Payload does not comply with API specification
+        detail: Malformed JSON
+        instance: path/to/corresponding/resource
+
+        - InvalidParameter:
+        type: /problems/INVALID_PAYLOAD
+        title: Invalid parameter values have been detected
+        detail: The field country must be an ISO 3166-1 alpha-2 country code
+        instance: path/to/corresponding/resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard401:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: Unauthorized - The request has not been applied because it provides no valid authentication credentials for the target resource.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard403:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: |
+        Forbidden - A valid OAuth token was received, but access was denied. (Depending on the security requirements, providers can return 404
+        instead)
+
+        Examples:
+        - InsufficientPrivileges:
+        type: /problems/INSUFFICIENT_PRIVILEGES
+        title: No privileges for the requested operation
+        detail: The token does not grant the scope required for this operation
+        instance: path/to/corresponding/resource
+
+        - ExpiredToken:
+        type: /problems/EXPIRED_TOKEN
+        title: The OAuth token is expired
+        detail: The token is no longer valid
+        instance: path/to/corresponding/resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard500:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: |
+        Internal Server Error - The server encountered an unexpected condition that prevented it from fulfilling the request.
+
+        Examples:
+        - TechnicalServerError:
+        type: /problems/TECHNICAL_ERROR
+        title: Technical error on server side
+        detail: Processing yielded a technical error
+        instance: path/to/corresponding/resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard503:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: Service Unavailable - The server is currently unable to handle the request due to a temporary overload or scheduled maintenance.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/CommonErrorResponse'
     standard404:
-      description: Not Found - No onboarding process exists for the given processId.
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: |
+        Not Found - Either the endpoint does not exist or the requested resource does not exist.
+
+        Examples:
+        - ResourceNotFound:
+        type: /problems/RESOURCE_NOT_FOUND
+        title: Resource not found
+        detail: No customer exists for the given customerId
+        instance: path/to/corresponding/resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard409:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: |
+        Conflict - The request conflicts with the current state of the target resource.
+
+        Examples:
+        - ContractAlreadySigned:
+        type: /problems/RESOURCE_LOCKED
+        title: The resource can no longer be changed
+        detail: The contract is covered by a completed signature and cannot be changed
+        instance: path/to/corresponding/resource
+
+        - ConsentAlreadyRevoked:
+        type: /problems/RESOURCE_LOCKED
+        title: The resource can no longer be changed
+        detail: The consent has already been revoked
+        instance: path/to/corresponding/resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/CommonErrorResponse'
+    standard422:
+      headers:
+        Content-Language:
+          $ref: '#/components/headers/Content-Language'
+        X-Correlation-ID:
+          $ref: '#/components/headers/X-Correlation-ID'
+      description: |
+        Unprocessable Content - The request is well-formed, but the provider refuses it because it would violate a regulatory or business invariant.
+        The invariants enforced by an operation are listed in its description. The type of the problem names the violated invariant.
+
+        Examples:
+        - ConsentMissing:
+        type: /problems/CONSENT_MISSING
+        title: No active consent covers the data
+        detail: The consent does not cover the data category financialProfile
+        instance: path/to/corresponding/resource
+
+        - PreconditionNotMet:
+        type: /problems/PRECONDITION_NOT_MET
+        title: A required resource is missing or not in the required state
+        detail: The most recent background check of the customer is not approved
+        instance: path/to/corresponding/resource
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/CommonErrorResponse'
   parameters:
-    process_id:
-      in: path
-      name: processId
-      description: Unique onboarding process identifier assigned at initialization.
+    correlation:
+      in: header
+      name: X-Correlation-ID
+      description: Unique ID (defined by the caller) which will be reflected back in the response.
       required: true
       schema:
-        $ref: '#/components/schemas/ProcessId'
+        type: string
+        examples:
+          - f058ebd6-02f7-4d3f-942e-904344e8cde5
+    idempotency_key:
+      in: header
+      name: Idempotency-Key
+      description: |
+        Unique key (defined by the caller) that makes a create request safe to retry. A repeated request with the same key returns the result of the
+        original request instead of creating a second resource.
+      required: true
+      schema:
+        type: string
+        maxLength: 64
+        examples:
+          - 5b3c8d7e-1f2a-4c6b-9e0d-3a7f1b2c4d5e
+    psu_ip:
+      in: header
+      name: X-PSU-IP-Address
+      description: IP address of the user initiating the operation. Recorded in the audit trail.
+      required: false
+      schema:
+        type: string
+        examples:
+          - 203.0.113.42
+    psu_user_agent:
+      in: header
+      name: X-PSU-User-Agent
+      description: User agent of the client software used by the user. Recorded in the audit trail.
+      required: false
+      schema:
+        type: string
+        examples:
+          - Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)
+    consent_id:
+      in: path
+      name: consentId
+      description: ID of the consent.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    customer_id:
+      in: path
+      name: customerId
+      description: ID of the customer.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    cursor:
+      in: query
+      name: cursor
+      description: Optional parameter for pagination. Use the X-Next-Cursor header of the previous response to retrieve the next set of results.
+      required: false
+      schema:
+        type: string
+        examples:
+          - cursorIDxyz
+    limit:
+      in: query
+      name: limit
+      description: |
+        Optional parameter for pagination, specifying the number of items to return. The actual maximum limit can be defined by the provider.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        examples:
+          - 25
+        default: 25
+    identification_id:
+      in: path
+      name: identificationId
+      description: ID of the identification.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    background_check_id:
+      in: path
+      name: backgroundCheckId
+      description: ID of the background check.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    contract_id:
+      in: path
+      name: contractId
+      description: ID of the contract.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    signature_id:
+      in: path
+      name: signatureId
+      description: ID of the signature.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    account_id:
+      in: path
+      name: accountId
+      description: ID of the account.
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+  headers:
+    Location:
+      description: Location (URI-reference) of the created resource. The relative path shall be returned as URI-reference.
+      schema:
+        type: string
+        examples:
+          - /customers/c-7f3a9b2e/contracts/CTR-2024-000123
+    X-Correlation-ID:
+      description: Client defined ID from request to correlates HTTP requests between a client and server.
+      schema:
+        type: string
+        examples:
+          - f058ebd6-02f7-4d3f-942e-904344e8cde5
+    Content-Language:
+      description: Response language - always en.
+      schema:
+        type: string
+        examples:
+          - en
+    X-Next-Cursor:
+      description: |
+        An opaque string value used for pagination. Include this value in the cursor parameter of the subsequent request to fetch the next page of
+        results. An empty string indicates that there are no more results.
+      required: true
+      schema:
+        type: string
+        examples:
+          - nextCursorIDxyz
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth authorization code flow. Further security requirements are defined by the provider.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://onboarding.common-api.ch/oauth/authorize
+          tokenUrl: https://onboarding.common-api.ch/oauth/token
+          scopes:
+            accounts:read: Read the accounts of a customer.
+            accounts:write: Open accounts for a customer.
+            audit:read: Read the audit trail of a customer.
+            consents:read: Read consents.
+            consents:write: Create and revoke consents.
+            contracts:read: Read contracts and signatures.
+            contracts:write: Create, accept and sign contracts.
+            customers:read: Read identity, address and contact data of a customer.
+            customers:write: Create and change customers.
+            kyc:read: Read the KYC data of a customer.
+            kyc:write: Submit KYC data and request background checks.
