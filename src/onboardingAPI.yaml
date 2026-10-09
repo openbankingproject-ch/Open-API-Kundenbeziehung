@@ -1,63 +1,65 @@
 openapi: 3.1.0
 info:
-  title: FAPI 2.0 Digital Banking Onboarding API
-  version: 1.0.0
-  description: >
-    FAPI 2.0-compliant digital banking customer onboarding API.
-    The onboarding is structured as a 10-step pipeline, from session
-    initialization through to final account provisioning.
+  title: Customer Relationship API
+  version: 2.0.0
+  description: |
+    API for establishing a customer relationship (Kundenbeziehung) with a financial institution, from the consent of the customer through to
+    an opened account.
 
+    The API is resource-oriented: consents, customers, KYC data, contracts, signatures and accounts are independent resources. The API does
+    not prescribe an order of operations. The reference process, i.e. the order in which a client collects data and calls the operations of
+    this API, is implemented by the clients and documented separately.
+
+    Regardless of the order chosen by a client, the provider enforces the regulatory invariants. A request that would violate an invariant
+    is rejected with 422 Unprocessable Content, and the problem type names the violated invariant:
+    - CONSENT_MISSING: personal data is only stored under an active consent that covers its data category.
+    - PRECONDITION_NOT_MET: a resource the operation depends on is missing or not in the required state, e.g. a signed contract that was not
+    accepted, or an account for a customer whose background check is not approved.
+
+    The invariants enforced by an operation are listed in its description.
+  contact:
+    email: info@common-api.ch
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://onboarding.common-api.ch/v2
+externalDocs:
+  description: Find out more about the Common API specifications.
+  url: https://www.common-api.ch
+tags:
+  - name: accounts
+    description: Opening of accounts for a customer and retrieval of the resulting core banking references.
+  - name: audit-events
+    description: Retrieval of the audit trail recorded by the provider for all changes of the resources of a customer.
+  - name: consents
+    description: Consent of the customer for the collection and processing of personal data, the legal basis for all other resources.
+  - name: contracts
+    description: Contract documents, their acceptance by the customer and their electronic signature.
+  - name: customers
+    description: Identity, address and contact data of the customer.
+  - name: kyc
+    description: Know-your-customer data, i.e. self declaration, financial profile, identity verification and AML / compliance screening.
+security:
+  - OAuth2: []
 paths:
-  /onboarding/initialization:
+  /consents:
     post:
-      summary: Step 1 – Initialize onboarding session
-      operationId: createInitialization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./components/schemas/InitializationRequest.yaml
-      responses:
-        '201':
-          description: Onboarding session created
-          content:
-            application/json:
-              schema:
-                $ref: ./components/schemas/InitializationResponse.yaml
-        '400':
-          $ref: ./components/responses/standard400.yaml
-
-  /onboarding/{processId}/product-selection:
-    put:
-      summary: Step 2 – Select banking products
-      operationId: updateProductSelection
+      tags:
+        - consents
+      summary: Create a consent
+      description: |
+        Records the consent of the customer for the collection and processing of personal data. A consent is the legal basis for every resource that
+        stores personal data, so it is created before the customer and referenced by it.
+      operationId: createConsent
+      security:
+        - OAuth2:
+            - consents:write
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./components/schemas/ProductSelection.yaml
-      responses:
-        '200':
-          description: Product selection updated
-          content:
-            application/json:
-              schema:
-                $ref: ./components/schemas/ProductSelection.yaml
-        '400':
-          $ref: ./components/responses/standard400.yaml
-        '404':
-          $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/consent:
-    put:
-      summary: Step 3 – Record consent
-      operationId: updateConsent
-      parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -65,23 +67,285 @@ paths:
             schema:
               $ref: ./components/schemas/Consent.yaml
       responses:
-        '200':
-          description: Consent recorded
+        '201':
+          description: Consent created.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
                 $ref: ./components/schemas/Consent.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /consents/{consentId}:
+    get:
+      tags:
+        - consents
+      summary: Get a consent
+      description: Returns a specific consent including its current lifecycle state.
+      operationId: getConsent
+      security:
+        - OAuth2:
+            - consents:read
+      parameters:
+        - $ref: ./components/parameters/path/consent_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The specified consent.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Consent.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/self-declaration:
-    put:
-      summary: Step 4 – Self declaration (FATCA / CRS / AML)
-      operationId: updateSelfDeclaration
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    delete:
+      tags:
+        - consents
+      summary: Revoke a consent
+      description: |
+        Revokes the consent. The provider retains the consent for audit purposes, so a subsequent request returns it with status revoked. No
+        personal data can be stored under a revoked consent.
+      operationId: revokeConsent
+      security:
+        - OAuth2:
+            - consents:write
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/consent_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '204':
+          description: Consent revoked.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '409':
+          $ref: ./components/responses/standard409.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers:
+    post:
+      tags:
+        - customers
+      summary: Create a customer
+      description: |
+        Creates a customer with identity, address and contact data. Invariants: CONSENT_MISSING if the consent of the customer is not active or does
+        not cover the data category identity (and address or contact, if provided).
+      operationId: createCustomer
+      security:
+        - OAuth2:
+            - customers:write
+      parameters:
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Customer.yaml
+      responses:
+        '201':
+          description: Customer created.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Customer.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}:
+    get:
+      tags:
+        - customers
+      summary: Get a customer
+      description: Returns the identity, address and contact data of a specific customer.
+      operationId: getCustomer
+      security:
+        - OAuth2:
+            - customers:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The specified customer.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Customer.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    patch:
+      tags:
+        - customers
+      summary: Update a customer
+      description: |
+        Updates the data of a customer with JSON merge patch semantics (RFC 7396): provided properties replace the stored ones, properties set to
+        null are removed, omitted properties remain unchanged. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not
+        cover the data category of each changed property.
+      operationId: updateCustomer
+      security:
+        - OAuth2:
+            - customers:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/CustomerUpdate.yaml
+      responses:
+        '200':
+          description: The updated customer.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Customer.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/self-declaration:
+    get:
+      tags:
+        - kyc
+      summary: Get the self declaration of a customer
+      description: Returns the self declaration of a specific customer.
+      operationId: getSelfDeclaration
+      security:
+        - OAuth2:
+            - kyc:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The self declaration of the customer.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/SelfDeclaration.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    put:
+      tags:
+        - kyc
+      summary: Replace the self declaration of a customer
+      description: |
+        Stores the self declaration of the customer on beneficial ownership, tax residency and source of funds (FATCA / CRS / AML). Replaces the
+        stored self declaration as a whole. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not cover the data
+        category selfDeclaration.
+      operationId: updateSelfDeclaration
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -90,46 +354,82 @@ paths:
               $ref: ./components/schemas/SelfDeclaration.yaml
       responses:
         '200':
-          description: Self declaration updated
+          description: The stored self declaration.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
                 $ref: ./components/schemas/SelfDeclaration.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/base-data:
-    put:
-      summary: Step 5 – Collect base data (identity, address, contact)
-      operationId: updateBaseData
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/financial-profile:
+    get:
+      tags:
+        - kyc
+      summary: Get the financial profile of a customer
+      description: Returns the financial profile of a specific customer.
+      operationId: getFinancialProfile
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./components/schemas/BaseData.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       responses:
         '200':
-          description: Base data updated
+          description: The financial profile of the customer.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
-                $ref: ./components/schemas/BaseData.yaml
+                $ref: ./components/schemas/FinancialProfile.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/financial-profile:
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
     put:
-      summary: Step 6 – Collect financial profile (MiFID II / KYC extended data)
+      tags:
+        - kyc
+      summary: Replace the financial profile of a customer
+      description: |
+        Stores assets, income, employment, education and financial knowledge of the customer (MiFID II / KYC extended data). Replaces the stored
+        financial profile as a whole. Invariants: CONSENT_MISSING if the consent of the customer is not active or does not cover the data category
+        financialProfile.
       operationId: updateFinancialProfile
+      security:
+        - OAuth2:
+            - kyc:write
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -138,22 +438,95 @@ paths:
               $ref: ./components/schemas/FinancialProfile.yaml
       responses:
         '200':
-          description: Financial profile updated
+          description: The stored financial profile.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
                 $ref: ./components/schemas/FinancialProfile.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/identification:
-    put:
-      summary: Step 7 – Identity verification (KYC)
-      operationId: updateIdentification
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/identifications:
+    get:
+      tags:
+        - kyc
+      summary: Get a list of all identifications of a customer
+      description: Returns all identity verifications of a specific customer, most recent first.
+      operationId: listIdentifications
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of identifications.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - identifications
+                properties:
+                  identifications:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/Identification.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    post:
+      tags:
+        - kyc
+      summary: Create an identification
+      description: |
+        Records the result of an identity verification of the customer, including document, biometric and audit data. A customer can have several
+        identifications; the most recent one determines the verification level of the customer. Invariants: CONSENT_MISSING if the consent of the
+        customer does not cover the data category identification; PRECONDITION_NOT_MET if the identity document was expired at the time of
+        verification.
+      operationId: createIdentification
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -161,39 +534,354 @@ paths:
             schema:
               $ref: ./components/schemas/Identification.yaml
       responses:
-        '200':
-          description: Identification updated
+        '201':
+          description: Identification created.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
                 $ref: ./components/schemas/Identification.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/background-checks:
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/identifications/{identificationId}:
     get:
-      summary: Step 8 – Retrieve AML / compliance check results
-      operationId: getBackgroundChecks
+      tags:
+        - kyc
+      summary: Get an identification
+      description: Returns a specific identity verification of a customer.
+      operationId: getIdentification
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/identification_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       responses:
         '200':
-          description: Background check results
+          description: The specified identification.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
-                $ref: ./components/schemas/BackgroundChecks.yaml
+                $ref: ./components/schemas/Identification.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/contract-acceptance:
-    put:
-      summary: Step 9 – Accept contracts
-      operationId: updateContractAcceptance
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/background-checks:
+    get:
+      tags:
+        - kyc
+      summary: Get a list of all background checks of a customer
+      description: Returns all AML and compliance background checks of a specific customer, most recent first.
+      operationId: listBackgroundChecks
+      security:
+        - OAuth2:
+            - kyc:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of background checks.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - backgroundChecks
+                properties:
+                  backgroundChecks:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/BackgroundCheck.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    post:
+      tags:
+        - kyc
+      summary: Request a background check
+      description: |
+        Requests AML and compliance screening (sanctions, PEP, crime, credit and adverse media) of the customer based on the data currently stored.
+        The screening runs asynchronously: the background check is returned with complianceStatus pending and can be polled at the returned location
+        until complianceStatus changes. manual_review requires handling by the provider. Invariants: CONSENT_MISSING if the consent of the customer
+        is not active or does not cover the data category backgroundCheck.
+      operationId: createBackgroundCheck
+      security:
+        - OAuth2:
+            - kyc:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '202':
+          description: Background check requested.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/BackgroundCheck.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/background-checks/{backgroundCheckId}:
+    get:
+      tags:
+        - kyc
+      summary: Get a background check
+      description: Returns a specific background check including the check results and the compliance decision.
+      operationId: getBackgroundCheck
+      security:
+        - OAuth2:
+            - kyc:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/background_check_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The specified background check.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/BackgroundCheck.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/contracts:
+    get:
+      tags:
+        - contracts
+      summary: Get a list of all contracts of a customer
+      description: Returns all contracts of a specific customer and whether the customer accepted them.
+      operationId: listContracts
+      security:
+        - OAuth2:
+            - contracts:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of contracts.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - contracts
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/Contract.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    post:
+      tags:
+        - contracts
+      summary: Create a contract
+      description: |
+        Creates a contract document for the customer. The provider determines the applicable version and document. Opening an account requires
+        termsAndConditions, baseContract and a productAgreement for each selected product. Invariants: CONSENT_MISSING if the consent of the
+        customer is not active or does not cover the data category contract.
+      operationId: createContract
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Contract.yaml
+      responses:
+        '201':
+          description: Contract created.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Contract.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/contracts/{contractId}:
+    get:
+      tags:
+        - contracts
+      summary: Get a contract
+      description: Returns a specific contract of a customer.
+      operationId: getContract
+      security:
+        - OAuth2:
+            - contracts:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/contract_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The specified contract.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Contract.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/contracts/{contractId}/acceptance:
+    put:
+      tags:
+        - contracts
+      summary: Accept a contract
+      description: |
+        Records whether the customer accepts the contract. A contract covered by a completed signature can no longer be changed and is rejected with
+        409 Conflict.
+      operationId: updateContractAcceptance
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/contract_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -202,22 +890,95 @@ paths:
               $ref: ./components/schemas/ContractAcceptance.yaml
       responses:
         '200':
-          description: Contract acceptance updated
+          description: The updated contract.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
-                $ref: ./components/schemas/ContractAcceptance.yaml
+                $ref: ./components/schemas/Contract.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/signature:
-    put:
-      summary: Step 10 – Digital signature
-      operationId: updateSignature
+        '409':
+          $ref: ./components/responses/standard409.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/signatures:
+    get:
+      tags:
+        - contracts
+      summary: Get a list of all signatures of a customer
+      description: Returns all electronic signatures of a specific customer.
+      operationId: listSignatures
+      security:
+        - OAuth2:
+            - contracts:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of signatures.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - signatures
+                properties:
+                  signatures:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/Signature.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    post:
+      tags:
+        - contracts
+      summary: Create a signature
+      description: |
+        Records the electronic signature of one or more contracts. The provider validates the signature and determines signatureStatus and
+        legallyBinding. Invariants: CONSENT_MISSING if the consent of the customer does not cover the data category signature; PRECONDITION_NOT_MET
+        if a signed contract does not belong to the customer, is not accepted or its version does not match, if a QES is submitted without a
+        QEAA-level identification of the customer, or if a QES or AES is submitted without completed MFA.
+      operationId: createSignature
+      security:
+        - OAuth2:
+            - contracts:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       requestBody:
         required: true
         content:
@@ -225,29 +986,279 @@ paths:
             schema:
               $ref: ./components/schemas/Signature.yaml
       responses:
-        '200':
-          description: Signature recorded
+        '201':
+          description: Signature created.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
                 $ref: ./components/schemas/Signature.yaml
         '400':
           $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
-
-  /onboarding/{processId}/metadata:
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/signatures/{signatureId}:
     get:
-      summary: Step 11 – Retrieve process metadata and audit trail
-      operationId: getMetadata
+      tags:
+        - contracts
+      summary: Get a signature
+      description: Returns a specific electronic signature of a customer.
+      operationId: getSignature
+      security:
+        - OAuth2:
+            - contracts:read
       parameters:
-        - $ref: ./components/parameters/path/process_id.yaml
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/signature_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
       responses:
         '200':
-          description: Process metadata
+          description: The specified signature.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
           content:
             application/json:
               schema:
-                $ref: ./components/schemas/ProcessMetadata.yaml
+                $ref: ./components/schemas/Signature.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
         '404':
           $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/accounts:
+    get:
+      tags:
+        - accounts
+      summary: Get a list of all accounts of a customer
+      description: Returns all accounts opened for a specific customer.
+      operationId: listAccounts
+      security:
+        - OAuth2:
+            - accounts:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of accounts.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - accounts
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/Account.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+    post:
+      tags:
+        - accounts
+      summary: Open an account
+      description: |
+        Opens an account with the selected products for the customer. Provisioning in the core banking system runs asynchronously: the account is
+        returned with status pending and can be polled at the returned location until it is active or rejected.
+
+        Invariants (PRECONDITION_NOT_MET unless stated otherwise):
+        - The consent of the customer is active and covers the data categories of all resources below (CONSENT_MISSING).
+        - The customer has a self declaration.
+        - The most recent identification of the customer meets the verification level required for the selected products.
+        - The most recent background check of the customer has complianceStatus approved.
+        - The customer has a financial profile if a selected product requires a MiFID II suitability assessment.
+        - signatureId references a completed, legally binding signature of the customer that covers accepted termsAndConditions, baseContract and a
+        productAgreement for each selected product.
+      operationId: createAccount
+      security:
+        - OAuth2:
+            - accounts:write
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/idempotency_key.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./components/schemas/Account.yaml
+      responses:
+        '202':
+          description: Account opening requested.
+          headers:
+            Location:
+              $ref: ./components/headers/Location.yaml
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Account.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '422':
+          $ref: ./components/responses/standard422.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/accounts/{accountId}:
+    get:
+      tags:
+        - accounts
+      summary: Get an account
+      description: Returns a specific account including its provisioning status and core banking references.
+      operationId: getAccount
+      security:
+        - OAuth2:
+            - accounts:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/path/account_id.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: The specified account.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+          content:
+            application/json:
+              schema:
+                $ref: ./components/schemas/Account.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+  /customers/{customerId}/audit-events:
+    get:
+      tags:
+        - audit-events
+      summary: Get the audit trail of a customer
+      description: Returns the audit events recorded by the provider for all changes of the resources of a specific customer, in chronological order.
+      operationId: listAuditEvents
+      security:
+        - OAuth2:
+            - audit:read
+      parameters:
+        - $ref: ./components/parameters/path/customer_id.yaml
+        - $ref: ./components/parameters/query/cursor.yaml
+        - $ref: ./components/parameters/query/limit.yaml
+        - $ref: ./components/parameters/header/correlation.yaml
+        - $ref: ./components/parameters/header/psu_ip.yaml
+        - $ref: ./components/parameters/header/psu_user_agent.yaml
+      responses:
+        '200':
+          description: Paginated list of audit events.
+          headers:
+            X-Correlation-ID:
+              $ref: ./components/headers/X-Correlation-ID.yaml
+            X-Next-Cursor:
+              $ref: ./components/headers/X-Next-Cursor.yaml
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - auditEvents
+                properties:
+                  auditEvents:
+                    type: array
+                    items:
+                      $ref: ./components/schemas/AuditEvent.yaml
+        '400':
+          $ref: ./components/responses/standard400.yaml
+        '401':
+          $ref: ./components/responses/standard401.yaml
+        '403':
+          $ref: ./components/responses/standard403.yaml
+        '404':
+          $ref: ./components/responses/standard404.yaml
+        '500':
+          $ref: ./components/responses/standard500.yaml
+        '503':
+          $ref: ./components/responses/standard503.yaml
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth authorization code flow. Further security requirements are defined by the provider.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://onboarding.common-api.ch/oauth/authorize
+          tokenUrl: https://onboarding.common-api.ch/oauth/token
+          scopes:
+            accounts:read: Read the accounts of a customer.
+            accounts:write: Open accounts for a customer.
+            audit:read: Read the audit trail of a customer.
+            consents:read: Read consents.
+            consents:write: Create and revoke consents.
+            contracts:read: Read contracts and signatures.
+            contracts:write: Create, accept and sign contracts.
+            customers:read: Read identity, address and contact data of a customer.
+            customers:write: Create and change customers.
+            kyc:read: Read the KYC data of a customer.
+            kyc:write: Submit KYC data and request background checks.
