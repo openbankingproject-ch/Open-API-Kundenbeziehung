@@ -1,0 +1,24 @@
+headers:
+  Content-Language:
+    $ref: ../headers/Content-Language.yaml
+  X-Correlation-ID:
+    $ref: ../headers/X-Correlation-ID.yaml
+description: |
+  Conflict - The request conflicts with the current state of the target resource.
+
+  Examples:
+  - ContractAlreadySigned:
+  type: /problems/RESOURCE_LOCKED
+  title: The resource can no longer be changed
+  detail: The contract is covered by a completed signature and cannot be changed
+  instance: path/to/corresponding/resource
+
+  - ConsentAlreadyRevoked:
+  type: /problems/RESOURCE_LOCKED
+  title: The resource can no longer be changed
+  detail: The consent has already been revoked
+  instance: path/to/corresponding/resource
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/CommonErrorResponse.yaml

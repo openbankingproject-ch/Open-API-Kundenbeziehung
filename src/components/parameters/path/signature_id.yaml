@@ -1,0 +1,6 @@
+in: path
+name: signatureId
+description: ID of the signature.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

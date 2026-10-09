@@ -1,0 +1,25 @@
+headers:
+  Content-Language:
+    $ref: ../headers/Content-Language.yaml
+  X-Correlation-ID:
+    $ref: ../headers/X-Correlation-ID.yaml
+description: |
+  Forbidden - A valid OAuth token was received, but access was denied. (Depending on the security requirements, providers can return 404
+  instead)
+
+  Examples:
+  - InsufficientPrivileges:
+  type: /problems/INSUFFICIENT_PRIVILEGES
+  title: No privileges for the requested operation
+  detail: The token does not grant the scope required for this operation
+  instance: path/to/corresponding/resource
+
+  - ExpiredToken:
+  type: /problems/EXPIRED_TOKEN
+  title: The OAuth token is expired
+  detail: The token is no longer valid
+  instance: path/to/corresponding/resource
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/CommonErrorResponse.yaml

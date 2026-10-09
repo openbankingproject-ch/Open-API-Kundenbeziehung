@@ -1,0 +1,7 @@
+title: Shared identifier
+description: Technical identifier of a resource, assigned by the provider.
+type: string
+maxLength: 256
+pattern: ^[A-Za-z0-9](([A-Za-z0-9._]|-){0,254}[A-Za-z0-9]){0,1}$
+examples:
+  - c-7f3a9b2e

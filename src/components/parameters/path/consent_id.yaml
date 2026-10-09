@@ -1,0 +1,6 @@
+in: path
+name: consentId
+description: ID of the consent.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

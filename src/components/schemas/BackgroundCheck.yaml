@@ -1,7 +1,34 @@
-title: Background checks
-description: Results of the AML and compliance background checks and the resulting compliance decision.
+title: Background check
+description: |
+  AML and compliance screening of a customer and the resulting compliance decision. Created by the client, performed asynchronously by the
+  provider.
 type: object
+required:
+  - backgroundCheckId
+  - complianceStatus
+  - requestedAt
 properties:
+  backgroundCheckId:
+    description: Unique identifier of the background check, assigned by the provider.
+    $ref: ./generic/Id.yaml
+    readOnly: true
+  complianceStatus:
+    description: Compliance decision. Opening an account requires the most recent background check of the customer to be approved.
+    type: string
+    enum:
+      - approved
+      - rejected
+      - pending
+      - manual_review
+    examples:
+      - approved
+  requestedAt:
+    description: ISO 8601 timestamp of when the background check was requested.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T10:50:00Z'
+    readOnly: true
   amlRiskClass:
     description: AML risk classification derived from all check results and profile factors.
     type: string
@@ -60,16 +87,13 @@ properties:
           - pending
         examples:
           - passed
-  complianceStatus:
-    description: Final compliance decision. Only approved allows continuation.
+  completedAt:
+    description: ISO 8601 timestamp of when the provider completed the background check.
     type: string
-    enum:
-      - approved
-      - rejected
-      - pending
-      - manual_review
+    format: date-time
     examples:
-      - approved
+      - '2024-03-15T10:55:00Z'
+    readOnly: true
   pepDetails:
     description: Details of the Politically Exposed Person (PEP) screening.
     type: object

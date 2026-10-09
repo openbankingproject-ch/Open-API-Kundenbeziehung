@@ -1,6 +1,23 @@
+headers:
+  Content-Language:
+    $ref: ../headers/Content-Language.yaml
+  X-Correlation-ID:
+    $ref: ../headers/X-Correlation-ID.yaml
 description: |
-  Client Error - The request could not be processed due to a problem in the data provided. This could be for any of the reasons of the HTTP
-  standard that would result in a 4xx code.
+  Bad Request - The format of the request was invalid.
+
+  Examples:
+  - InvalidPayload:
+  type: /problems/INVALID_PAYLOAD
+  title: Payload does not comply with API specification
+  detail: Malformed JSON
+  instance: path/to/corresponding/resource
+
+  - InvalidParameter:
+  type: /problems/INVALID_PAYLOAD
+  title: Invalid parameter values have been detected
+  detail: The field country must be an ISO 3166-1 alpha-2 country code
+  instance: path/to/corresponding/resource
 content:
   application/problem+json:
     schema:

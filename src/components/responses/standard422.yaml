@@ -1,0 +1,25 @@
+headers:
+  Content-Language:
+    $ref: ../headers/Content-Language.yaml
+  X-Correlation-ID:
+    $ref: ../headers/X-Correlation-ID.yaml
+description: |
+  Unprocessable Content - The request is well-formed, but the provider refuses it because it would violate a regulatory or business invariant.
+  The invariants enforced by an operation are listed in its description. The type of the problem names the violated invariant.
+
+  Examples:
+  - ConsentMissing:
+  type: /problems/CONSENT_MISSING
+  title: No active consent covers the data
+  detail: The consent does not cover the data category financialProfile
+  instance: path/to/corresponding/resource
+
+  - PreconditionNotMet:
+  type: /problems/PRECONDITION_NOT_MET
+  title: A required resource is missing or not in the required state
+  detail: The most recent background check of the customer is not approved
+  instance: path/to/corresponding/resource
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/CommonErrorResponse.yaml

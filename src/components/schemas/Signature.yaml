@@ -1,24 +1,31 @@
 title: Signature
-description: Digital signature of the accepted contracts.
+description: Electronic signature of one or more accepted contracts.
 type: object
 required:
   - legallyBinding
   - mfaCompleted
+  - signatureId
   - signatureStatus
   - signatureType
+  - signedContracts
 properties:
   legallyBinding:
-    description: Whether the signature is legally binding based on type and applicable jurisdiction.
+    description: Whether the signature is legally binding based on type and applicable jurisdiction. Determined by the provider.
     type: boolean
     examples:
       - true
+    readOnly: true
   mfaCompleted:
     description: Whether MFA was completed during signing. Required for QES and AES.
     type: boolean
     examples:
       - true
+  signatureId:
+    description: Unique identifier of the signature, assigned by the provider.
+    $ref: ./generic/Id.yaml
+    readOnly: true
   signatureStatus:
-    description: Only completed allows the process to proceed to finalization.
+    description: Validation state of the signature. Only a completed signature can be referenced when opening an account.
     type: string
     enum:
       - completed
@@ -26,8 +33,9 @@ properties:
       - failed
     examples:
       - completed
+    readOnly: true
   signatureType:
-    description: eIDAS signature level. QES requires QEAA-level identification.
+    description: eIDAS signature level. QES requires a QEAA-level identification of the customer.
     type: string
     enum:
       - QES
@@ -35,6 +43,18 @@ properties:
       - SES
     examples:
       - QES
+  signedContracts:
+    description: Contracts covered by this signature. Every contract must have been accepted by the customer.
+    type: array
+    items:
+      $ref: ./SignedContract.yaml
+  createdAt:
+    description: ISO 8601 timestamp of when the signature was recorded.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T11:10:00Z'
+    readOnly: true
   signatureData:
     description: Technical data of the signature.
     type: object
@@ -55,8 +75,3 @@ properties:
         format: date-time
         examples:
           - '2024-03-15T11:10:00Z'
-  signedContracts:
-    description: Contracts covered by this signature.
-    type: array
-    items:
-      $ref: ./SignedContract.yaml

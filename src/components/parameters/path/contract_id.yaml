@@ -1,0 +1,6 @@
+in: path
+name: contractId
+description: ID of the contract.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

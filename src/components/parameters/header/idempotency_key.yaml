@@ -1,0 +1,11 @@
+in: header
+name: Idempotency-Key
+description: |
+  Unique key (defined by the caller) that makes a create request safe to retry. A repeated request with the same key returns the result of the
+  original request instead of creating a second resource.
+required: true
+schema:
+  type: string
+  maxLength: 64
+  examples:
+    - 5b3c8d7e-1f2a-4c6b-9e0d-3a7f1b2c4d5e

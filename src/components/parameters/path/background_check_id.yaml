@@ -1,0 +1,6 @@
+in: path
+name: backgroundCheckId
+description: ID of the background check.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

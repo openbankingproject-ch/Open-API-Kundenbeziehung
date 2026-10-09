@@ -1,5 +1,7 @@
 title: Consent
-description: Consent of the customer for the collection and processing of personal data.
+description: |
+  Consent of the customer for the collection and processing of personal data. Every operation that stores personal data checks that an active
+  consent covers the affected data category.
 type: object
 required:
   - consentId
@@ -7,32 +9,31 @@ required:
   - expiresAt
   - grantedAt
   - grantedScopes
+  - jurisdiction
   - purposes
   - status
 properties:
   consentId:
     description: Unique identifier for this consent grant.
-    type: string
-    format: uuid
-    examples:
-      - 6b1e2c4a-9d3f-4a7e-8b52-1c0f7e9a3d64
+    $ref: ./generic/Id.yaml
+    readOnly: true
   dataCategories:
-    description: Personal data categories the customer has authorized for collection.
+    description: Personal data categories the customer has authorized for collection and processing.
     type: array
     items:
       type: string
       enum:
-        - initialization
-        - productSelection
+        - identity
+        - address
+        - contact
         - selfDeclaration
-        - basicData
         - financialProfile
         - identification
-        - backgroundChecks
-        - contracts
+        - backgroundCheck
+        - contract
         - signature
       examples:
-        - basicData
+        - identity
         - identification
   expiresAt:
     description: ISO 8601 timestamp after which the consent is no longer valid.
@@ -46,14 +47,21 @@ properties:
     format: date-time
     examples:
       - '2024-03-15T09:30:00Z'
+    readOnly: true
   grantedScopes:
-    description: OAuth 2.1 scopes granted to the consuming application (e.g. read:account, write:profile).
+    description: OAuth scopes granted to the consuming application (e.g. customers:read, kyc:write).
     type: array
     items:
       type: string
       examples:
-        - read:account
-        - write:profile
+        - customers:read
+        - kyc:write
+  jurisdiction:
+    description: ISO 3166-1 alpha-2 country code of the jurisdiction whose data protection law applies (e.g. CH for DSG, DE for GDPR).
+    type: string
+    pattern: ^[A-Z]{2}$
+    examples:
+      - CH
   purposes:
     description: |
       Specific purposes for data use, each with a legal basis under GDPR/DSG.
@@ -65,7 +73,7 @@ properties:
         - account_opening
         - kyc_verification
   status:
-    description: Lifecycle state of the consent.
+    description: Lifecycle state of the consent. A revoked or expired consent no longer permits storing personal data.
     type: string
     enum:
       - active
@@ -73,3 +81,4 @@ properties:
       - expired
     examples:
       - active
+    readOnly: true

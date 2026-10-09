@@ -1,0 +1,6 @@
+in: path
+name: identificationId
+description: ID of the identification.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

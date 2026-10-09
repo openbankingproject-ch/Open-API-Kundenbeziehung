@@ -1,30 +1,28 @@
 title: Signed contract
-description: Single contract covered by the digital signature.
+description: Single contract covered by an electronic signature.
 type: object
 required:
-  - contractType
-  - signatureId
-  - signatureTimestamp
+  - contractId
   - version
 properties:
+  contractId:
+    description: Contract covered by the signature.
+    $ref: ./generic/Id.yaml
+  version:
+    description: Version of the signed contract. Must match the accepted version.
+    type: string
+    examples:
+      - '2.1'
   contractType:
-    description: Type of signed contract matching contractAcceptance step.
+    description: Type of the signed contract.
     type: string
     examples:
       - termsAndConditions
-  signatureId:
-    description: Unique signature identifier for certificate retrieval and integrity verification.
-    type: string
-    examples:
-      - SIG-2024-000987
+    readOnly: true
   signatureTimestamp:
-    description: Must be equal to or later than the corresponding acceptanceTimestamp.
+    description: ISO 8601 timestamp of the signature. Equal to or later than the acceptanceTimestamp of the contract.
     type: string
     format: date-time
     examples:
       - '2024-03-15T11:10:00Z'
-  version:
-    description: Version of the signed contract, must match the accepted version.
-    type: string
-    examples:
-      - '2.1'
+    readOnly: true

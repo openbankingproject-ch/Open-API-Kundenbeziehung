@@ -3,6 +3,7 @@ description: Result of the identity verification of the customer (KYC).
 type: object
 required:
   - documentData
+  - identificationId
   - identificationMethod
   - referenceNumber
   - verificationDate
@@ -84,6 +85,10 @@ properties:
             type: number
             examples:
               - 3
+  identificationId:
+    description: Unique identifier of the identification, assigned by the provider.
+    $ref: ./generic/Id.yaml
+    readOnly: true
   identificationMethod:
     description: Method used to verify the customer's identity.
     type: string
@@ -107,7 +112,7 @@ properties:
     examples:
       - '2024-03-15T10:48:03Z'
   verificationLevel:
-    description: Achieved eIDAS trust level. Determines available products and signature types.
+    description: Achieved eIDAS trust level. Determines available products and signature types (QES requires QEAA).
     type: string
     enum:
       - QEAA

@@ -1,0 +1,8 @@
+in: query
+name: cursor
+description: Optional parameter for pagination. Use the X-Next-Cursor header of the previous response to retrieve the next set of results.
+required: false
+schema:
+  type: string
+  examples:
+    - cursorIDxyz

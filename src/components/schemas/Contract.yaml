@@ -1,0 +1,53 @@
+title: Contract
+description: Contract document presented to the customer, and its acceptance.
+type: object
+required:
+  - accepted
+  - contractId
+  - contractType
+  - version
+properties:
+  accepted:
+    description: Whether the customer has accepted this contract. Set via the acceptance sub-resource.
+    type: boolean
+    examples:
+      - true
+    readOnly: true
+  contractId:
+    description: Unique identifier for this contract document instance.
+    $ref: ./generic/Id.yaml
+    readOnly: true
+  contractType:
+    description: Type of the contract document.
+    type: string
+    enum:
+      - termsAndConditions
+      - dataSharingAgreement
+      - baseContract
+      - productAgreement
+    examples:
+      - termsAndConditions
+  version:
+    description: Version number of the contract (e.g. 2.1, 3.0), assigned by the provider.
+    type: string
+    examples:
+      - '2.1'
+    readOnly: true
+  acceptanceTimestamp:
+    description: ISO 8601 timestamp of when the customer accepted this contract.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T11:02:45Z'
+    readOnly: true
+  documentUrl:
+    description: Relative URL from which the contract document can be retrieved.
+    type: string
+    examples:
+      - /documents/CTR-2024-000123.pdf
+    readOnly: true
+  productId:
+    description: Product catalog ID this contract applies to. Required for productAgreement only.
+    type: string
+    examples:
+      - PRV-ACC-STD

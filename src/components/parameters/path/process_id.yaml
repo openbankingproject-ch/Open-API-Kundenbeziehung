@@ -1,6 +1,0 @@
-in: path
-name: processId
-description: Unique onboarding process identifier assigned at initialization.
-required: true
-schema:
-  $ref: ../../schemas/ProcessId.yaml

@@ -1,0 +1,77 @@
+title: Audit event
+description: Single entry of the audit trail of a customer, recorded by the provider for every change of a resource.
+type: object
+required:
+  - action
+  - eventId
+  - originator
+  - resourceId
+  - resourceType
+  - result
+  - timestamp
+properties:
+  action:
+    description: Machine-readable action identifier (e.g. consent_granted, contract_accepted).
+    type: string
+    examples:
+      - contract_accepted
+  eventId:
+    description: Unique identifier of the audit event.
+    $ref: ./generic/Id.yaml
+  originator:
+    description: Entity that performed the action.
+    type: string
+    enum:
+      - user
+      - system
+      - partner
+    examples:
+      - user
+  resourceId:
+    description: Identifier of the resource affected by the action.
+    $ref: ./generic/Id.yaml
+  resourceType:
+    description: Type of the resource affected by the action.
+    type: string
+    enum:
+      - consent
+      - customer
+      - selfDeclaration
+      - financialProfile
+      - identification
+      - backgroundCheck
+      - contract
+      - signature
+      - account
+    examples:
+      - contract
+  result:
+    description: Outcome of the action.
+    type: string
+    enum:
+      - success
+      - failure
+      - pending
+    examples:
+      - success
+  timestamp:
+    description: ISO 8601 timestamp of when the action was performed.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T11:02:45Z'
+  correlationId:
+    description: X-Correlation-ID of the request that triggered the action.
+    type: string
+    examples:
+      - f058ebd6-02f7-4d3f-942e-904344e8cde5
+  deviceFingerprint:
+    description: Hash representing the device used. Used for fraud detection.
+    type: string
+    examples:
+      - 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+  ipAddress:
+    description: IP address from which the action was initiated.
+    type: string
+    examples:
+      - 203.0.113.42

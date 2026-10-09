@@ -1,0 +1,13 @@
+title: Customer update
+description: Properties of a customer to change. Omitted properties remain unchanged.
+type: object
+properties:
+  address:
+    $ref: ./AddressData.yaml
+  consentId:
+    description: Consent under which the personal data of this customer is collected and processed.
+    $ref: ./generic/Id.yaml
+  contact:
+    $ref: ./Contact.yaml
+  identity:
+    $ref: ./Identity.yaml

@@ -1,31 +1,18 @@
 title: Contract acceptance
-description: Acceptance of the contracts required for the selected products.
+description: Acceptance of a single contract by the customer.
 type: object
 required:
-  - contracts
+  - acceptanceTimestamp
+  - accepted
 properties:
-  contracts:
-    description: Contracts presented to and accepted by the customer.
-    type: array
-    items:
-      $ref: ./ContractItem.yaml
-  contractType:
-    description: Deprecated. Legacy field replaced by the contracts array.
+  acceptanceTimestamp:
+    description: ISO 8601 timestamp of when the customer accepted the contract.
     type: string
+    format: date-time
     examples:
-      - termsAndConditions
-    deprecated: true
-  contractVersion:
-    description: Deprecated. Legacy field replaced by the contracts array.
-    type: string
-    examples:
-      - '2.1'
-    deprecated: true
-  termsAccepted:
-    description: |
-      Deprecated. Legacy field replaced by the contracts array.
-      Retained for backward compatibility.
+      - '2024-03-15T11:02:45Z'
+  accepted:
+    description: Whether the customer accepts the contract.
     type: boolean
     examples:
       - true
-    deprecated: true

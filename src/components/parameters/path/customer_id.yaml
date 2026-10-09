@@ -1,0 +1,6 @@
+in: path
+name: customerId
+description: ID of the customer.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

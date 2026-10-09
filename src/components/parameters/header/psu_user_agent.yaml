@@ -1,0 +1,8 @@
+in: header
+name: X-PSU-User-Agent
+description: User agent of the client software used by the user. Recorded in the audit trail.
+required: false
+schema:
+  type: string
+  examples:
+    - Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)

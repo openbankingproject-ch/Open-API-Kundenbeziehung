@@ -1,4 +1,17 @@
-description: Not Found - No onboarding process exists for the given processId.
+headers:
+  Content-Language:
+    $ref: ../headers/Content-Language.yaml
+  X-Correlation-ID:
+    $ref: ../headers/X-Correlation-ID.yaml
+description: |
+  Not Found - Either the endpoint does not exist or the requested resource does not exist.
+
+  Examples:
+  - ResourceNotFound:
+  type: /problems/RESOURCE_NOT_FOUND
+  title: Resource not found
+  detail: No customer exists for the given customerId
+  instance: path/to/corresponding/resource
 content:
   application/problem+json:
     schema:

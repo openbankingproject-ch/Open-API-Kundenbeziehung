@@ -1,0 +1,41 @@
+title: Customer
+description: Natural person for whom the customer relationship is established, with identity, address and contact data.
+type: object
+required:
+  - consentId
+  - customerId
+  - identity
+properties:
+  consentId:
+    description: Consent under which the personal data of this customer is collected and processed.
+    $ref: ./generic/Id.yaml
+  customerId:
+    description: Unique identifier of the customer, assigned by the provider.
+    $ref: ./generic/Id.yaml
+    readOnly: true
+  identity:
+    $ref: ./Identity.yaml
+  address:
+    $ref: ./AddressData.yaml
+  contact:
+    $ref: ./Contact.yaml
+  coreBankingId:
+    description: Unique customer ID in the core banking system (T24, Avaloq, Finnova, etc.). Assigned once the first account is opened.
+    type: string
+    examples:
+      - '100045872'
+    readOnly: true
+  createdAt:
+    description: ISO 8601 timestamp of when the customer was created.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T09:45:00Z'
+    readOnly: true
+  updatedAt:
+    description: ISO 8601 timestamp of the most recent change of the customer.
+    type: string
+    format: date-time
+    examples:
+      - '2024-03-15T09:45:00Z'
+    readOnly: true

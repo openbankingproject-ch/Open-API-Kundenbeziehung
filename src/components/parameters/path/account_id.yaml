@@ -1,0 +1,6 @@
+in: path
+name: accountId
+description: ID of the account.
+required: true
+schema:
+  $ref: ../../schemas/generic/Id.yaml

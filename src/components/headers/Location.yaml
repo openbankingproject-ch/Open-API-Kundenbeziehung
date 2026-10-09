@@ -1,0 +1,5 @@
+description: Location (URI-reference) of the created resource. The relative path shall be returned as URI-reference.
+schema:
+  type: string
+  examples:
+    - /customers/c-7f3a9b2e/contracts/CTR-2024-000123
