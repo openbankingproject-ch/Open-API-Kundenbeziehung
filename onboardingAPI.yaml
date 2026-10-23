@@ -17,6 +17,16 @@ info:
     accepted, or an account for a customer whose background check is not approved.
 
     The invariants enforced by an operation are listed in its description.
+  contact:
+    email: info@common-api.ch
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://onboarding.common-api.ch/v2
+externalDocs:
+  description: Find out more about the Common API specifications.
+  url: https://www.common-api.ch
 tags:
   - name: accounts
     description: Opening of accounts for a customer and retrieval of the resulting core banking references.
