@@ -2,7 +2,7 @@
 
 OpenAPI 3.1 specification for the Customer Relationship API (version 2.0.0). It covers what a financial institution needs to open a relationship with a new customer: consent, personal data, KYC, contracts, signatures and the account itself.
 
-View it in the Swagger editor: [onboardingAPI.yaml](https://editor-next.swagger.io/?url=https://raw.githubusercontent.com/openbankingproject-ch/Open-API-Kundenbeziehung/main/onboardingAPI.yaml)
+View it in the Swagger editor: [onboardingAPI.yaml](https://editor-next.swagger.io/?url=https://raw.githubusercontent.com/openbankingproject-ch/Open-API-Kundenbeziehung/main/onboardingAPI.yaml](https://editor.swagger.io/?url=https://raw.githubusercontent.com/openbankingproject-ch/Open-API-Kundenbeziehung/refs/heads/alpha/onboardingAPI.yaml)
 
 ## How the API is shaped
 
